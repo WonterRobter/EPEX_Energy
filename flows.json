@@ -1,0 +1,304 @@
+[
+    {
+        "id": "82b3898341da1e12",
+        "type": "tab",
+        "label": "EPEX Logica",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "3665652b53173d87",
+        "type": "inject",
+        "z": "82b3898341da1e12",
+        "name": "EPEX_Time_14u15",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "15 14 * * *",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 340,
+        "y": 580,
+        "wires": [
+            [
+                "0afad3e54788e571"
+            ]
+        ]
+    },
+    {
+        "id": "a44fe912a7a47107",
+        "type": "http request",
+        "z": "82b3898341da1e12",
+        "name": "",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 650,
+        "y": 680,
+        "wires": [
+            [
+                "df3a37df245129b2",
+                "2a36459db1903740",
+                "cb560ecea0d1ef1c"
+            ]
+        ]
+    },
+    {
+        "id": "df3a37df245129b2",
+        "type": "json",
+        "z": "82b3898341da1e12",
+        "name": "",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 870,
+        "y": 680,
+        "wires": [
+            [
+                "dfcd798313ce8c5e"
+            ]
+        ]
+    },
+    {
+        "id": "dfcd798313ce8c5e",
+        "type": "function",
+        "z": "82b3898341da1e12",
+        "name": "function 1",
+        "func": "let timestamps = msg.payload.unix_seconds;\nlet prijzen = msg.payload.price;\n\nlet waarden = [];\n\n// Loop door alle tijden (of het er nu 24 of 96 zijn)\nfor (let i = 0; i < timestamps.length; i++) {\n    let datum = new Date(timestamps[i] * 1000);\n\n    // .getTime() is iets veiliger in Javascript bij het rekenen met tijd\n    let offset = datum.getTimezoneOffset() * 60000;\n    let lokaleTijd = (new Date(datum.getTime() - offset)).toISOString().slice(0, 19).replace('T', ' ');\n\n    waarden.push(\"('\" + lokaleTijd + \"', \" + prijzen[i] + \")\");\n}\n\nlet sqlQuery = \"INSERT OR REPLACE INTO epex_prijzen (tijdstip, prijs) VALUES \" + waarden.join(\", \") + \";\";\n\nmsg.topic = sqlQuery;\n\n// We gebruiken een eigen naam (msg.mijn_tekst) zodat SQLite het niet overschrijft!\nmsg.mijn_tekst = \"✅ Succes! \" + timestamps.length + \" prijzen naar de database gestuurd.\";\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1040,
+        "y": 680,
+        "wires": [
+            [
+                "4098b759e05c8269"
+            ]
+        ]
+    },
+    {
+        "id": "4098b759e05c8269",
+        "type": "sqlite",
+        "z": "82b3898341da1e12",
+        "mydb": "4dcaae5e6de71de8",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "",
+        "x": 1260,
+        "y": 680,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2a36459db1903740",
+        "type": "function",
+        "z": "82b3898341da1e12",
+        "name": "Message",
+        "func": "// Vul hier jouw Telegram Chat ID in!\nconst mijnChatId = env.get(\"TELEGRAM_CHAT_ID\"); \n\n// Jouw drempelwaarde\nconst drempel = 25;\n\nlet data = msg.payload;\nif (typeof data === \"string\") {\n    try { data = JSON.parse(data); } catch(e) {}\n}\n\nif (!data || !data.unix_seconds) {\n    node.error(\"Fout: Geen prijzen gevonden.\");\n    return null;\n}\n\nlet timestamps = data.unix_seconds;\nlet prijzen = data.price;\n\n// 1. We halen de datum van morgen uit de allereerste tijdstempel\nlet datumMorgenObj = new Date(timestamps[0] * 1000);\nlet dag = String(datumMorgenObj.getDate()).padStart(2, '0');\nlet maand = String(datumMorgenObj.getMonth() + 1).padStart(2, '0');\nlet jaar = datumMorgenObj.getFullYear();\nlet weergaveDatum = dag + \"-\" + maand + \"-\" + jaar;\n\nlet blokken = [];\nlet inBlok = false;\nlet huidigeBlok = null;\n\n// Loop door alle kwartieren om blokken te maken\nfor(let i=0; i < timestamps.length; i++) {\n    let prijs = prijzen[i];\n\n    if (prijs < drempel) {\n        if (!inBlok) {\n            inBlok = true;\n            let startDatum = new Date(timestamps[i] * 1000);\n            let offset = startDatum.getTimezoneOffset() * 60000;\n            let startLokaleTijd = new Date(startDatum.getTime() - offset).toISOString().substring(11, 16);\n\n            huidigeBlok = {\n                start: startLokaleTijd,\n                prijzen: [prijs],\n                laatsteIndex: i\n            };\n        } else {\n            huidigeBlok.prijzen.push(prijs);\n            huidigeBlok.laatsteIndex = i;\n        }\n    }\n\n    // Als we in een blok zaten, maar de prijs stijgt erboven (of de lijst is ten einde)\n    if (inBlok && (prijs >= drempel || i === timestamps.length - 1)) {\n        let eindTimestamp = timestamps[huidigeBlok.laatsteIndex] + 900;\n        let eindDatum = new Date(eindTimestamp * 1000);\n        let offset = eindDatum.getTimezoneOffset() * 60000;\n        let eindLokaleTijd = new Date(eindDatum.getTime() - offset).toISOString().substring(11, 16);\n        \n        huidigeBlok.eind = eindLokaleTijd;\n        \n        // Bereken alleen de laagste prijs (gemiddelde is weggehaald!)\n        let minPrijs = Math.min(...huidigeBlok.prijzen);\n        huidigeBlok.min = minPrijs.toFixed(2);\n\n        blokken.push(huidigeBlok);\n        inBlok = false;\n    }\n}\n\n// -----------------------------------------------------------------\n// HET BERICHT OPBOUWEN\n// -----------------------------------------------------------------\n// De datum staat nu netjes in de titel!\nlet bericht = \"📅 <b>De EPEX Prijzen Voor morgen (\" + weergaveDatum + \")</b>\\n\\n\";\n\nif (blokken.length > 0) {\n    // Het \"<\" teken is vervangen door tekst, zodat Error 400 wegblijft!\n    bericht += \"Hier zijn de voordeligste momenten (onder de € \" + drempel + \"):\\n\\n\";\n    \n    for (let blok of blokken) {\n        bericht += \"⏱️ <b>\" + blok.start + \" - \" + blok.eind + \"</b>\\n\";\n        bericht += \"   Laagste prijs: € \" + blok.min + \" / MWh\\n\\n\";\n    }\n} else {\n    let absoluteMin = Math.min(...prijzen).toFixed(2);\n    bericht += \"Helaas, er zijn morgen géén prijzen onder de € \" + drempel + \" / MWh.\\n\\n\";\n    bericht += \"📉 De laagste prijs morgen is € \" + absoluteMin + \" / MWh.\";\n}\n\n// Stuur het bericht naar Telegram\nmsg.payload = {\n    chatId: mijnChatId,\n    type: \"message\",\n    content: bericht,\n    options: { parse_mode: \"HTML\" } \n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 960,
+        "y": 780,
+        "wires": [
+            [
+                "26c2336ec39d346a"
+            ]
+        ]
+    },
+    {
+        "id": "26c2336ec39d346a",
+        "type": "telegram sender",
+        "z": "82b3898341da1e12",
+        "name": "BOT",
+        "bot": "94e5249c403c9c50",
+        "haserroroutput": false,
+        "outputs": 1,
+        "x": 1170,
+        "y": 820,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0afad3e54788e571",
+        "type": "function",
+        "z": "82b3898341da1e12",
+        "name": "API_URL_Functie",
+        "func": "// Pak de datum en tijd van nú\nlet datum = new Date();\n\n// Tel er precies 1 dag (morgen) bij op\ndatum.setDate(datum.getDate() + 1);\n\n// Haal het jaartal, de maand en de dag eruit (en zorg voor een voorloopnul, bijv. '03')\nlet jaar = datum.getFullYear();\nlet maand = String(datum.getMonth() + 1).padStart(2, '0');\nlet dag = String(datum.getDate()).padStart(2, '0');\n\n// Plak ze aan elkaar tot YYYY-MM-DD (bijv. 2026-03-07)\nlet morgenString = jaar + \"-\" + maand + \"-\" + dag;\n\n// Maak de nieuwe URL en stop die in msg.url\n// (Let op: Energy-Charts gebruikt vaak 'start' en 'end' tegelijk om het netjes af te bakenen voor 1 dag)\nmsg.url = \"https://api.energy-charts.info/price?bzn=BE&start=\" + morgenString + \"&end=\" + morgenString;\n\n// Extraatje: stuur de datum ook door in een ander vakje, handig voor straks!\nmsg.datumMorgen = morgenString;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 570,
+        "y": 580,
+        "wires": [
+            [
+                "a44fe912a7a47107"
+            ]
+        ]
+    },
+    {
+        "id": "11c53e962f960d36",
+        "type": "inject",
+        "z": "82b3898341da1e12",
+        "name": "Onbalans_15min",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "900",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 330,
+        "y": 500,
+        "wires": [
+            [
+                "c57608c870ee1a6e"
+            ]
+        ]
+    },
+    {
+        "id": "c57608c870ee1a6e",
+        "type": "http request",
+        "z": "82b3898341da1e12",
+        "name": "",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods161/records?select=imbalanceprice%2Cdatetime&order_by=datetime%20desc&limit=60",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 570,
+        "y": 500,
+        "wires": [
+            [
+                "df87692dc92d2e79"
+            ]
+        ]
+    },
+    {
+        "id": "df87692dc92d2e79",
+        "type": "function",
+        "z": "82b3898341da1e12",
+        "name": "onbalansDB_omzetfunctie",
+        "func": "// We krijgen een lijst (array) met resultaten terug\nlet records = msg.payload.results;\n\nif (!records || records.length === 0) {\n    return null;\n}\n\n// We maken een lijst met SQL commando's (één voor elk record)\nlet sqlQueries = [];\n\nfor (let i = 0; i < records.length; i++) {\n    let item = records[i];\n\n    // Tijd omzetten van UTC (Elia) naar Lokale tijd\n    let datum = new Date(item.datetime);\n    let offset = datum.getTimezoneOffset() * 60000;\n    let lokaleTijd = new Date(datum.getTime() - offset);\n\n    // Formatteer naar YYYY-MM-DD HH:MM:00\n    let tijdstipStr = lokaleTijd.toISOString().replace('T', ' ').substring(0, 19);\n    let prijs = item.imbalanceprice;\n\n    // Voeg toe aan de lijst met queries\n    if (prijs !== null && prijs !== undefined) {\n        sqlQueries.push(\"('\" + tijdstipStr + \"', \" + prijs + \")\");\n    }\n}\n\n// We voegen alles samen in één krachtige INSERT opdracht\nif (sqlQueries.length > 0) {\n    msg.topic = \"INSERT OR REPLACE INTO onbalans_prijzen (tijdstip, prijs) VALUES \" + sqlQueries.join(\",\");\n    return msg;\n}\n\nreturn null;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 810,
+        "y": 500,
+        "wires": [
+            [
+                "4098b759e05c8269"
+            ]
+        ]
+    },
+    {
+        "id": "cb560ecea0d1ef1c",
+        "type": "function",
+        "z": "82b3898341da1e12",
+        "name": "Watchdog Check",
+        "func": "// 1. Check of de API deprecated is (zit in de msg.payload van de bestaande aanroep)\nconst isDeprecated = msg.payload.deprecated;\n\n// 2. Haal de status op uit het interne geheugen (context)\nlet status = context.get(\"waarschuwingStatus\") || { firstSeen: null, lastMonthNotified: null };\n\nif (isDeprecated === true) {\n    let nu = new Date();\n    \n    // EERSTE KEER: Alarm slaan!\n    if (!status.firstSeen) {\n        status.firstSeen = nu.toISOString();\n        status.lastMonthNotified = 6;\n        context.set(\"waarschuwingStatus\", status);\n        \n        msg.payload = {\n            chatId: env.get(\"TELEGRAM_CHAT_ID\"),\n            type: \"message\",\n            content: \"🚨 <b>GROOT ALARM: API GAAT STOPPEN</b> 🚨\\n\\nFraunhofer heeft aangekondigd dat deze API over 6 maanden stopt. Tijd om een alternatief te zoeken!\"\n        };\n        return msg;\n    }\n    \n    // AFTELLEN:\n    let startDatum = new Date(status.firstSeen);\n    let eindDatum = new Date(startDatum);\n    eindDatum.setMonth(eindDatum.getMonth() + 6);\n    \n    let maandenOver = Math.max(0, (eindDatum.getFullYear() - nu.getFullYear()) * 12 + (eindDatum.getMonth() - nu.getMonth()));\n    \n    // Alleen bericht als de maand verspringt\n    if (maandenOver < status.lastMonthNotified) {\n        status.lastMonthNotified = maandenOver;\n        context.set(\"waarschuwingStatus\", status);\n        \n        msg.payload = {\n            chatId: env.get(\"TELEGRAM_CHAT_ID\"),\n            type: \"message\",\n            content: \"⏳ <b>API AFTELLING UPDATE</b>\\n\\nDe energie-API stopt over \" + maandenOver + \" maanden.\\nDeadline: \" + eindDatum.toLocaleDateString('nl-BE')\n        };\n        return msg;\n    }\n}\n\n// Alles is ok? Dan sturen we niets door naar Telegram.\nreturn null;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 930,
+        "y": 860,
+        "wires": [
+            [
+                "26c2336ec39d346a"
+            ]
+        ]
+    },
+    {
+        "id": "4dcaae5e6de71de8",
+        "type": "sqlitedb",
+        "db": "/database/energie.db",
+        "mode": "RWC"
+    },
+    {
+        "id": "94e5249c403c9c50",
+        "type": "telegram bot",
+        "botname": "TEST_BOT",
+        "usernames": "",
+        "chatids": "",
+        "baseapiurl": "",
+        "testenvironment": false,
+        "updatemode": "polling",
+        "pollinterval": 300,
+        "usesocks": false,
+        "sockshost": "",
+        "socksprotocol": "socks5",
+        "socksport": 6667,
+        "socksusername": "anonymous",
+        "sockspassword": "",
+        "bothost": "",
+        "botpath": "",
+        "localbothost": "0.0.0.0",
+        "localbotport": 8443,
+        "publicbotport": 8443,
+        "privatekey": "",
+        "certificate": "",
+        "useselfsignedcertificate": false,
+        "sslterminated": false,
+        "verboselogging": false
+    },
+    {
+        "id": "0ef1f26e4402e4e4",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-node-sqlite": "1.1.1",
+            "node-red-contrib-telegrambot": "17.0.6"
+        }
+    }
+]
