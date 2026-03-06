@@ -1,0 +1,3 @@
+# Negeer de database en Node-RED instellingen (veiligheid!)
+database/
+nodered_data/

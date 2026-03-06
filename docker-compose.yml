@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  nodered:
+    image: nodered/node-red:latest-debian
+    container_name: epex_nodered
+    restart: unless-stopped
+    ports:
+      - "1880:1880"
+    volumes:
+      - ./nodered_data:/data
+      - ./database:/database
+    environment:
+      - TZ=Europe/Brussels
+
+  webserver:
+    image: nginx:alpine
+    container_name: epex_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./html:/usr/share/nginx/html:ro
