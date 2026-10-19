@@ -1,48 +1,91 @@
 [
     {
-        "id": "82b3898341da1e12",
+        "id": "44ae34a704e13388",
         "type": "tab",
-        "label": "EPEX Logica",
+        "label": "EPEXernergy Proxmox",
         "disabled": false,
         "info": "",
         "env": []
     },
     {
-        "id": "3665652b53173d87",
+        "id": "98965db8d1aa2365",
+        "type": "influxdb batch",
+        "z": "44ae34a704e13388",
+        "influxdb": "c37561ff29513d8a",
+        "precision": "",
+        "retentionPolicy": "",
+        "name": "Schrijf naar InfluxDB 2.7",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "epex_org",
+        "bucket": "energie_db",
+        "x": 1530,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "comment_epex_header",
+        "type": "comment",
+        "z": "44ae34a704e13388",
+        "name": "1. EPEX Day-Ahead Prijzen (Energy-Charts API - Kwartier)",
+        "info": "",
+        "x": 550,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "inj_epex_collect",
         "type": "inject",
-        "z": "82b3898341da1e12",
-        "name": "EPEX_Time_14u15",
+        "z": "44ae34a704e13388",
+        "name": "Elke 15m (13u-16u)",
         "props": [
             {
                 "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
             }
         ],
         "repeat": "",
-        "crontab": "15 14 * * *",
+        "crontab": "*/15 13-16 * * *",
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 340,
-        "y": 580,
+        "x": 460,
+        "y": 360,
         "wires": [
             [
-                "0afad3e54788e571"
+                "func_epex_build_url"
             ]
         ]
     },
     {
-        "id": "a44fe912a7a47107",
+        "id": "func_epex_build_url",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Maak URL (Vandaag + Morgen)",
+        "func": "function formatDate(d) {\n    let jaar = d.getFullYear();\n    let maand = String(d.getMonth() + 1).padStart(2, '0');\n    let dag = String(d.getDate()).padStart(2, '0');\n    return `${jaar}-${maand}-${dag}`;\n}\n\nlet vandaag = new Date();\nlet morgen = new Date();\nmorgen.setDate(vandaag.getDate() + 1);\n\nlet startStr = formatDate(vandaag);\nlet endStr = formatDate(morgen);\n\nmsg.url = `https://api.energy-charts.info/price?bzn=BE&start=${startStr}&end=${endStr}`;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 360,
+        "wires": [
+            [
+                "http_epex_request"
+            ]
+        ]
+    },
+    {
+        "id": "http_epex_request",
         "type": "http request",
-        "z": "82b3898341da1e12",
-        "name": "",
+        "z": "44ae34a704e13388",
+        "name": "GET Energy-Charts",
         "method": "GET",
-        "ret": "txt",
+        "ret": "obj",
         "paytoqs": "ignore",
         "url": "",
         "tls": "",
@@ -52,132 +95,131 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 650,
-        "y": 680,
+        "x": 970,
+        "y": 360,
         "wires": [
             [
-                "df3a37df245129b2",
-                "2a36459db1903740",
-                "cb560ecea0d1ef1c"
+                "func_epex_to_influx"
             ]
         ]
     },
     {
-        "id": "df3a37df245129b2",
-        "type": "json",
-        "z": "82b3898341da1e12",
-        "name": "",
-        "property": "payload",
-        "action": "obj",
-        "pretty": false,
-        "x": 870,
-        "y": 680,
-        "wires": [
-            [
-                "dfcd798313ce8c5e"
-            ]
-        ]
-    },
-    {
-        "id": "dfcd798313ce8c5e",
+        "id": "func_epex_to_influx",
         "type": "function",
-        "z": "82b3898341da1e12",
-        "name": "function 1",
-        "func": "let timestamps = msg.payload.unix_seconds;\nlet prijzen = msg.payload.price;\n\nlet waarden = [];\n\n// Loop door alle tijden (of het er nu 24 of 96 zijn)\nfor (let i = 0; i < timestamps.length; i++) {\n    let datum = new Date(timestamps[i] * 1000);\n\n    // .getTime() is iets veiliger in Javascript bij het rekenen met tijd\n    let offset = datum.getTimezoneOffset() * 60000;\n    let lokaleTijd = (new Date(datum.getTime() - offset)).toISOString().slice(0, 19).replace('T', ' ');\n\n    waarden.push(\"('\" + lokaleTijd + \"', \" + prijzen[i] + \")\");\n}\n\nlet sqlQuery = \"INSERT OR REPLACE INTO epex_prijzen (tijdstip, prijs) VALUES \" + waarden.join(\", \") + \";\";\n\nmsg.topic = sqlQuery;\n\n// We gebruiken een eigen naam (msg.mijn_tekst) zodat SQLite het niet overschrijft!\nmsg.mijn_tekst = \"✅ Succes! \" + timestamps.length + \" prijzen naar de database gestuurd.\";\n\nreturn msg;",
+        "z": "44ae34a704e13388",
+        "name": "Format EPEX -> Influx 2.7",
+        "func": "let tijden = msg.payload.unix_seconds;\nlet prijzen = msg.payload.price;\n\n// Sla API-status op voor het Watchdog tabblad\nglobal.set(\"epex_api_deprecated\", msg.payload.deprecated === true);\n\nif (!tijden || !prijzen || tijden.length === 0) {\n    node.status({ fill: \"yellow\", shape: \"ring\", text: \"Geen data ontvangen\" });\n    return null;\n}\n\nlet points = [];\nfor (let i = 0; i < tijden.length; i++) {\n    let prijsGetal = parseFloat(prijzen[i]);\n    if (isNaN(prijsGetal)) continue;\n\n    points.push({\n        measurement: \"epex_kwartier\",\n        fields: { prijs: prijsGetal },\n        tags: { type: \"epex\" },\n        timestamp: new Date(tijden[i] * 1000)\n    });\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${points.length} kwartieren opgeslagen` });\nmsg.payload = points;\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1040,
-        "y": 680,
+        "x": 1210,
+        "y": 360,
         "wires": [
             [
-                "4098b759e05c8269"
+                "98965db8d1aa2365"
             ]
         ]
     },
     {
-        "id": "4098b759e05c8269",
-        "type": "sqlite",
-        "z": "82b3898341da1e12",
-        "mydb": "4dcaae5e6de71de8",
-        "sqlquery": "msg.topic",
-        "sql": "",
-        "name": "",
-        "x": 1260,
-        "y": 680,
-        "wires": [
-            []
-        ]
+        "id": "comment_onb_kwartier_header",
+        "type": "comment",
+        "z": "44ae34a704e13388",
+        "name": "2. Elia Onbalans Prijzen - Kwartier (ods162)",
+        "info": "",
+        "x": 510,
+        "y": 400,
+        "wires": []
     },
     {
-        "id": "2a36459db1903740",
-        "type": "function",
-        "z": "82b3898341da1e12",
-        "name": "Message",
-        "func": "// Vul hier jouw Telegram Chat ID in!\nconst mijnChatId = env.get(\"TELEGRAM_CHAT_ID\"); \n\n// Jouw drempelwaarde\nconst drempel = 25;\n\nlet data = msg.payload;\nif (typeof data === \"string\") {\n    try { data = JSON.parse(data); } catch(e) {}\n}\n\nif (!data || !data.unix_seconds) {\n    node.error(\"Fout: Geen prijzen gevonden.\");\n    return null;\n}\n\nlet timestamps = data.unix_seconds;\nlet prijzen = data.price;\n\n// 1. We halen de datum van morgen uit de allereerste tijdstempel\nlet datumMorgenObj = new Date(timestamps[0] * 1000);\nlet dag = String(datumMorgenObj.getDate()).padStart(2, '0');\nlet maand = String(datumMorgenObj.getMonth() + 1).padStart(2, '0');\nlet jaar = datumMorgenObj.getFullYear();\nlet weergaveDatum = dag + \"-\" + maand + \"-\" + jaar;\n\nlet blokken = [];\nlet inBlok = false;\nlet huidigeBlok = null;\n\n// Loop door alle kwartieren om blokken te maken\nfor(let i=0; i < timestamps.length; i++) {\n    let prijs = prijzen[i];\n\n    if (prijs < drempel) {\n        if (!inBlok) {\n            inBlok = true;\n            let startDatum = new Date(timestamps[i] * 1000);\n            let offset = startDatum.getTimezoneOffset() * 60000;\n            let startLokaleTijd = new Date(startDatum.getTime() - offset).toISOString().substring(11, 16);\n\n            huidigeBlok = {\n                start: startLokaleTijd,\n                prijzen: [prijs],\n                laatsteIndex: i\n            };\n        } else {\n            huidigeBlok.prijzen.push(prijs);\n            huidigeBlok.laatsteIndex = i;\n        }\n    }\n\n    // Als we in een blok zaten, maar de prijs stijgt erboven (of de lijst is ten einde)\n    if (inBlok && (prijs >= drempel || i === timestamps.length - 1)) {\n        let eindTimestamp = timestamps[huidigeBlok.laatsteIndex] + 900;\n        let eindDatum = new Date(eindTimestamp * 1000);\n        let offset = eindDatum.getTimezoneOffset() * 60000;\n        let eindLokaleTijd = new Date(eindDatum.getTime() - offset).toISOString().substring(11, 16);\n        \n        huidigeBlok.eind = eindLokaleTijd;\n        \n        // Bereken alleen de laagste prijs (gemiddelde is weggehaald!)\n        let minPrijs = Math.min(...huidigeBlok.prijzen);\n        huidigeBlok.min = minPrijs.toFixed(2);\n\n        blokken.push(huidigeBlok);\n        inBlok = false;\n    }\n}\n\n// -----------------------------------------------------------------\n// HET BERICHT OPBOUWEN\n// -----------------------------------------------------------------\n// De datum staat nu netjes in de titel!\nlet bericht = \"📅 <b>De EPEX Prijzen Voor morgen (\" + weergaveDatum + \")</b>\\n\\n\";\n\nif (blokken.length > 0) {\n    // Het \"<\" teken is vervangen door tekst, zodat Error 400 wegblijft!\n    bericht += \"Hier zijn de voordeligste momenten (onder de € \" + drempel + \"):\\n\\n\";\n    \n    for (let blok of blokken) {\n        bericht += \"⏱️ <b>\" + blok.start + \" - \" + blok.eind + \"</b>\\n\";\n        bericht += \"   Laagste prijs: € \" + blok.min + \" / MWh\\n\\n\";\n    }\n} else {\n    let absoluteMin = Math.min(...prijzen).toFixed(2);\n    bericht += \"Helaas, er zijn morgen géén prijzen onder de € \" + drempel + \" / MWh.\\n\\n\";\n    bericht += \"📉 De laagste prijs morgen is € \" + absoluteMin + \" / MWh.\";\n}\n\n// Stuur het bericht naar Telegram\nmsg.payload = {\n    chatId: mijnChatId,\n    type: \"message\",\n    content: bericht,\n    options: { parse_mode: \"HTML\" } \n};\n\nreturn msg;",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 960,
-        "y": 780,
-        "wires": [
-            [
-                "26c2336ec39d346a"
-            ]
-        ]
-    },
-    {
-        "id": "26c2336ec39d346a",
-        "type": "telegram sender",
-        "z": "82b3898341da1e12",
-        "name": "BOT",
-        "bot": "94e5249c403c9c50",
-        "haserroroutput": false,
-        "outputs": 1,
-        "x": 1170,
-        "y": 820,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "0afad3e54788e571",
-        "type": "function",
-        "z": "82b3898341da1e12",
-        "name": "API_URL_Functie",
-        "func": "// Pak de datum en tijd van nú\nlet datum = new Date();\n\n// Tel er precies 1 dag (morgen) bij op\ndatum.setDate(datum.getDate() + 1);\n\n// Haal het jaartal, de maand en de dag eruit (en zorg voor een voorloopnul, bijv. '03')\nlet jaar = datum.getFullYear();\nlet maand = String(datum.getMonth() + 1).padStart(2, '0');\nlet dag = String(datum.getDate()).padStart(2, '0');\n\n// Plak ze aan elkaar tot YYYY-MM-DD (bijv. 2026-03-07)\nlet morgenString = jaar + \"-\" + maand + \"-\" + dag;\n\n// Maak de nieuwe URL en stop die in msg.url\n// (Let op: Energy-Charts gebruikt vaak 'start' en 'end' tegelijk om het netjes af te bakenen voor 1 dag)\nmsg.url = \"https://api.energy-charts.info/price?bzn=BE&start=\" + morgenString + \"&end=\" + morgenString;\n\n// Extraatje: stuur de datum ook door in een ander vakje, handig voor straks!\nmsg.datumMorgen = morgenString;\n\nreturn msg;",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 570,
-        "y": 580,
-        "wires": [
-            [
-                "a44fe912a7a47107"
-            ]
-        ]
-    },
-    {
-        "id": "11c53e962f960d36",
+        "id": "inj_onb_kwartier",
         "type": "inject",
-        "z": "82b3898341da1e12",
-        "name": "Onbalans_15min",
+        "z": "44ae34a704e13388",
+        "name": "Elke 5 minuten",
         "props": [
             {
                 "p": "payload"
-            },
+            }
+        ],
+        "repeat": "300",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 440,
+        "y": 440,
+        "wires": [
+            [
+                "http_elia_kwartier"
+            ]
+        ]
+    },
+    {
+        "id": "http_elia_kwartier",
+        "type": "http request",
+        "z": "44ae34a704e13388",
+        "name": "GET Elia Kwartier (ods162)",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods162/records?select=datetime%2C%20imbalanceprice&order_by=datetime%20desc&limit=20",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 700,
+        "y": 440,
+        "wires": [
+            [
+                "func_onb_kwartier_to_influx"
+            ]
+        ]
+    },
+    {
+        "id": "func_onb_kwartier_to_influx",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Format Kwartier -> Influx 2.7",
+        "func": "let records = msg.payload.results;\nif (!records || records.length === 0) return null;\n\nlet points = [];\nfor (let i = 0; i < records.length; i++) {\n    let item = records[i];\n    if (item.imbalanceprice === null || item.imbalanceprice === undefined || !item.datetime) continue;\n\n    let prijsGetal = parseFloat(item.imbalanceprice);\n    if (isNaN(prijsGetal)) continue;\n\n    points.push({\n        measurement: \"onbalans_kwartier\",\n        fields: { prijs: prijsGetal },\n        tags: { type: \"onbalans\" },\n        timestamp: new Date(item.datetime)\n    });\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${points.length} kwartieren opgeslagen` });\nmsg.payload = points;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1220,
+        "y": 440,
+        "wires": [
+            [
+                "98965db8d1aa2365"
+            ]
+        ]
+    },
+    {
+        "id": "comment_onb_minuut_header",
+        "type": "comment",
+        "z": "44ae34a704e13388",
+        "name": "3. Elia Onbalans Prijzen - Minuut (ods161)",
+        "info": "",
+        "x": 500,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "inj_onb_minuut",
+        "type": "inject",
+        "z": "44ae34a704e13388",
+        "name": "Elke 15 minuten",
+        "props": [
             {
-                "p": "topic",
-                "vt": "str"
+                "p": "payload"
             }
         ],
         "repeat": "900",
@@ -187,23 +229,23 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 330,
-        "y": 500,
+        "x": 450,
+        "y": 520,
         "wires": [
             [
-                "c57608c870ee1a6e"
+                "http_elia_minuut"
             ]
         ]
     },
     {
-        "id": "c57608c870ee1a6e",
+        "id": "http_elia_minuut",
         "type": "http request",
-        "z": "82b3898341da1e12",
-        "name": "",
+        "z": "44ae34a704e13388",
+        "name": "GET Elia Minuut (ods161)",
         "method": "GET",
         "ret": "obj",
         "paytoqs": "ignore",
-        "url": "https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods161/records?select=imbalanceprice%2Cdatetime&order_by=datetime%20desc&limit=60",
+        "url": "https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods161/records?select=datetime%2C%20imbalanceprice&order_by=datetime%20desc&limit=100",
         "tls": "",
         "persist": false,
         "proxy": "",
@@ -211,70 +253,634 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 570,
-        "y": 500,
+        "x": 770,
+        "y": 520,
         "wires": [
             [
-                "df87692dc92d2e79"
+                "func_onb_minuut_to_influx"
             ]
         ]
     },
     {
-        "id": "df87692dc92d2e79",
+        "id": "func_onb_minuut_to_influx",
         "type": "function",
-        "z": "82b3898341da1e12",
-        "name": "onbalansDB_omzetfunctie",
-        "func": "// We krijgen een lijst (array) met resultaten terug\nlet records = msg.payload.results;\n\nif (!records || records.length === 0) {\n    return null;\n}\n\n// We maken een lijst met SQL commando's (één voor elk record)\nlet sqlQueries = [];\n\nfor (let i = 0; i < records.length; i++) {\n    let item = records[i];\n\n    // Tijd omzetten van UTC (Elia) naar Lokale tijd\n    let datum = new Date(item.datetime);\n    let offset = datum.getTimezoneOffset() * 60000;\n    let lokaleTijd = new Date(datum.getTime() - offset);\n\n    // Formatteer naar YYYY-MM-DD HH:MM:00\n    let tijdstipStr = lokaleTijd.toISOString().replace('T', ' ').substring(0, 19);\n    let prijs = item.imbalanceprice;\n\n    // Voeg toe aan de lijst met queries\n    if (prijs !== null && prijs !== undefined) {\n        sqlQueries.push(\"('\" + tijdstipStr + \"', \" + prijs + \")\");\n    }\n}\n\n// We voegen alles samen in één krachtige INSERT opdracht\nif (sqlQueries.length > 0) {\n    msg.topic = \"INSERT OR REPLACE INTO onbalans_prijzen (tijdstip, prijs) VALUES \" + sqlQueries.join(\",\");\n    return msg;\n}\n\nreturn null;",
+        "z": "44ae34a704e13388",
+        "name": "Format Minuut -> Influx 2.7",
+        "func": "let records = msg.payload.results;\nif (!records || records.length === 0) return null;\n\nlet points = [];\nfor (let i = 0; i < records.length; i++) {\n    let item = records[i];\n    if (item.imbalanceprice === null || item.imbalanceprice === undefined || !item.datetime) continue;\n\n    let prijsGetal = parseFloat(item.imbalanceprice);\n    if (isNaN(prijsGetal)) continue;\n\n    points.push({\n        measurement: \"onbalans_minuut\",\n        fields: { prijs: prijsGetal },\n        tags: { type: \"onbalans\" },\n        timestamp: new Date(item.datetime)\n    });\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${points.length} minuten opgeslagen` });\nmsg.payload = points;\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
+        "x": 1220,
+        "y": 520,
+        "wires": [
+            [
+                "98965db8d1aa2365"
+            ]
+        ]
+    },
+    {
+        "id": "f7f13e4707bc93ae",
+        "type": "comment",
+        "z": "44ae34a704e13388",
+        "name": "1. DAGELIJKS EPEX OVERZICHT VOOR MORGEN (Leest uit InfluxDB 2.7)",
+        "info": "",
+        "x": 610,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "58b717313ca89c9b",
+        "type": "inject",
+        "z": "44ae34a704e13388",
+        "name": "Check 13u05 - 16u50",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "*/15 13-16 * * *",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 460,
+        "y": 660,
+        "wires": [
+            [
+                "fd5b2bf4feab34a5"
+            ]
+        ]
+    },
+    {
+        "id": "fd5b2bf4feab34a5",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Vraag Prijzen Morgen op",
+        "func": "let morgen = new Date();\nmorgen.setDate(morgen.getDate() + 1);\n\nlet jaar = morgen.getFullYear();\nlet maand = String(morgen.getMonth() + 1).padStart(2, '0');\nlet dag = String(morgen.getDate()).padStart(2, '0');\n\nlet datumISO = `${jaar}-${maand}-${dag}`;\nlet datumWeergave = `${dag}-${maand}-${jaar}`;\n\nif (msg.force === true) {\n    flow.set(\"epexLaatstGestuurd\", \"\");\n}\n\n// Als we vandaag al voor morgen gestuurd hebben, hoeven we InfluxDB niet eens te vragen\nif (flow.get(\"epexLaatstGestuurd\") === datumWeergave) {\n    node.status({ fill: \"green\", shape: \"ring\", text: `Al verstuurd voor ${datumWeergave}` });\n    return null;\n}\n\nlet start = new Date(`${datumISO}T00:00:00`).toISOString();\nlet end = new Date(`${datumISO}T23:59:59.999`).toISOString();\n\nlet q = `SELECT \"prijs\" FROM \"epex_kwartier\" WHERE time >= '${start}' AND time <= '${end}' ORDER BY time ASC`;\nmsg.url = \"http://epex_influxdb:8086/query?db=energie_db&epoch=ms&q=\" + encodeURIComponent(q);\nmsg.headers = { \"Authorization\": \"Token epex_super_secret_token_2026\" };\nmsg.datumWeergave = datumWeergave;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 660,
+        "wires": [
+            [
+                "46eef2a86e6abe65"
+            ]
+        ]
+    },
+    {
+        "id": "46eef2a86e6abe65",
+        "type": "http request",
+        "z": "44ae34a704e13388",
+        "name": "InfluxDB 2.7",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "x": 970,
+        "y": 660,
+        "wires": [
+            [
+                "2324340e06a283b2"
+            ]
+        ]
+    },
+    {
+        "id": "2324340e06a283b2",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Maak Telegram Overzicht",
+        "func": "let res = msg.payload.results;\nif (!res || !res[0] || !res[0].series) {\n    node.status({ fill: \"yellow\", shape: \"ring\", text: \"Morgen nog niet in DB\" });\n    return null;\n}\n\nlet rows = res[0].series[0].values; // [ [timestamp_ms, prijs], ... ]\nif (rows.length < 90) {\n    node.status({ fill: \"yellow\", shape: \"ring\", text: `Pas ${rows.length} kwartieren binnen` });\n    return null;\n}\n\nlet timestampsMs = rows.map(r => r[0]);\nlet prijzen = rows.map(r => r[1]);\n\nlet indices25 = [];\nlet indices0 = [];\nlet minPrijs = Math.min(...prijzen);\nlet minTijdIndex = prijzen.indexOf(minPrijs);\nlet minTijdstip = \"\";\n\nfunction formatLocalHHmm(ms) {\n    let d = new Date(ms);\n    return d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n}\n\nfor (let i = 0; i < timestampsMs.length; i++) {\n    if (i === minTijdIndex) {\n        minTijdstip = formatLocalHHmm(timestampsMs[i]);\n    }\n    if (prijzen[i] <= 25) indices25.push(i);\n    if (prijzen[i] <= 0) indices0.push(i);\n}\n\nfunction maakTijdBlokken(indices) {\n    let resultaat = [];\n    if (indices.length === 0) return resultaat;\n    let startIdx = indices[0];\n    for (let i = 0; i < indices.length; i++) {\n        if (indices[i + 1] !== indices[i] + 1) {\n            let s = formatLocalHHmm(timestampsMs[startIdx]);\n            let e = formatLocalHHmm(timestampsMs[indices[i]] + 15 * 60000);\n            resultaat.push(`⏱️ <b>${s} tot ${e}</b>`);\n            startIdx = indices[i + 1];\n        }\n    }\n    return resultaat;\n}\n\nlet blokken25 = maakTijdBlokken(indices25);\nlet blokken0 = maakTijdBlokken(indices0);\nlet datumMorgen = msg.datumWeergave;\n\nlet berichtTekst = `📊 <b>EPEX PRIJZEN VOOR ${datumMorgen}</b>\\n\\n`;\n\nif (blokken25.length > 0) {\n    berichtTekst += `✅ <b>Momenten onder de € 25:</b>\\n${blokken25.join(\"\\n\")}\\n\\n`;\n} else {\n    berichtTekst += `❌ <b>Er zijn geen lage waardes onder de € 25.</b>\\n\\n`;\n}\n\nif (blokken0.length > 0) {\n    berichtTekst += `✅ <b>Momenten onder de € 0:</b>\\n${blokken0.join(\"\\n\")}\\n\\n`;\n}\n\nberichtTekst += `📉 <b>Laagste prijs: € ${minPrijs.toFixed(2)} / MWh</b>\\n`;\nberichtTekst += `⏱️ <b>${minTijdstip}</b>`;\n\nflow.set(\"epexLaatstGestuurd\", datumMorgen);\nnode.status({ fill: \"green\", shape: \"dot\", text: `Verstuurd voor ${datumMorgen}` });\n\nlet idsRaw = env.get(\"TELEGRAM_CHAT_ID\") || \"\";\nlet chatIds = idsRaw.split(\",\").map(id => id.trim()).filter(id => id.length > 0);\n\nchatIds.forEach(id => {\n    node.send({\n        payload: {\n            chatId: id,\n            type: \"message\",\n            content: berichtTekst,\n            options: { parse_mode: \"HTML\" }\n        }\n    });\n});\n\nreturn null;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1210,
+        "y": 660,
+        "wires": [
+            [
+                "2b1513e002075e8f"
+            ]
+        ]
+    },
+    {
+        "id": "f17e87c3624766a5",
+        "type": "comment",
+        "z": "44ae34a704e13388",
+        "name": "2. PRIJS WEKKER: Waarschuw 15 minuten voordat de prijs onder € 25 duikt",
+        "info": "",
+        "x": 610,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "0ca14bfbf36e4f99",
+        "type": "inject",
+        "z": "44ae34a704e13388",
+        "name": "Elke 15 minuten",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "900",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 450,
+        "y": 740,
+        "wires": [
+            [
+                "a26763a853a4e77c"
+            ]
+        ]
+    },
+    {
+        "id": "a26763a853a4e77c",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Vraag Nu & Straks (+15m)",
+        "func": "let nu = new Date();\nlet kwartier = Math.floor(nu.getMinutes() / 15) * 15;\n\nlet startTijd = new Date(nu);\nstartTijd.setMinutes(kwartier, 0, 0);\nlet eindTijd = new Date(startTijd.getTime() + 15 * 60000);\n\nlet q = `SELECT \"prijs\" FROM \"epex_kwartier\" WHERE time = ${startTijd.getTime()}ms OR time = ${eindTijd.getTime()}ms ORDER BY time ASC`;\nmsg.url = \"http://epex_influxdb:8086/query?db=energie_db&epoch=ms&q=\" + encodeURIComponent(q);\nmsg.headers = { \"Authorization\": \"Token epex_super_secret_token_2026\" };\nreturn msg;",
+        "outputs": 1,
+        "x": 720,
+        "y": 740,
+        "wires": [
+            [
+                "8caf27e919c22c9b"
+            ]
+        ]
+    },
+    {
+        "id": "8caf27e919c22c9b",
+        "type": "http request",
+        "z": "44ae34a704e13388",
+        "name": "InfluxDB 2.7",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "x": 970,
+        "y": 740,
+        "wires": [
+            [
+                "7d169d3a37a550b6"
+            ]
+        ]
+    },
+    {
+        "id": "7d169d3a37a550b6",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Check Drempel (€ 25)",
+        "func": "let res = msg.payload.results;\nif (!res || !res[0] || !res[0].series) return null;\n\nlet waarden = res[0].series[0].values;\nif (waarden.length < 2) return null;\n\nlet prijsNu = waarden[0][1];\nlet prijsStraks = waarden[1][1];\nlet tijdStraksMs = waarden[1][0];\nlet drempel = 25;\n\nlet d = new Date(tijdStraksMs);\nlet weergaveTijd = d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n\nnode.status({ fill: \"blue\", shape: \"ring\", text: `Nu: €${prijsNu} -> ${weergaveTijd}: €${prijsStraks}` });\n\nif (prijsNu > drempel && prijsStraks <= drempel) {\n    let bericht = `🔔 <b>PRIJS ALARM!</b>\\n\\nOver 15 minuten (om <b>${weergaveTijd}</b>) zakt de prijs onder de € ${drempel}!\\n\\n💰 Prijs: € ${prijsStraks.toFixed(2)} / MWh\\n⚡ <i>Tijd om de grote verbruikers aan te zetten!</i>`;\n\n    let idsRaw = env.get(\"TELEGRAM_CHAT_ID\") || \"\";\n    let chatIds = idsRaw.split(\",\").map(id => id.trim()).filter(id => id.length > 0);\n\n    chatIds.forEach(id => {\n        node.send({\n            payload: {\n                chatId: id,\n                type: \"message\",\n                content: bericht,\n                options: { parse_mode: \"HTML\" }\n            }\n        });\n    });\n}\nreturn null;",
+        "outputs": 1,
+        "x": 1200,
+        "y": 740,
+        "wires": [
+            [
+                "2b1513e002075e8f"
+            ]
+        ]
+    },
+    {
+        "id": "d6b6dccfdaeaf88d",
+        "type": "comment",
+        "z": "44ae34a704e13388",
+        "name": "3. WATCHDOG: Controleer elke nacht om 01:00 uur op ontbrekende data & API-status",
+        "info": "",
+        "x": 640,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "b09c7a1b6d17db83",
+        "type": "inject",
+        "z": "44ae34a704e13388",
+        "name": "Elke nacht 01:00",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "00 01 * * *",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 450,
+        "y": 820,
+        "wires": [
+            [
+                "9d34e86c39fe6e8c"
+            ]
+        ]
+    },
+    {
+        "id": "9d34e86c39fe6e8c",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Multi-Query Gisteren",
+        "func": "let nu = new Date();\nlet vandaag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate());\nlet gisteren = new Date(vandaag.getTime() - 24 * 60 * 60 * 1000);\n\nlet startStr = gisteren.toISOString();\nlet eindStr = vandaag.toISOString();\n\nlet qMin = `SELECT \"prijs\" FROM \"onbalans_minuut\" WHERE time >= '${startStr}' AND time < '${eindStr}' ORDER BY time ASC`;\nlet qQOnb = `SELECT \"prijs\" FROM \"onbalans_kwartier\" WHERE time >= '${startStr}' AND time < '${eindStr}' ORDER BY time ASC`;\nlet qQEpex = `SELECT \"prijs\" FROM \"epex_kwartier\" WHERE time >= '${startStr}' AND time < '${eindStr}' ORDER BY time ASC`;\n\nmsg.url = \"http://epex_influxdb:8086/query?db=energie_db&epoch=ms&q=\" + encodeURIComponent(`${qMin};${qQOnb};${qQEpex}`);\nmsg.headers = { \"Authorization\": \"Token epex_super_secret_token_2026\" };\nmsg.startMs = gisteren.getTime();\nmsg.datumWeergave = gisteren.toLocaleDateString('nl-BE');\nreturn msg;",
+        "outputs": 1,
+        "x": 720,
+        "y": 820,
+        "wires": [
+            [
+                "2fe888a5ff8b4af8"
+            ]
+        ]
+    },
+    {
+        "id": "2fe888a5ff8b4af8",
+        "type": "http request",
+        "z": "44ae34a704e13388",
+        "name": "InfluxDB 2.7",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "x": 990,
+        "y": 820,
+        "wires": [
+            [
+                "5946c0dbadecec06"
+            ]
+        ]
+    },
+    {
+        "id": "5946c0dbadecec06",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Analyseer Gaten & API",
+        "func": "let results = msg.payload.results;\nif (!results || results.length < 3) return null;\n\nlet startMs = msg.startMs;\nlet datum = msg.datumWeergave;\n\nlet actualMin = new Set();\nlet actualQOnb = new Set();\nlet actualQEpex = new Set();\n\nif (results[0] && results[0].series) results[0].series[0].values.forEach(v => actualMin.add(v[0]));\nif (results[1] && results[1].series) results[1].series[0].values.forEach(v => actualQOnb.add(v[0]));\nif (results[2] && results[2].series) results[2].series[0].values.forEach(v => actualQEpex.add(v[0]));\n\nlet missingMin = [];\nlet missingQOnb = [];\nlet missingQEpex = [];\n\nfunction formatTijd(tms) {\n    let d = new Date(tms);\n    return d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n}\n\nfor (let i = 0; i < 1440; i++) {\n    let t = startMs + i * 60 * 1000;\n    if (!actualMin.has(t)) missingMin.push(formatTijd(t));\n}\n\nfor (let i = 0; i < 96; i++) {\n    let t = startMs + i * 15 * 60 * 1000;\n    let tStr = formatTijd(t);\n    if (!actualQOnb.has(t)) missingQOnb.push(tStr);\n    if (!actualQEpex.has(t)) missingQEpex.push(tStr);\n}\n\nlet isDeprecated = global.get(\"epex_api_deprecated\") === true;\n\nif (missingMin.length > 0 || missingQOnb.length > 0 || missingQEpex.length > 0 || isDeprecated) {\n    let bericht = `⚠️ <b>WATCHDOG RAPPORT (${datum})</b>\\n\\n`;\n    \n    if (isDeprecated) {\n        bericht += `🚨 <b>LET OP:</b> Energy-Charts API heeft gemeld dat deze versie binnenkort stopt (deprecated)!\\n\\n`;\n    }\n    if (missingQEpex.length > 0) {\n        bericht += `❌ <b>EPEX Kwartier (${96 - missingQEpex.length}/96):</b>\\n└ Gemist: ${missingQEpex.slice(0, 12).join(', ')}${missingQEpex.length > 12 ? '...' : ''}\\n\\n`;\n    }\n    if (missingQOnb.length > 0) {\n        bericht += `❌ <b>Onbalans Kwartier (${96 - missingQOnb.length}/96):</b>\\n└ Gemist: ${missingQOnb.slice(0, 12).join(', ')}${missingQOnb.length > 12 ? '...' : ''}\\n\\n`;\n    }\n    if (missingMin.length > 0) {\n        bericht += `❌ <b>Onbalans Minuut (${1440 - missingMin.length}/1440):</b>\\n`;\n        bericht += missingMin.length > 15 ? `└ Totaal ${missingMin.length} min gemist (o.a. ${missingMin.slice(0, 8).join(', ')}...)\\n` : `└ Gemist: ${missingMin.join(', ')}\\n`;\n    }\n\n    node.status({ fill: \"red\", shape: \"dot\", text: `Gaten gevonden op ${datum}` });\n    let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n    msg.payload = {\n        chatId: targetChat,\n        type: \"message\",\n        content: bericht,\n        options: { parse_mode: \"HTML\" }\n    };\n    return msg;\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${datum}: 100% compleet!` });\nreturn null;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1200,
+        "y": 820,
+        "wires": [
+            [
+                "8616788a903aaa57"
+            ]
+        ]
+    },
+    {
+        "id": "2b1513e002075e8f",
+        "type": "telegram sender",
+        "z": "44ae34a704e13388",
+        "name": "EPEX_BOT",
+        "bot": "7fdca0379777c9a8",
+        "haserroroutput": false,
+        "outputs": 1,
+        "x": 1570,
+        "y": 720,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "8616788a903aaa57",
+        "type": "telegram sender",
+        "z": "44ae34a704e13388",
+        "name": "EPEX_ADMIN_BOT",
+        "bot": "5801c82befe61e4e",
+        "haserroroutput": false,
+        "outputs": 1,
+        "x": 1600,
+        "y": 760,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "login_api",
+        "type": "http in",
+        "z": "44ae34a704e13388",
+        "name": "",
+        "url": "/api/login",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 420,
+        "y": 960,
+        "wires": [
+            [
+                "query_bouw"
+            ]
+        ]
+    },
+    {
+        "id": "query_bouw",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Check MariaDB",
+        "func": "// We zoeken de gebruiker op basis van naam EN wachtwoord\nmsg.topic = \"SELECT id, gebruikersnaam, rol, telegram_chat_id FROM gebruikers WHERE gebruikersnaam = ? AND wachtwoord_hash = ?\";\nmsg.payload = [msg.payload.username, msg.payload.password];\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 620,
+        "y": 960,
+        "wires": [
+            [
+                "db_login"
+            ]
+        ]
+    },
+    {
+        "id": "db_login",
+        "type": "mysql",
+        "z": "44ae34a704e13388",
+        "mydb": "0d836172df78c3f2",
+        "name": "MariaDB",
+        "x": 800,
+        "y": 960,
+        "wires": [
+            [
+                "login_check"
+            ]
+        ]
+    },
+    {
+        "id": "login_check",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Antwoord Bepalen",
+        "func": "if (msg.payload && msg.payload.length > 0) {\n    // Gebruiker gevonden!\n    msg.payload = { success: true, user: msg.payload[0] };\n} else {\n    // Niet gevonden of fout wachtwoord\n    msg.payload = { success: false, error: \"Verkeerde gebruikersnaam of wachtwoord!\" };\n}\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 990,
+        "y": 960,
+        "wires": [
+            [
+                "register_out"
+            ]
+        ]
+    },
+    {
+        "id": "register_api",
+        "type": "http in",
+        "z": "44ae34a704e13388",
+        "name": "",
+        "url": "/api/register",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 430,
+        "y": 1080,
+        "wires": [
+            [
+                "query_register"
+            ]
+        ]
+    },
+    {
+        "id": "query_register",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Insert Gebruiker",
+        "func": "// Nieuwe gebruiker aanmaken. We geven standaard de rol 'user'\nmsg.topic = \"INSERT INTO gebruikers (gebruikersnaam, email, wachtwoord_hash, rol) VALUES (?, ?, ?, 'user')\";\nmsg.payload = [msg.payload.username, msg.payload.email, msg.payload.password];\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 630,
+        "y": 1080,
+        "wires": [
+            [
+                "db_register"
+            ]
+        ]
+    },
+    {
+        "id": "db_register",
+        "type": "mysql",
+        "z": "44ae34a704e13388",
+        "mydb": "0d836172df78c3f2",
+        "name": "MariaDB",
         "x": 810,
-        "y": 500,
+        "y": 1080,
         "wires": [
             [
-                "4098b759e05c8269"
+                "register_check"
             ]
         ]
     },
     {
-        "id": "cb560ecea0d1ef1c",
+        "id": "register_check",
         "type": "function",
-        "z": "82b3898341da1e12",
-        "name": "Watchdog Check",
-        "func": "// 1. Check of de API deprecated is (zit in de msg.payload van de bestaande aanroep)\nconst isDeprecated = msg.payload.deprecated;\n\n// 2. Haal de status op uit het interne geheugen (context)\nlet status = context.get(\"waarschuwingStatus\") || { firstSeen: null, lastMonthNotified: null };\n\nif (isDeprecated === true) {\n    let nu = new Date();\n    \n    // EERSTE KEER: Alarm slaan!\n    if (!status.firstSeen) {\n        status.firstSeen = nu.toISOString();\n        status.lastMonthNotified = 6;\n        context.set(\"waarschuwingStatus\", status);\n        \n        msg.payload = {\n            chatId: env.get(\"TELEGRAM_CHAT_ID\"),\n            type: \"message\",\n            content: \"🚨 <b>GROOT ALARM: API GAAT STOPPEN</b> 🚨\\n\\nFraunhofer heeft aangekondigd dat deze API over 6 maanden stopt. Tijd om een alternatief te zoeken!\"\n        };\n        return msg;\n    }\n    \n    // AFTELLEN:\n    let startDatum = new Date(status.firstSeen);\n    let eindDatum = new Date(startDatum);\n    eindDatum.setMonth(eindDatum.getMonth() + 6);\n    \n    let maandenOver = Math.max(0, (eindDatum.getFullYear() - nu.getFullYear()) * 12 + (eindDatum.getMonth() - nu.getMonth()));\n    \n    // Alleen bericht als de maand verspringt\n    if (maandenOver < status.lastMonthNotified) {\n        status.lastMonthNotified = maandenOver;\n        context.set(\"waarschuwingStatus\", status);\n        \n        msg.payload = {\n            chatId: env.get(\"TELEGRAM_CHAT_ID\"),\n            type: \"message\",\n            content: \"⏳ <b>API AFTELLING UPDATE</b>\\n\\nDe energie-API stopt over \" + maandenOver + \" maanden.\\nDeadline: \" + eindDatum.toLocaleDateString('nl-BE')\n        };\n        return msg;\n    }\n}\n\n// Alles is ok? Dan sturen we niets door naar Telegram.\nreturn null;",
+        "z": "44ae34a704e13388",
+        "name": "Antwoord Bepalen",
+        "func": "if (msg.payload && msg.payload.insertId) {\n    // insertId betekent dat de database succesvol een nieuwe rij (ID) heeft aangemaakt\n    msg.payload = { success: true };\n} else {\n    msg.payload = { success: false, error: \"Kon gebruiker niet aanmaken.\" };\n}\nreturn msg;",
         "outputs": 1,
-        "timeout": 0,
+        "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 930,
-        "y": 860,
+        "x": 1000,
+        "y": 1080,
         "wires": [
             [
-                "26c2336ec39d346a"
+                "register_out"
             ]
         ]
     },
     {
-        "id": "4dcaae5e6de71de8",
-        "type": "sqlitedb",
-        "db": "/database/energie.db",
-        "mode": "RWC"
+        "id": "register_out",
+        "type": "http response",
+        "z": "44ae34a704e13388",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1250,
+        "y": 1080,
+        "wires": []
     },
     {
-        "id": "94e5249c403c9c50",
+        "id": "db_register_catch",
+        "type": "catch",
+        "z": "44ae34a704e13388",
+        "name": "",
+        "scope": [
+            "db_register"
+        ],
+        "uncaught": false,
+        "x": 730,
+        "y": 1140,
+        "wires": [
+            [
+                "register_error"
+            ]
+        ]
+    },
+    {
+        "id": "register_error",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Fout afvangen (Bijv. Dubbele naam)",
+        "func": "let errorMsg = \"Er is een fout opgetreden bij het registreren.\";\n\n// Check of de foutmelding van MariaDB komt omdat de naam of email al bestaat (UNIQUE restrictie)\nif (msg.error && msg.error.message.includes(\"ER_DUP_ENTRY\")) {\n    errorMsg = \"Deze gebruikersnaam of dit e-mailadres is al in gebruik!\";\n}\n\nmsg.payload = { success: false, error: errorMsg };\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 960,
+        "y": 1140,
+        "wires": [
+            [
+                "register_out"
+            ]
+        ]
+    },
+    {
+        "id": "api_prijzen",
+        "type": "http in",
+        "z": "44ae34a704e13388",
+        "name": "",
+        "url": "/api/prijzen",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 420,
+        "y": 1260,
+        "wires": [
+            [
+                "build_flux",
+                "58ae86aba52a56b9"
+            ]
+        ]
+    },
+    {
+        "id": "build_flux",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Bouw Flux Query",
+        "func": "// 1. Haal de gekozen datum op uit de URL (?datum=YYYY-MM-DD)\nlet datum = (msg.req && msg.req.query && msg.req.query.datum) \n            ? msg.req.query.datum \n            : new Date().toISOString().split('T')[0];\n\n// Laat onder de node zien welke datum de website opvraagt\nnode.status({ fill: \"green\", shape: \"dot\", text: \"Opgevraagd: \" + datum });\n\n// 2. Zet 00:00:00 en 23:59:59 om naar de juiste UTC-tijden voor InfluxDB\nlet start = new Date(`${datum}T00:00:00`).toISOString();\nlet stop = new Date(`${datum}T23:59:59.999`).toISOString();\n\n// Bewaar de datum voor het volgende blokje (Format voor Chart.js)\nmsg.gekozenDatum = datum;\n\n// 3. Haal alle 3 de metingen op uit bucket 'energie_db'\nmsg.query = `\n  from(bucket: \"energie_db\")\n    |> range(start: ${start}, stop: ${stop})\n    |> filter(fn: (r) => r[\"_measurement\"] == \"epex_kwartier\" or r[\"_measurement\"] == \"onbalans_kwartier\" or r[\"_measurement\"] == \"onbalans_minuut\")\n    |> filter(fn: (r) => r[\"_field\"] == \"prijs\")\n    |> drop(columns: [\"type\"])\n    |> pivot(rowKey:[\"_time\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n    |> sort(columns: [\"_time\"])\n`;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 620,
+        "y": 1260,
+        "wires": [
+            [
+                "query_influx"
+            ]
+        ]
+    },
+    {
+        "id": "query_influx",
+        "type": "influxdb in",
+        "z": "44ae34a704e13388",
+        "influxdb": "c37561ff29513d8a",
+        "name": "InfluxDB 2.7",
+        "query": "",
+        "rawOutput": false,
+        "precision": "",
+        "retentionPolicy": "",
+        "org": "epex_org",
+        "x": 800,
+        "y": 1260,
+        "wires": [
+            [
+                "format_chart"
+            ]
+        ]
+    },
+    {
+        "id": "format_chart",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Format voor Chart.js",
+        "func": "if (!msg.payload || msg.payload.length === 0) {\n    msg.payload = [];\n    return msg;\n}\n\nlet datum = msg.gekozenDatum || new Date().toISOString().split('T')[0];\nlet startDagMs = new Date(`${datum}T00:00:00`).getTime();\n\nlet epexMap = {};\nlet onbKwartierMap = {};\nlet onbMinuutMap = {};\n\n// 1. Verzamel alle waarden uit InfluxDB op basis van hun timestamp\nmsg.payload.forEach(row => {\n    let t = new Date(row._time).getTime();\n    if (row.epex_kwartier !== undefined && row.epex_kwartier !== null) {\n        epexMap[t] = Number(row.epex_kwartier);\n    }\n    if (row.onbalans_kwartier !== undefined && row.onbalans_kwartier !== null) {\n        onbKwartierMap[t] = Number(row.onbalans_kwartier);\n    }\n    if (row.onbalans_minuut !== undefined && row.onbalans_minuut !== null) {\n        onbMinuutMap[t] = Number(row.onbalans_minuut);\n    }\n});\n\n// 2. Bouw een vaste tijdlijn van 00:00 t/m 23:59 (zodat de X-as nooit vervormt)\nlet resultaat = [];\n\nfor (let q = 0; q < 96; q++) {\n    let kwartierMs = startDagMs + (q * 15 * 60000);\n    let epexPrijs = epexMap[kwartierMs] ?? null;\n    let onbKwartierPrijs = onbKwartierMap[kwartierMs] ?? null;\n\n    for (let m = 0; m < 15; m++) {\n        let minuutMs = kwartierMs + (m * 60000);\n        let d = new Date(minuutMs);\n        let tijdStr = d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n\n        resultaat.push({\n            tijdstip: `${datum} ${tijdStr}`,\n            prijs: epexPrijs,\n            onbalans_kwartier: onbKwartierPrijs,\n            onbalans_minuut: onbMinuutMap[minuutMs] ?? null\n        });\n    }\n}\n\nmsg.payload = resultaat;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1000,
+        "y": 1260,
+        "wires": [
+            [
+                "register_out"
+            ]
+        ]
+    },
+    {
+        "id": "58ae86aba52a56b9",
+        "type": "debug",
+        "z": "44ae34a704e13388",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 660,
+        "y": 1340,
+        "wires": []
+    },
+    {
+        "id": "c37561ff29513d8a",
+        "type": "influxdb",
+        "hostname": "127.0.0.1",
+        "port": 8086,
+        "protocol": "http",
+        "database": "database",
+        "name": "InfluxDB 2.7",
+        "usetls": false,
+        "tls": "",
+        "influxdbVersion": "2.0",
+        "url": "http://epex_influxdb:8086",
+        "timeout": 10,
+        "rejectUnauthorized": false
+    },
+    {
+        "id": "7fdca0379777c9a8",
         "type": "telegram bot",
-        "botname": "TEST_BOT",
+        "botname": "EPEX_BOT",
         "usernames": "",
         "chatids": "",
         "baseapiurl": "",
         "testenvironment": false,
         "updatemode": "polling",
-        "pollinterval": 300,
+        "pollinterval": "500",
         "usesocks": false,
         "sockshost": "",
         "socksprotocol": "socks5",
@@ -293,12 +899,50 @@
         "verboselogging": false
     },
     {
-        "id": "0ef1f26e4402e4e4",
+        "id": "5801c82befe61e4e",
+        "type": "telegram bot",
+        "botname": "ADMIN_BOT",
+        "usernames": "",
+        "chatids": "",
+        "baseapiurl": "",
+        "testenvironment": false,
+        "updatemode": "polling",
+        "pollinterval": "700",
+        "usesocks": false,
+        "sockshost": "",
+        "socksprotocol": "socks5",
+        "socksport": 6667,
+        "socksusername": "anonymous",
+        "sockspassword": "",
+        "bothost": "",
+        "botpath": "",
+        "localbothost": "0.0.0.0",
+        "localbotport": 8443,
+        "publicbotport": 8443,
+        "privatekey": "",
+        "certificate": "",
+        "useselfsignedcertificate": false,
+        "sslterminated": false,
+        "verboselogging": false
+    },
+    {
+        "id": "0d836172df78c3f2",
+        "type": "MySQLdatabase",
+        "name": "EPEX_DB",
+        "host": "epex_mariadb",
+        "port": "3306",
+        "db": "energie_db",
+        "tz": "",
+        "charset": "UTF8"
+    },
+    {
+        "id": "287c95554cf34667",
         "type": "global-config",
         "env": [],
         "modules": {
-            "node-red-node-sqlite": "1.1.1",
-            "node-red-contrib-telegrambot": "17.0.6"
+            "node-red-contrib-influxdb": "0.7.0",
+            "node-red-contrib-telegrambot": "17.0.6",
+            "node-red-node-mysql": "3.0.0"
         }
     }
 ]

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - EPEXenergy</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; background-color: var(--grey); font-family: var(--poppins);
+        }
+        .login-box {
+            background: var(--light); padding: 40px; border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); width: 100%; max-width: 400px; text-align: center;
+        }
+        .login-box .logo { font-size: 50px; color: var(--blue); margin-bottom: 10px; }
+        .login-box h2 { color: var(--dark); margin-bottom: 30px; font-weight: 600; }
+        .input-group { position: relative; margin-bottom: 20px; }
+        .input-group i {
+            position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+            color: var(--dark-grey); font-size: 20px;
+        }
+        .input-group input {
+            width: 100%; padding: 15px 15px 15px 45px; border: 2px solid transparent;
+            border-radius: 30px; background: var(--grey); color: var(--dark);
+            outline: none; font-size: 15px; transition: all 0.3s ease;
+        }
+        .input-group input:focus { border-color: var(--blue); }
+        .btn-login {
+            width: 100%; padding: 15px; background: var(--blue); color: #fff;
+            border: none; border-radius: 30px; font-size: 16px; font-weight: 600;
+            cursor: pointer; transition: 0.3s ease; margin-top: 10px;
+        }
+        .btn-login:hover { background: #2b7fc7; }
+        
+        #error-msg {
+            color: #DB504A; margin-top: 15px; font-size: 14px; font-weight: 500; display: none;
+        }
+        .register-link {
+            margin-top: 25px; font-size: 14px; color: var(--dark-grey);
+        }
+        .register-link a, .forgot-link a {
+            color: var(--blue); font-weight: 600; text-decoration: none;
+        }
+        .register-link a:hover, .forgot-link a:hover { text-decoration: underline; }
+        .forgot-link {
+            text-align: right; margin-bottom: 20px; font-size: 13px;
+        }
+    </style>
+</head>
+<body class="dark">
+
+    <div class="login-box">
+        <i class='bx bxs-zap logo'></i>
+        <h2>Inloggen EPEXenergy</h2>
+        
+        <form id="loginForm">
+            <div class="input-group">
+                <i class='bx bxs-user'></i>
+                <input type="text" id="username" placeholder="Gebruikersnaam" required autocomplete="username">
+            </div>
+            
+            <div class="input-group">
+                <i class='bx bxs-lock-alt'></i>
+                <input type="password" id="password" placeholder="Wachtwoord" required autocomplete="current-password">
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 13px;">
+                <label style="color: var(--dark-grey); display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="remember" style="margin-right: 8px;"> Mij onthouden
+                </label>
+                <div class="forgot-link" style="margin-bottom: 0;">
+                    <a href="forgot.html">Wachtwoord vergeten?</a>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-login">Inloggen</button>
+            
+            <p id="error-msg"></p>
+        </form>
+
+        <div class="register-link">
+            Nog geen account? <a href="register.html">Registreer hier</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); 
+            
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const btn = document.querySelector('.btn-login');
+            const errorMsg = document.getElementById('error-msg');
+            
+            btn.innerText = "Bezig met inloggen...";
+            errorMsg.style.display = "none";
+            
+            try {
+                // Let op: Node-RED draait standaard op poort 1880. Als Nginx dit niet goed doorstuurt, 
+                // moeten we straks mogelijk :1880 toevoegen in je Nginx configuratie.
+                const response = await fetch('http://192.168.1.130:1880/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                
+                // Controleer of Nginx niet stiekem een 404 of 405 error pagina teruggeeft
+                if (!response.ok) {
+                    throw new Error(`Webserver error: ${response.status} ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Check of het vinkje aan staat
+                    const onthoudMij = document.getElementById('remember').checked;
+                    
+                    if (onthoudMij) {
+                        localStorage.setItem('loggedInUser', JSON.stringify(result.user));
+                        sessionStorage.removeItem('loggedInUser'); // Zeker weten dat de andere leeg is
+                    } else {
+                        sessionStorage.setItem('loggedInUser', JSON.stringify(result.user));
+                        localStorage.removeItem('loggedInUser'); // Zeker weten dat de andere leeg is
+                    }
+
+                    btn.innerText = "Succes!";
+                    btn.style.background = "#28a745"; 
+                    setTimeout(() => { window.location.href = "index.html"; }, 500);
+                } else {
+                    errorMsg.innerText = result.error || "Verkeerde gebruikersnaam of wachtwoord.";
+                    errorMsg.style.display = "block";
+                    btn.innerText = "Inloggen";
+                }
+            } catch (error) {
+                // Toon de exacte foutmelding zodat we weten wat er mis gaat!
+                console.error(error);
+                errorMsg.innerText = error.message.includes('Unexpected token') ? 
+                                     "Nginx stuurt API data niet door naar Node-RED!" : 
+                                     "Fout: " + error.message;
+                errorMsg.style.display = "block";
+                btn.innerText = "Inloggen";
+            }
+        });
+    </script>
+</body>
+</html>

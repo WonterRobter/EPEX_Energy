@@ -1,7 +1,194 @@
 <!DOCTYPE html>
-<html>
-<body>
-    <h1>Hallo Vanaf Nginx! Het blanco canvas is klaar.</h1>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Jouw CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <title>EPEXenergy Dashboard</title>
+</head>
+<body class="dark">
+    
+    <!-- ZIJBALK -->
+    <section id="sidebar">
+        <div>
+            <a href="#" class="brand">
+                <i class='bx bxs-zap bx-sm' style="margin-left: 16px; margin-right: 10px; color: var(--blue);"></i>
+                <span class="text">EPEXenergy</span>
+            </a>
+
+            <ul class="side-menu top">
+                <li class="active">
+                    <a href="#">
+                        <i class='bx bxs-dashboard'></i>
+                        <span class="text">Vandaag (Actueel)</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class='bx bx-line-chart'></i>
+                        <span class="text">Trends (Analyse)</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class='bx bxs-bell'></i>
+                        <span class="text">Meldingen</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class='bx bx-time-five'></i>
+                        <span class="text">Planner</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- KALENDER WIDGET -->
+            <div class="kalender-sectie">
+                <p style="font-size: 10px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px;">KIES DATUM</p>
+                <div class="kalender-box">
+                    <div class="kalender-header">
+                        <i class='bx bx-chevron-left' id="kalender-prev"></i>
+                        <span id="kalender-maand">oktober 2026</span>
+                        <i class='bx bx-chevron-right' id="kalender-next"></i>
+                    </div>
+                    <div class="kalender-weekdagen">
+                        <div>ma</div><div>di</div><div>wo</div><div>do</div><div>vr</div><div>za</div><div>zo</div>
+                    </div>
+                    <div id="kalender-dagen">
+                        <!-- Javascript vult hier de dagen in -->
+                    </div>
+                </div>
+            </div>
+
+        <ul class="side-menu bottom">
+            <li>
+                <a href="#">
+                    <i class='bx bxs-user-circle'></i>
+                    <span class="text" id="profiel-naam">Profiel</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class='bx bxs-cog'></i>
+                    <span class="text">Instellingen</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" class="logout">
+                    <i class='bx bx-power-off'></i>
+                    <span class="text">Uitloggen</span>
+                </a>
+            </li>
+        </ul>
+    </section>
+
+    <!-- INHOUD RECHTS -->
+    <section id="content">
+        <!-- BOVENBALK (Navbar) -->
+        <nav>
+            <i class='bx bx-menu bx-sm'></i>
+            <a href="#" class="nav-link">Dashboard</a>
+            <form action="#">
+                <div class="form-input" style="display: none;"></div>
+            </form>
+            
+            <!-- Dark Mode Knop -->
+            <input type="checkbox" class="checkbox" id="switch-mode" checked hidden />
+            <label class="swith-lm" for="switch-mode">
+                <i class="bx bxs-moon"></i>
+                <i class="bx bx-sun"></i>
+                <div class="ball"></div>
+            </label>
+
+            <!-- Profiel -->
+            <a href="#" class="profile" id="profileIcon">
+                <img src="https://ui-avatars.com/api/?name=Wouter+D&background=3C91E6&color=fff" alt="Profile">
+            </a>
+        </nav>
+
+        <!-- HOOFDSCHERM -->
+        <main>
+            <div class="head-title">
+                <div class="left">
+                    <h1 id="pagina-titel">Dagverloop - --/--/----</h1>
+                    <div id="live-indicator" class="live-status">
+                        <span class="pulse-dot"></span>
+                        <span id="live-text">Live (laatst bijgewerkt: --:--)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- De 3 Compacte Statistiek Blokken -->
+            <ul class="box-info">
+                <li>
+                    <span class="text">
+                        <p id="label-stat-nu">Huidige EPEX (Live)</p>
+                        <h3 id="stat-nu">Laden...</h3>
+                    </span>
+                </li>
+                <li>
+                    <span class="text">
+                        <p>Gemiddeld EPEX</p>
+                        <h3 id="stat-gem">Laden...</h3>
+                    </span>
+                </li>
+                <li>
+                    <span class="text">
+                        <p>Min / Max (EPEX)</p>
+                        <h3 id="stat-minmax">Laden...</h3>
+                    </span>
+                </li>
+            </ul>
+
+            <!-- Balk met Datum-pijltjes (links) en Grafiek-filters (rechts) -->
+            <div class="chart-controls">
+                <div class="date-nav">
+                    <button id="btn-prev-day" title="Vorige dag"><i class='bx bxs-left-arrow'></i></button>
+                    <button id="btn-today">Vandaag</button>
+                    <button id="btn-next-day" title="Volgende dag"><i class='bx bxs-right-arrow'></i></button>
+                </div>
+
+                <div class="chart-legend" id="custom-legend">
+                    <div class="legend-item" data-dataset="0">
+                        <span class="legend-box" style="background: #22d3ee;"></span>
+                        <span class="legend-text">EPEX Prijs</span>
+                    </div>
+                    <div class="legend-item" data-dataset="1">
+                        <span class="legend-box" style="background: #f97316;"></span>
+                        <span class="legend-text">Onbalans (15m)</span>
+                    </div>
+                    <div class="legend-item" data-dataset="2">
+                        <span class="legend-box" style="background: #a855f7;"></span>
+                        <span class="legend-text">Onbalans (1m)</span>
+                    </div>
+                    <div class="legend-item" data-dataset="3">
+                        <span class="legend-box" style="background: #ef4444;"></span>
+                        <span class="legend-text">Drempel €25</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grafiek Vak -->
+            <div class="table-data">
+                <div class="order">
+                    <div class="chart-wrapper">
+                        <canvas id="dagGrafiek"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </section>
+
+    <script src="js/script.js"></script>
 </body>
 </html>
-

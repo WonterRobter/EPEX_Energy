@@ -1,0 +1,17 @@
+{
+  "short_name": "EnergyEPEX",
+  "name": "EnergyEPEX Monitor",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#070d18",
+  "theme_color": "#092144",
+  "display": "standalone",
+  "orientation": "portrait"
+}

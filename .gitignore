@@ -1,3 +1,14 @@
-# Negeer de database en Node-RED instellingen (veiligheid!)
+# Negeer alle database- en Docker-datamappen (veiligheid & grootte!)
 database/
+influxdb2_data/
+mariadb_data/
 nodered_data/
+
+# Negeer geheime sleutels en wachtwoorden
+.env
+
+# Negeer losse databasebestanden en tekstnotities (zoals idee.txt)
+*.db
+*.txt
+*.log
+.DS_Store
