@@ -148,9 +148,9 @@ document.getElementById('btn-next-day').addEventListener('click', () => {
 });
 
 // ==========================================
-// 3. LEGENDA KNOPPEN (Lijnen aan/uit zetten)
+// 3. LEGENDA KNOPPEN (Onbalans 1m staat standaard UIT op index 2)
 // ==========================================
-let datasetZichtbaar = [true, true, true, true];
+let datasetZichtbaar = [true, true, false, true];
 
 document.querySelectorAll('#custom-legend .legend-item').forEach(item => {
     item.addEventListener('click', function () {
@@ -206,9 +206,8 @@ let epexGrafiek = null;
 
 async function laadEpexData(datumString) {
     try {
-        // Zorg dat hij de exacte URL aanroept (pas 192.168.1.130:1880 aan als jouw Node-RED op een ander IP/poort draait)
         const url = `http://192.168.1.130:1880/api/prijzen?datum=${datumString}`;
-        console.log("Ophalen van URL:", url); // Open je F12 Console in de browser om dit te zien!
+        console.log("Ophalen van URL:", url);
 
         const response = await fetch(url);
         const data = await response.json();
@@ -281,7 +280,7 @@ async function laadEpexData(datumString) {
                 labels: labelsTijd,
                 datasets: [
                     {
-                        label: 'EPEX',
+                        label: 'EPEX Prijs',
                         data: dataEpex,
                         borderColor: '#22d3ee',
                         backgroundColor: 'rgba(34, 211, 238, 0.12)',
@@ -293,7 +292,7 @@ async function laadEpexData(datumString) {
                         hidden: !datasetZichtbaar[0]
                     },
                     {
-                        label: 'Onbalans Kwartier',
+                        label: 'Onbalans (15m)',
                         data: dataOnbalans15m,
                         borderColor: '#f97316',
                         backgroundColor: 'transparent',
@@ -305,7 +304,7 @@ async function laadEpexData(datumString) {
                         hidden: !datasetZichtbaar[1]
                     },
                     {
-                        label: 'Onbalans Minuut',
+                        label: 'Onbalans (1m)',
                         data: dataOnbalans1m,
                         borderColor: '#a855f7',
                         backgroundColor: 'transparent',
@@ -314,7 +313,7 @@ async function laadEpexData(datumString) {
                         fill: false,
                         pointRadius: 0,
                         pointHitRadius: 8,
-                        hidden: !datasetZichtbaar[2]
+                        hidden: !datasetZichtbaar[2] // Standaard verborgen
                     },
                     {
                         label: 'Drempel €25',
@@ -337,8 +336,7 @@ async function laadEpexData(datumString) {
                     mode: 'nearest',
                     axis: 'x',
                     intersect: false,
-                    includeInvisible: false // Negeert verborgen lijnen zodat de muis direct naar de actieve punten grijpt
-                    
+                    includeInvisible: false
                 },
                 scales: {
                     x: {
@@ -365,7 +363,22 @@ async function laadEpexData(datumString) {
                     }
                 },
                 plugins: {
-                    legend: { display: false }
+                    legend: { display: false },
+                    tooltip: {
+                        // Verberg Drempel €25 uit de tooltip
+                        filter: function(tooltipItem) {
+                            return tooltipItem.datasetIndex !== 3;
+                        },
+                        callbacks: {
+                            // Rond de getallen in het zwarte vakje af op hele euro's
+                            label: function(context) {
+                                const naam = context.dataset.label || '';
+                                const waarde = context.parsed.y;
+                                if (waarde === null || waarde === undefined) return null;
+                                return ` ${naam}: € ${Math.round(waarde)} /MWh`;
+                            }
+                        }
+                    }
                 }
             }
         });
