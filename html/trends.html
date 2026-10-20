@@ -20,12 +20,24 @@
 
             <ul class="side-menu top">
                 <li><a href="index.html"><i class='bx bxs-dashboard'></i><span class="text">Vandaag (Actueel)</span></a></li>
-                <li class="active"><a href="trends.html"><i class='bx bx-line-chart'></i><span class="text">Trends (Analyse)</span></a></li>
+                <li class="dropdown show-menu">
+                    <a href="#" class="dropdown-btn">
+                        <div style="display: flex; align-items: center;">
+                            <i class='bx bx-line-chart'></i>
+                            <span class="text">Trends (Analyse)</span>
+                        </div>
+                        <i class='bx bx-chevron-down'></i>
+                    </a>
+                    <ul class="sub-menu">
+                        <li><a href="trends.html" class="active-sub">Kwartierprofielen</a></li>
+                        <li><a href="#">Maandoverzicht</a></li>
+                        <li><a href="#">Jaaroverzicht</a></li>
+                        <li><a href="#">Seizoensprofiel</a></li>
+                    </ul>
+                </li>
                 <li><a href="meldingen.html"><i class='bx bxs-bell'></i><span class="text">Meldingen</span></a></li>
                 <li><a href="planner.html"><i class='bx bx-time-five'></i><span class="text">Planner</span></a></li>
             </ul>
-            
-            <!-- We laten de dag-kalender hier weg, want bij trends willen we wss periodes kiezen -->
         </div> 
 
         <ul class="side-menu bottom">
@@ -37,31 +49,19 @@
 
     <!-- INHOUD RECHTS -->
     <section id="content">
-        <!-- BOVENBALK (Navbar) -->
         <nav>
             <i class='bx bx-menu bx-sm'></i>
             <a href="#" class="nav-link">Analyse Dashboard</a>
-            <form action="#">
-                <div class="form-input" style="display: none;"></div>
-            </form>
-            
+            <form action="#"><div class="form-input" style="display: none;"></div></form>
             <input type="checkbox" class="checkbox" id="switch-mode" checked hidden />
-            <label class="swith-lm" for="switch-mode">
-                <i class="bx bxs-moon"></i>
-                <i class="bx bx-sun"></i>
-                <div class="ball"></div>
-            </label>
-
-            <a href="#" class="profile" id="profileIcon">
-                <img src="https://ui-avatars.com/api/?name=Wouter+D&background=3C91E6&color=fff" alt="Profile">
-            </a>
+            <label class="swith-lm" for="switch-mode"><i class="bx bxs-moon"></i><i class="bx bx-sun"></i><div class="ball"></div></label>
+            <a href="profiel.html" class="profile" id="profileIcon"><img src="https://ui-avatars.com/api/?name=Wouter+D&background=3C91E6&color=fff" alt="Profile"></a>
         </nav>
 
-        <!-- HOOFDSCHERM TRENDS -->
         <main>
             <div class="head-title">
                 <div class="left">
-                    <h1>Trend Analyse</h1>
+                    <h1>Trend Analyse - Kwartierprofielen</h1>
                 </div>
             </div>
 
@@ -76,7 +76,6 @@
         </main>
     </section>
 
-    <!-- Let op: we gebruiken straks een eigen script-bestand voor trends -->
     <script src="js/trends.js"></script>
 </body>
 </html>

@@ -480,3 +480,95 @@ html, body {
     width: 100%;
     min-height: 0;
 }
+
+/* ==========================================
+   DROPDOWN MENU (Trends)
+   ========================================== */
+#sidebar .side-menu li .dropdown-btn {
+    display: flex;
+    justify-content: space-between; /* Zorgt dat het pijltje rechts staat */
+    align-items: center;
+    width: 100%;
+    cursor: pointer;
+}
+
+#sidebar .side-menu li .dropdown-btn .bx-chevron-down {
+    transition: transform 0.3s ease;
+    min-width: 20px; /* Overschrijft de brede icon-margin */
+    font-size: 16px;
+}
+
+/* Roteer het pijltje als hij open staat */
+#sidebar .side-menu li.show-menu .dropdown-btn .bx-chevron-down {
+    transform: rotate(-180deg);
+}
+
+/* Het verborgen submenu */
+#sidebar .side-menu .sub-menu {
+    display: none;
+    padding-left: 36px; /* Inspringen zodat het onder de iconen valt */
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+#sidebar .side-menu li.show-menu .sub-menu {
+    display: block;
+}
+
+#sidebar .side-menu .sub-menu li a {
+    height: 32px; /* Iets dunner dan hoofdmenu-knoppen */
+    font-size: 13px;
+    color: var(--dark-grey);
+    border-radius: 6px;
+}
+
+#sidebar .side-menu .sub-menu li a:hover,
+#sidebar .side-menu .sub-menu li a.active-sub {
+    color: var(--blue);
+    background: transparent;
+    font-weight: 600;
+}
+
+/* Als sidebar dicht is, mag het submenu niet zichtbaar zijn */
+#sidebar.hide .sub-menu,
+#sidebar.hide .dropdown-btn .bx-chevron-down {
+    display: none !important;
+}
+
+/* Het verborgen submenu met vloeiende animatie (zoals in de video) */
+#sidebar .side-menu .sub-menu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out, margin 0.3s ease-in-out;
+    padding-left: 36px;
+    margin: 0;
+}
+
+#sidebar .side-menu li.show-menu .sub-menu {
+    max-height: 200px; /* Hoog genoeg voor 4 a 5 items */
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+#sidebar .side-menu .sub-menu li a {
+    height: 32px;
+    font-size: 13px;
+    color: var(--dark-grey);
+    border-radius: 6px;
+    opacity: 0.8;
+    transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+#sidebar .side-menu .sub-menu li a:hover,
+#sidebar .side-menu .sub-menu li a.active-sub {
+    color: var(--blue);
+    background: transparent;
+    font-weight: 600;
+    opacity: 1;
+}
+
+/* Als sidebar dicht is, verberg submenu direct */
+#sidebar.hide .sub-menu,
+#sidebar.hide .dropdown-btn .bx-chevron-down {
+    display: none !important;
+}

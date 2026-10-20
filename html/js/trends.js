@@ -1,7 +1,7 @@
 // ==========================================
-// 1. ZIJBALK & DARK MODE LOGICA
+// 1. ZIJBALK, DROPDOWN & DARK MODE LOGICA
 // ==========================================
-const allSideMenu = document.querySelectorAll('#sidebar .side-menu.top li a');
+const allSideMenu = document.querySelectorAll('#sidebar .side-menu.top > li > a:not(.dropdown-btn)');
 allSideMenu.forEach(item => {
     const li = item.parentElement;
     item.addEventListener('click', function () {
@@ -10,11 +10,26 @@ allSideMenu.forEach(item => {
     });
 });
 
+// Dropdown functionaliteit: ENKEL open/dicht klappen, niet selecteren!
+const allDropdowns = document.querySelectorAll('#sidebar .dropdown-btn');
+allDropdowns.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault(); 
+        const parentLi = this.parentElement;
+        parentLi.classList.toggle('show-menu');
+    });
+});
+
 const menuBar = document.querySelector('#content nav .bx.bx-menu');
 const sidebar = document.getElementById('sidebar');
-menuBar.addEventListener('click', () => sidebar.classList.toggle('hide'));
+menuBar.addEventListener('click', () => {
+    sidebar.classList.toggle('hide');
+    // Sluit alle dropdowns als de zijbalk krimpt
+    if (sidebar.classList.contains('hide')) {
+        document.querySelectorAll('#sidebar .side-menu li.dropdown').forEach(li => li.classList.remove('show-menu'));
+    }
+});
 
-// Lees de opgeslagen status uit (zodat hij niet ineens wit is als je van pagina wisselt)
 const switchMode = document.getElementById('switch-mode');
 if (localStorage.getItem('dark-mode') === 'disabled') {
     document.body.classList.remove('dark');
@@ -33,5 +48,3 @@ switchMode.addEventListener('change', function () {
         localStorage.setItem('dark-mode', 'disabled');
     }
 });
-
-// Hieronder gaan we in de volgende stappen de Trends-grafieken bouwen!
