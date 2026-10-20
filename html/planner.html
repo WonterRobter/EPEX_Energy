@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="css/style.css?v=6">
+    <title>Planner - EPEXenergy</title>
+</head>
+<body class="dark">
+    <section id="sidebar">
+        <div>
+            <a href="index.html" class="brand">
+                <i class='bx bxs-zap bx-sm' style="margin-left: 16px; margin-right: 10px; color: var(--blue);"></i>
+                <span class="text">EPEXenergy</span>
+            </a>
+            <ul class="side-menu top">
+                <li><a href="index.html"><i class='bx bxs-dashboard'></i><span class="text">Vandaag (Actueel)</span></a></li>
+                <li><a href="trends.html"><i class='bx bx-line-chart'></i><span class="text">Trends (Analyse)</span></a></li>
+                <li><a href="meldingen.html"><i class='bx bxs-bell'></i><span class="text">Meldingen</span></a></li>
+                <li class="active"><a href="planner.html"><i class='bx bx-time-five'></i><span class="text">Planner</span></a></li>
+            </ul>
+        </div> 
+        <ul class="side-menu bottom">
+            <li><a href="profiel.html"><i class='bx bxs-user-circle'></i><span class="text" id="profiel-naam">Profiel</span></a></li>
+            <li><a href="instellingen.html"><i class='bx bxs-cog'></i><span class="text">Instellingen</span></a></li>
+            <li><a href="login.html" class="logout"><i class='bx bx-power-off'></i><span class="text">Uitloggen</span></a></li>
+        </ul>
+    </section>
+
+    <section id="content">
+        <nav>
+            <i class='bx bx-menu bx-sm'></i>
+            <a href="#" class="nav-link">Smart Planner</a>
+            <form action="#"><div class="form-input" style="display: none;"></div></form>
+            <input type="checkbox" class="checkbox" id="switch-mode" checked hidden />
+            <label class="swith-lm" for="switch-mode"><i class="bx bxs-moon"></i><i class="bx bx-sun"></i><div class="ball"></div></label>
+            <a href="profiel.html" class="profile" id="profileIcon"><img src="https://ui-avatars.com/api/?name=Wouter+D&background=3C91E6&color=fff" alt="Profile"></a>
+        </nav>
+        <main>
+            <div class="head-title"><div class="left"><h1>Verbruiks-Planner</h1></div></div>
+            <div class="table-data">
+                <div class="order">
+                    <p style="color: var(--dark-grey);">Plan hier wanneer je de wasmachine of warmtepomp het beste kunt inschakelen.</p>
+                </div>
+            </div>
+        </main>
+    </section>
+    <script src="js/trends.js"></script>
+</body>
+</html>
