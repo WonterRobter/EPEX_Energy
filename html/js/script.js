@@ -78,18 +78,14 @@ function veranderActieveDag(nieuweDatum) {
 
     const vandaag = new Date();
     const liveIndicator = document.getElementById('live-indicator');
-    const labelStatNu = document.getElementById('label-stat-nu');
-
     if (isZelfdeDag(actieveDatum, vandaag)) {
         liveIndicator.style.visibility = 'visible';
-        labelStatNu.innerText = 'Huidige EPEX (Live)';
     } else {
         liveIndicator.style.visibility = 'hidden';
-        labelStatNu.innerText = 'Laatste EPEX van dag';
     }
 
     bouwKalender(kalenderMaandDatum);
-    laadEpexData(formatteerApiDatum(actieveDatum));
+    laadEpexData(formatteerApiDatum(actieveDatum), true);
 }
 
 function bouwKalender(datum) {
@@ -148,7 +144,7 @@ document.getElementById('btn-next-day').addEventListener('click', () => {
 });
 
 // ==========================================
-// 3. LEGENDA KNOPPEN (Onbalans 1m staat standaard UIT op index 2)
+// 3. LEGENDA KNOPPEN (Onbalans 1m standaard UIT)
 // ==========================================
 let datasetZichtbaar = [true, true, false, true];
 
@@ -167,7 +163,7 @@ document.querySelectorAll('#custom-legend .legend-item').forEach(item => {
 });
 
 // ==========================================
-// 4. CUSTOM PLUG-IN VOOR HUIDIGE TIJD LIJN OP VANDAAG
+// 4. CUSTOM PLUG-INS VOOR CHART.JS
 // ==========================================
 const huidigeTijdLijnPlugin = {
     id: 'huidigeTijdLijn',
@@ -191,24 +187,92 @@ const huidigeTijdLijnPlugin = {
         ctx.moveTo(xCoord, yAxis.top);
         ctx.lineTo(xCoord, yAxis.bottom);
         ctx.lineWidth = 1.5;
-        ctx.strokeStyle = 'rgba(203, 213, 225, 0.65)'; // Lichtgrijs lijntje voor het huidige uur
+        ctx.strokeStyle = 'rgba(203, 213, 225, 0.65)';
         ctx.stroke();
         ctx.restore();
     }
 };
 
+Chart.Interaction.modes.kwartierSnap = function(chart, e) {
+    const xAxis = chart.scales.x;
+    const rect = chart.canvas.getBoundingClientRect();
+    const xPixel = e.native ? (e.native.clientX - rect.left) : e.x;
+
+    let rawIndex = xAxis.getValueForPixel(xPixel);
+    if (rawIndex === undefined || rawIndex === null) return [];
+    
+    rawIndex = Math.max(0, Math.min(chart.data.labels.length - 1, Math.round(rawIndex)));
+
+    const minuutActief = chart.isDatasetVisible(2);
+    let targetIndex = minuutActief ? rawIndex : Math.round(rawIndex / 15) * 15;
+    targetIndex = Math.min(chart.data.labels.length - 1, targetIndex);
+
+    const items = [];
+    chart.data.datasets.forEach((dataset, datasetIndex) => {
+        if (!chart.isDatasetVisible(datasetIndex) || datasetIndex === 3) return;
+
+        const meta = chart.getDatasetMeta(datasetIndex);
+        const element = meta.data[targetIndex];
+        const waarde = dataset.data[targetIndex];
+
+        if (element && waarde !== null && waarde !== undefined) {
+            items.push({ element, datasetIndex, index: targetIndex });
+        }
+    });
+    return items;
+};
+
 Chart.register(huidigeTijdLijnPlugin);
 
 // ==========================================
-// 5. DATA OPHALEN & GRAFIEK TEKENEN
+// 5. KLEURBEPALING PRIJZEN (Groen, Grijs, Rood)
+// ==========================================
+function bepaalPrijsKleur(prijs) {
+    if (prijs < 0) return '#10b981';      // Groen
+    if (prijs < 50) return '#84cc16';     // Lichtgroen
+    if (prijs < 100) return '#8b9bb4';    // Grijs (Neutrale kleur)
+    if (prijs < 175) return '#f87171';    // Lichtrood
+    return '#ef4444';                     // Rood
+}
+
+// ==========================================
+// 6. ALTIJD LIVE PRIJS OPHALEN
+// ==========================================
+async function updateHuidigeLivePrijs() {
+    try {
+        const vandaagStr = formatteerApiDatum(new Date());
+        const url = `http://192.168.1.130:1880/api/prijzen?datum=${vandaagStr}&_t=${Date.now()}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const nu = new Date();
+        const huidigeTijdStr = nu.getHours().toString().padStart(2, '0') + ":" + nu.getMinutes().toString().padStart(2, '0');
+        
+        let huidigItem = data.find(item => item.tijdstip.endsWith(huidigeTijdStr));
+        let geldigeEpexPunten = data.filter(item => item.prijs !== null);
+        
+        let prijsNu = (huidigItem && huidigItem.prijs !== null) 
+                      ? Number(huidigItem.prijs) 
+                      : (geldigeEpexPunten.length > 0 ? Number(geldigeEpexPunten[geldigeEpexPunten.length - 1].prijs) : 0);
+
+        const kleurNu = bepaalPrijsKleur(prijsNu);
+        
+        document.getElementById('stat-nu').innerHTML = `<span style="color: ${kleurNu};">€ ${prijsNu.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
+        document.getElementById('label-stat-nu').innerText = 'Huidige EPEX (Live)';
+
+    } catch (error) {
+        console.error("Fout bij ophalen ALTIJD LIVE prijs:", error);
+    }
+}
+
+// ==========================================
+// 7. DATA OPHALEN & GRAFIEK TEKENEN
 // ==========================================
 let epexGrafiek = null;
 
-async function laadEpexData(datumString) {
+async function laadEpexData(datumString, metAnimatie = false) {
     try {
-        const url = `http://192.168.1.130:1880/api/prijzen?datum=${datumString}`;
-        console.log("Ophalen van URL:", url);
-
+        const url = `http://192.168.1.130:1880/api/prijzen?datum=${datumString}&_t=${Date.now()}`;
         const response = await fetch(url);
         const data = await response.json();
 
@@ -221,7 +285,6 @@ async function laadEpexData(datumString) {
         const heeftData = data && data.some(d => d.prijs !== null || d.onbalans_kwartier !== null || d.onbalans_minuut !== null);
 
         if (!heeftData) {
-            document.getElementById('stat-nu').innerText = "Geen data";
             document.getElementById('stat-gem').innerText = "Geen data";
             document.getElementById('stat-minmax').innerText = "Geen data";
             if (epexGrafiek) epexGrafiek.destroy();
@@ -249,7 +312,8 @@ async function laadEpexData(datumString) {
             dataOnbalans1m.push(item.onbalans_minuut ?? null);
             dataDrempel.push(25);
 
-            if (prijs !== null && !isNaN(prijs)) {
+            const isKwartier = (tijdKort.endsWith(':00') || tijdKort.endsWith(':15') || tijdKort.endsWith(':30') || tijdKort.endsWith(':45'));
+            if (isKwartier && prijs !== null && !isNaN(prijs)) {
                 som += prijs;
                 aantalEpex++;
                 if (prijs < minPrijs) { minPrijs = prijs; minTijd = tijdKort; }
@@ -258,22 +322,31 @@ async function laadEpexData(datumString) {
         });
 
         const gemiddelde = aantalEpex > 0 ? (som / aantalEpex) : 0;
+        const kleurGem = bepaalPrijsKleur(gemiddelde);
 
-        const huidigeTijdStr = nu.getHours().toString().padStart(2, '0') + ":" + nu.getMinutes().toString().padStart(2, '0');
-        let huidigItem = data.find(item => item.tijdstip.endsWith(huidigeTijdStr));
-        let geldigeEpexPunten = data.filter(item => item.prijs !== null);
-        let prijsNu = (huidigItem && huidigItem.prijs !== null) 
-                      ? Number(huidigItem.prijs) 
-                      : (geldigeEpexPunten.length > 0 ? Number(geldigeEpexPunten[geldigeEpexPunten.length - 1].prijs) : 0);
-
-        document.getElementById('stat-nu').innerHTML = `<span style="color: #ef4444;">€ ${prijsNu.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
-        document.getElementById('stat-gem').innerHTML = `<span style="color: #ef4444;">€ ${gemiddelde.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
+        document.getElementById('stat-gem').innerHTML = `<span style="color: ${kleurGem};">€ ${gemiddelde.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
         document.getElementById('stat-minmax').innerHTML = `<span style="color: #10b981;">${minPrijs.toFixed(2)}</span> <span class="unit-label">(${minTijd})</span> / <span style="color: #ef4444;">${maxPrijs.toFixed(2)}</span> <span class="unit-label">(${maxTijd})</span>`;
 
-        // --- GRAFIEK TEKENEN ---
-        const ctx = document.getElementById('dagGrafiek').getContext('2d');
-        if (epexGrafiek) epexGrafiek.destroy();
+        // Update bestaande grafiek soepel
+        if (epexGrafiek) {
+            epexGrafiek.data.labels = labelsTijd;
+            epexGrafiek.data.datasets[0].data = dataEpex;
+            epexGrafiek.data.datasets[1].data = dataOnbalans15m;
+            epexGrafiek.data.datasets[2].data = dataOnbalans1m;
+            epexGrafiek.data.datasets[3].data = dataDrempel;
 
+            datasetZichtbaar.forEach((zichtbaar, idx) => {
+                epexGrafiek.setDatasetVisibility(idx, zichtbaar);
+            });
+
+            // Hier is de magie: Bij 1-minuut updates 'none' (zodat de lijn niet springt),
+            // Bij nieuwe dag 'default' (zodat de lijnen vloeiend overgaan naar de nieuwe dag)
+            epexGrafiek.update(metAnimatie ? 'default' : 'none');
+            return;
+        }
+
+        // --- GRAFIEK VOOR HET EERST TEKENEN ---
+        const ctx = document.getElementById('dagGrafiek').getContext('2d');
         epexGrafiek = new Chart(ctx, {
             type: 'line',
             data: {
@@ -288,7 +361,7 @@ async function laadEpexData(datumString) {
                         stepped: true,
                         fill: true,
                         pointRadius: 0,
-                        pointHitRadius: 10,
+                        pointHoverRadius: 5,
                         hidden: !datasetZichtbaar[0]
                     },
                     {
@@ -300,7 +373,7 @@ async function laadEpexData(datumString) {
                         stepped: true,
                         fill: false,
                         pointRadius: 0,
-                        pointHitRadius: 10,
+                        pointHoverRadius: 5,
                         hidden: !datasetZichtbaar[1]
                     },
                     {
@@ -312,8 +385,8 @@ async function laadEpexData(datumString) {
                         stepped: true,
                         fill: false,
                         pointRadius: 0,
-                        pointHitRadius: 8,
-                        hidden: !datasetZichtbaar[2] // Standaard verborgen
+                        pointHoverRadius: 4,
+                        hidden: !datasetZichtbaar[2]
                     },
                     {
                         label: 'Drempel €25',
@@ -322,7 +395,7 @@ async function laadEpexData(datumString) {
                         borderWidth: 1.5,
                         borderDash: [5, 5],
                         pointRadius: 0,
-                        pointHitRadius: 0,
+                        pointHoverRadius: 0,
                         fill: false,
                         hidden: !datasetZichtbaar[3]
                     }
@@ -331,12 +404,14 @@ async function laadEpexData(datumString) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: true,
+                // Zet de algemene animaties ALTIJD aan, zodat je muis-hover en tooltip soepel zijn!
+                animation: {
+                    duration: 350,
+                    easing: 'easeOutQuart'
+                },
                 interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false,
-                    includeInvisible: false
+                    mode: 'kwartierSnap',
+                    intersect: false
                 },
                 scales: {
                     x: {
@@ -365,12 +440,16 @@ async function laadEpexData(datumString) {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        // Verberg Drempel €25 uit de tooltip
+                        mode: 'kwartierSnap',
+                        intersect: false,
+                        animation: {
+                            duration: 200, // Zorgt ervoor dat de tooltip zachtjes over het scherm glijdt
+                            easing: 'easeOutCubic'
+                        },
                         filter: function(tooltipItem) {
-                            return tooltipItem.datasetIndex !== 3;
+                            return tooltipItem.datasetIndex !== 3; // Verberg Drempel
                         },
                         callbacks: {
-                            // Rond de getallen in het zwarte vakje af op hele euro's
                             label: function(context) {
                                 const naam = context.dataset.label || '';
                                 const waarde = context.parsed.y;
@@ -385,18 +464,20 @@ async function laadEpexData(datumString) {
 
     } catch (error) {
         console.error("Fout bij ophalen van API:", error);
-        document.getElementById('stat-nu').innerText = "API Fout";
     }
 }
 
 // ==========================================
-// 6. ELKE MINUUT AUTOMATISCH VERVERSEN (OP VANDAAG)
+// 8. OPSTARTEN & 1-MINUUT TIMERS
 // ==========================================
 setInterval(() => {
+    updateHuidigeLivePrijs();
+    
     const nu = new Date();
     if (isZelfdeDag(actieveDatum, nu)) {
-        laadEpexData(formatteerApiDatum(actieveDatum));
+        laadEpexData(formatteerApiDatum(actieveDatum), false); 
     }
 }, 60000);
 
+updateHuidigeLivePrijs();
 veranderActieveDag(new Date());
