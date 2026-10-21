@@ -605,3 +605,28 @@ html, body {
     border-top: 2px dashed;
     display: inline-block;
 }
+
+/* ==========================================
+   MAAND-KIEZER MODAL (Trends)
+   ========================================== */
+.mp-month-btn {
+    background: rgba(139, 155, 180, 0.1);
+    color: var(--dark-grey);
+    border-radius: 6px;
+    text-align: center;
+    padding: 8px 0;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.mp-month-btn:hover {
+    background: var(--blue);
+    color: #fff;
+}
+
+.mp-month-btn.selected {
+    background: var(--blue);
+    color: #fff;
+    font-weight: bold;
+}

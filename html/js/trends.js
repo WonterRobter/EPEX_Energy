@@ -48,30 +48,47 @@ switchMode.addEventListener('change', function () {
 });
 
 // ==========================================
-// 2. SUB-TABS WISSELEN BINNEN TRENDS.HTML
+// 2. SUB-TABS WISSELEN BINNEN TRENDS.HTML (Met URL Support)
 // ==========================================
 const subTabLinks = document.querySelectorAll('.sub-tab-link');
 const viewKwartier = document.getElementById('view-kwartier');
-const viewOverig = document.getElementById('view-overig');
+const viewMaand = document.getElementById('view-maand');
 const kalenderSectie = document.getElementById('periode-kalender-sectie');
 
+function openTab(tabNaam) {
+    subTabLinks.forEach(l => l.classList.remove('active-sub'));
+    const targetLink = document.querySelector(`.sub-tab-link[data-tab="${tabNaam}"]`);
+    if (targetLink) targetLink.classList.add('active-sub');
+
+    viewKwartier.style.display = 'none';
+    viewMaand.style.display = 'none';
+    kalenderSectie.style.display = 'none'; 
+
+    if (tabNaam === 'kwartier') {
+        viewKwartier.style.display = 'flex';
+        kalenderSectie.style.display = 'block';
+        laadKwartierProfielData();
+    } else if (tabNaam === 'maand') {
+        viewMaand.style.display = 'flex';
+        laadMaandOverzicht();
+    }
+}
+
+// Luister naar normale kliks in het menu
 subTabLinks.forEach(link => {
     link.addEventListener('click', function(e) {
         e.preventDefault();
-        subTabLinks.forEach(l => l.classList.remove('active-sub'));
-        this.classList.add('active-sub');
-
-        const gekozenTab = this.getAttribute('data-tab');
-        if (gekozenTab === 'kwartier') {
-            viewKwartier.style.display = 'flex';
-            viewOverig.style.display = 'none';
-            kalenderSectie.style.display = 'block';
-        } else {
-            viewKwartier.style.display = 'none';
-            viewOverig.style.display = 'flex';
-            document.getElementById('overig-titel').innerText = this.innerText;
-        }
+        openTab(this.getAttribute('data-tab'));
+        // Update stilletjes de URL zodat je pagina-refresh op dezelfde tab blijft
+        window.history.pushState({}, '', `trends.html?tab=${this.getAttribute('data-tab')}`);
     });
+});
+
+// Zodra de pagina laadt: check of we via een andere pagina komen met ?tab=maand in de link!
+document.addEventListener("DOMContentLoaded", () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab') || 'kwartier';
+    openTab(tabParam);
 });
 
 // ==========================================
@@ -469,6 +486,184 @@ async function laadKwartierProfielData() {
 
     } catch (error) {
         console.error("Fout bij ophalen van kwartierprofiel:", error);
+    }
+}
+
+// ==========================================
+// 7. MAANDOVERZICHT LOGICA, KIEZER & GRAFIEK
+// ==========================================
+let actieveMaandDatum = new Date();
+let maandGrafiek = null;
+let datasetZichtbaarMaand = [true, true, false, true, true];
+
+const maandNamenLijst = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
+const maandNamenVol = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
+
+// Maand-Kiezer Logica
+const btnMaandSelector = document.getElementById('btn-maand-selector');
+const maandPickerModal = document.getElementById('maand-picker-modal');
+let pickerJaar = actieveMaandDatum.getFullYear();
+
+btnMaandSelector.addEventListener('click', () => {
+    maandPickerModal.style.display = maandPickerModal.style.display === 'none' ? 'block' : 'none';
+    pickerJaar = actieveMaandDatum.getFullYear();
+    tekenMaandPicker();
+});
+
+document.getElementById('mp-prev-year').addEventListener('click', () => { pickerJaar--; tekenMaandPicker(); });
+document.getElementById('mp-next-year').addEventListener('click', () => { pickerJaar++; tekenMaandPicker(); });
+
+function tekenMaandPicker() {
+    document.getElementById('mp-year').innerText = pickerJaar;
+    const container = document.getElementById('mp-months');
+    container.innerHTML = '';
+    
+    for (let i = 0; i < 12; i++) {
+        const div = document.createElement('div');
+        div.className = 'mp-month-btn';
+        if (pickerJaar === actieveMaandDatum.getFullYear() && i === actieveMaandDatum.getMonth()) {
+            div.classList.add('selected');
+        }
+        div.innerText = maandNamenLijst[i];
+        div.addEventListener('click', () => {
+            actieveMaandDatum.setFullYear(pickerJaar);
+            actieveMaandDatum.setMonth(i);
+            maandPickerModal.style.display = 'none';
+            laadMaandOverzicht();
+        });
+        container.appendChild(div);
+    }
+}
+
+// Sluit popup als je ergens anders klikt
+document.addEventListener('click', (e) => {
+    if (!btnMaandSelector.contains(e.target) && !maandPickerModal.contains(e.target)) {
+        maandPickerModal.style.display = 'none';
+    }
+});
+
+document.getElementById('btn-prev-maand').addEventListener('click', () => {
+    actieveMaandDatum.setMonth(actieveMaandDatum.getMonth() - 1);
+    laadMaandOverzicht();
+});
+
+document.getElementById('btn-next-maand').addEventListener('click', () => {
+    actieveMaandDatum.setMonth(actieveMaandDatum.getMonth() + 1);
+    laadMaandOverzicht();
+});
+
+document.querySelectorAll('#maand-legend .legend-item').forEach(item => {
+    item.addEventListener('click', function () {
+        const index = parseInt(this.getAttribute('data-dataset'));
+        datasetZichtbaarMaand[index] = !datasetZichtbaarMaand[index];
+        this.classList.toggle('hidden-dataset', !datasetZichtbaarMaand[index]);
+        if (maandGrafiek) {
+            maandGrafiek.setDatasetVisibility(index, datasetZichtbaarMaand[index]);
+            maandGrafiek.update();
+        }
+    });
+});
+
+async function laadMaandOverzicht() {
+    const jaar = actieveMaandDatum.getFullYear();
+    const maand = actieveMaandDatum.getMonth() + 1;
+    const maandNaamVol = maandNamenVol[maand - 1];
+
+    document.getElementById('maand-titel').innerText = `Maandoverzicht (${maandNaamVol} ${jaar})`;
+    btnMaandSelector.innerText = `${maandNaamVol} ${jaar}`;
+
+    try {
+        const url = `http://192.168.1.130:1880/api/maandoverzicht?jaar=${jaar}&maand=${maand}&_t=${Date.now()}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const heeftData = data && data.some(d => d.epex_gem !== null);
+
+        if (!heeftData) {
+            document.getElementById('maand-stat-gem').innerText = "Geen data";
+            document.getElementById('maand-stat-min').innerText = "Geen data";
+            document.getElementById('maand-stat-max').innerText = "Geen data";
+            if (maandGrafiek) { maandGrafiek.destroy(); maandGrafiek = null; }
+            return;
+        }
+
+        let som = 0, aantalDagen = 0;
+        let goedkoopsteGem = Infinity, goedkoopsteDag = "--";
+        let duursteGem = -Infinity, duursteDag = "--";
+
+        let labelsDag = [];
+        let dataEpexGem = [];
+        let dataOnb15Gem = [];
+        let dataOnb1Gem = [];
+        let dataEpexMin = [];
+        let dataEpexMax = [];
+
+        data.forEach(item => {
+            labelsDag.push(`${item.dag} ${maandNaamVol.substring(0, 3)}`);
+
+            dataEpexGem.push(item.epex_gem);
+            dataOnb15Gem.push(item.onb15_gem);
+            dataOnb1Gem.push(item.onb1_gem);
+            dataEpexMin.push(item.epex_min);
+            dataEpexMax.push(item.epex_max);
+
+            if (item.epex_gem !== null && !isNaN(item.epex_gem)) {
+                som += item.epex_gem;
+                aantalDagen++;
+                if (item.epex_gem < goedkoopsteGem) { goedkoopsteGem = item.epex_gem; goedkoopsteDag = item.dag; }
+                if (item.epex_gem > duursteGem) { duursteGem = item.epex_gem; duursteDag = item.dag; }
+            }
+        });
+
+        const maandGem = aantalDagen > 0 ? (som / aantalDagen) : 0;
+
+        document.getElementById('maand-stat-gem').innerHTML = `<span style="color: ${bepaalPrijsKleur(maandGem)};">€ ${maandGem.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
+        // HIER IS TEKST GEFIXT NAAR BIJV "19 oktober"
+        document.getElementById('maand-stat-min').innerHTML = `<span style="color: #ffffff; font-size: 20px;">${goedkoopsteDag} ${maandNaamVol}</span> <span style="color: ${bepaalPrijsKleur(goedkoopsteGem)}; font-size: 13px;">(€${goedkoopsteGem.toFixed(2)})</span>`;
+        document.getElementById('maand-stat-max').innerHTML = `<span style="color: #ffffff; font-size: 20px;">${duursteDag} ${maandNaamVol}</span> <span style="color: ${bepaalPrijsKleur(duursteGem)}; font-size: 13px;">(€${duursteGem.toFixed(2)})</span>`;
+
+        if (maandGrafiek) {
+            maandGrafiek.data.labels = labelsDag;
+            maandGrafiek.data.datasets[0].data = dataEpexGem;
+            maandGrafiek.data.datasets[1].data = dataOnb15Gem;
+            maandGrafiek.data.datasets[2].data = dataOnb1Gem;
+            maandGrafiek.data.datasets[3].data = dataEpexMin;
+            maandGrafiek.data.datasets[4].data = dataEpexMax;
+            
+            datasetZichtbaarMaand.forEach((zichtbaar, idx) => { maandGrafiek.setDatasetVisibility(idx, zichtbaar); });
+            maandGrafiek.update();
+            return;
+        }
+
+        const ctx = document.getElementById('maandGrafiek').getContext('2d');
+        maandGrafiek = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labelsDag,
+                datasets: [
+                    { type: 'bar', label: 'Gem. EPEX', data: dataEpexGem, backgroundColor: 'rgba(34, 211, 238, 0.65)', borderColor: '#22d3ee', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarMaand[0] },
+                    { type: 'bar', label: 'Gem. Onbalans (15m)', data: dataOnb15Gem, backgroundColor: 'rgba(249, 115, 22, 0.65)', borderColor: '#f97316', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarMaand[1] },
+                    { type: 'bar', label: 'Gem. Onbalans (1m)', data: dataOnb1Gem, backgroundColor: 'rgba(168, 85, 247, 0.65)', borderColor: '#a855f7', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarMaand[2] },
+                    { type: 'line', label: 'Min EPEX', data: dataEpexMin, borderColor: '#10b981', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 3, pointBackgroundColor: '#10b981', hidden: !datasetZichtbaarMaand[3] },
+                    { type: 'line', label: 'Max EPEX', data: dataEpexMax, borderColor: '#ef4444', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 3, pointBackgroundColor: '#ef4444', hidden: !datasetZichtbaarMaand[4] }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, animation: { duration: 350, easing: 'easeOutQuart' },
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#8b9bb4' } },
+                    y: { suggestedMin: 0, grid: { color: (ctx) => ctx.tick.value === 0 ? 'rgba(255, 255, 255, 0.15)' : 'rgba(139, 155, 180, 0.08)' }, ticks: { color: '#8b9bb4' }, title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: function(ctx) { const val = ctx.parsed.y; if (val === null || val === undefined) return null; return ` ${ctx.dataset.label}: € ${Math.round(val)} /MWh`; } } }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Fout bij ophalen van maandoverzicht:", error);
     }
 }
 
