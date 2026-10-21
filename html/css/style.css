@@ -572,3 +572,36 @@ html, body {
 #sidebar.hide .dropdown-btn .bx-chevron-down {
     display: none !important;
 }
+
+/* ==========================================
+   PERIODE KALENDER STIJLEN (Trends)
+   ========================================== */
+.cal-day.range-start {
+    background: #38bdf8 !important;
+    color: #070b14 !important;
+    font-weight: 700;
+    border-radius: 50% 4px 4px 50%;
+}
+
+.cal-day.range-end {
+    background: #38bdf8 !important;
+    color: #070b14 !important;
+    font-weight: 700;
+    border-radius: 4px 50% 50% 4px;
+}
+
+.cal-day.range-start.range-end {
+    border-radius: 50%;
+}
+
+.cal-day.in-range {
+    background: rgba(34, 211, 238, 0.22) !important;
+    color: #cbd5e1 !important;
+}
+
+.legend-line {
+    width: 14px;
+    height: 0;
+    border-top: 2px dashed;
+    display: inline-block;
+}

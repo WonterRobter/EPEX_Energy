@@ -303,7 +303,12 @@ async function laadEpexData(datumString, metAnimatie = false) {
         if (!heeftData) {
             document.getElementById('stat-gem').innerText = "Geen data";
             document.getElementById('stat-minmax').innerText = "Geen data";
-            if (epexGrafiek) epexGrafiek.destroy();
+            
+            // DE FIX: Zet de grafiek op null nadat je hem vernietigt!
+            if (epexGrafiek) {
+                epexGrafiek.destroy();
+                epexGrafiek = null;
+            }
             return;
         }
 

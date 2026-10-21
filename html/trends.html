@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=6">
+    <link rel="stylesheet" href="css/style.css?v=7">
     <title>Trends - EPEXenergy</title>
 </head>
 <body class="dark">
@@ -28,16 +28,35 @@
                         </div>
                         <i class='bx bx-chevron-down'></i>
                     </a>
+                    <!-- Alle 4 de subtabs binnen trends.html -->
                     <ul class="sub-menu">
-                        <li><a href="trends.html" class="active-sub">Kwartierprofielen</a></li>
-                        <li><a href="#">Maandoverzicht</a></li>
-                        <li><a href="#">Jaaroverzicht</a></li>
-                        <li><a href="#">Seizoensprofiel</a></li>
+                        <li><a href="#" class="sub-tab-link active-sub" data-tab="kwartier">Kwartierprofielen</a></li>
+                        <li><a href="#" class="sub-tab-link" data-tab="maand">Maandoverzicht</a></li>
+                        <li><a href="#" class="sub-tab-link" data-tab="jaar">Jaaroverzicht</a></li>
+                        <li><a href="#" class="sub-tab-link" data-tab="seizoen">Seizoensprofiel</a></li>
                     </ul>
                 </li>
                 <li><a href="meldingen.html"><i class='bx bxs-bell'></i><span class="text">Meldingen</span></a></li>
                 <li><a href="planner.html"><i class='bx bx-time-five'></i><span class="text">Planner</span></a></li>
             </ul>
+
+            <!-- PERIODE KALENDER WIDGET -->
+            <div class="kalender-sectie" id="periode-kalender-sectie">
+                <p style="font-size: 10px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px;">KIES PERIODE</p>
+                <div class="kalender-box">
+                    <div class="kalender-header">
+                        <i class='bx bx-chevron-left' id="kalender-prev"></i>
+                        <span id="kalender-maand">oktober 2026</span>
+                        <i class='bx bx-chevron-right' id="kalender-next"></i>
+                    </div>
+                    <div class="kalender-weekdagen">
+                        <div>ma</div><div>di</div><div>wo</div><div>do</div><div>vr</div><div>za</div><div>zo</div>
+                    </div>
+                    <div id="kalender-dagen">
+                        <!-- Javascript vult hier de dagen in -->
+                    </div>
+                </div>
+            </div>
         </div> 
 
         <ul class="side-menu bottom">
@@ -58,24 +77,86 @@
             <a href="profiel.html" class="profile" id="profileIcon"><img src="https://ui-avatars.com/api/?name=Wouter+D&background=3C91E6&color=fff" alt="Profile"></a>
         </nav>
 
-        <main>
+        <!-- TAB 1: KWARTIERPROFIELEN -->
+        <main id="view-kwartier" style="display: flex;">
             <div class="head-title">
                 <div class="left">
-                    <h1>Trend Analyse - Kwartierprofielen</h1>
+                    <h1 id="profiel-titel">Kwartierprofielen (--/--/---- tot --/--/----)</h1>
+                </div>
+            </div>
+
+            <!-- De 3 Statistiek Blokken -->
+            <ul class="box-info">
+                <li>
+                    <span class="text">
+                        <p>Gemiddelde (Periode)</p>
+                        <h3 id="profiel-gem">Laden...</h3>
+                    </span>
+                </li>
+                <li>
+                    <span class="text">
+                        <p>Goedkoopste Kwartier (Gem)</p>
+                        <h3 id="profiel-min">Laden...</h3>
+                    </span>
+                </li>
+                <li>
+                    <span class="text">
+                        <p>Duurste Kwartier (Gem)</p>
+                        <h3 id="profiel-max">Laden...</h3>
+                    </span>
+                </li>
+            </ul>
+
+            <!-- Legenda rechtsboven de grafiek -->
+            <div class="chart-controls" style="justify-content: flex-end;">
+                <div class="chart-legend" id="profiel-legend">
+                    <div class="legend-item" data-dataset="0">
+                        <span class="legend-box" style="background: #22d3ee;"></span>
+                        <span class="legend-text">Gem. EPEX</span>
+                    </div>
+                    <div class="legend-item" data-dataset="1">
+                        <span class="legend-box" style="background: #f97316;"></span>
+                        <span class="legend-text">Gem. Onbalans (15m)</span>
+                    </div>
+                    <div class="legend-item hidden-dataset" data-dataset="2">
+                        <span class="legend-box" style="background: #a855f7;"></span>
+                        <span class="legend-text">Gem. Onbalans (1m)</span>
+                    </div>
+                    <div class="legend-item" data-dataset="3">
+                        <span class="legend-line" style="border-color: #10b981;"></span>
+                        <span class="legend-text">Min EPEX</span>
+                    </div>
+                    <div class="legend-item" data-dataset="4">
+                        <span class="legend-line" style="border-color: #ef4444;"></span>
+                        <span class="legend-text">Max EPEX</span>
+                    </div>
                 </div>
             </div>
 
             <div class="table-data">
                 <div class="order">
-                    <div class="head">
-                        <h3>We bouwen hier straks de grafieken!</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="profielGrafiek"></canvas>
                     </div>
-                    <p style="color: var(--dark-grey);">Welkom op de trendpagina. Hier komt de data-analyse.</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- TAB 2, 3, 4: OVERIGE TRENDS VIEWS (Voor straks) -->
+        <main id="view-overig" style="display: none;">
+            <div class="head-title">
+                <div class="left">
+                    <h1 id="overig-titel">Maandoverzicht</h1>
+                </div>
+            </div>
+            <div class="table-data">
+                <div class="order">
+                    <p style="color: var(--dark-grey);">Deze analyse-tab bouwen we in de volgende stap!</p>
                 </div>
             </div>
         </main>
     </section>
 
-    <script src="js/trends.js"></script>
+    <script src="js/trends.js?v=7"></script>
 </body>
 </html>
