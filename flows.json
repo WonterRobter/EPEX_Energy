@@ -600,7 +600,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 620,
+        "x": 640,
         "y": 960,
         "wires": [
             [
@@ -614,7 +614,7 @@
         "z": "44ae34a704e13388",
         "mydb": "0d836172df78c3f2",
         "name": "MariaDB",
-        "x": 800,
+        "x": 840,
         "y": 960,
         "wires": [
             [
@@ -634,7 +634,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 990,
+        "x": 1030,
         "y": 960,
         "wires": [
             [
@@ -652,7 +652,7 @@
         "upload": false,
         "swaggerDoc": "",
         "x": 430,
-        "y": 1080,
+        "y": 1020,
         "wires": [
             [
                 "query_register"
@@ -671,8 +671,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 630,
-        "y": 1080,
+        "x": 640,
+        "y": 1020,
         "wires": [
             [
                 "db_register"
@@ -685,8 +685,8 @@
         "z": "44ae34a704e13388",
         "mydb": "0d836172df78c3f2",
         "name": "MariaDB",
-        "x": 810,
-        "y": 1080,
+        "x": 840,
+        "y": 1020,
         "wires": [
             [
                 "register_check"
@@ -705,8 +705,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1000,
-        "y": 1080,
+        "x": 1030,
+        "y": 1020,
         "wires": [
             [
                 "register_out"
@@ -720,7 +720,7 @@
         "name": "",
         "statusCode": "",
         "headers": {},
-        "x": 1250,
+        "x": 1390,
         "y": 1080,
         "wires": []
     },
@@ -733,8 +733,8 @@
             "db_register"
         ],
         "uncaught": false,
-        "x": 730,
-        "y": 1140,
+        "x": 770,
+        "y": 920,
         "wires": [
             [
                 "register_error"
@@ -753,8 +753,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 960,
-        "y": 1140,
+        "x": 980,
+        "y": 920,
         "wires": [
             [
                 "register_out"
@@ -772,11 +772,10 @@
         "skipBodyParsing": false,
         "swaggerDoc": "",
         "x": 420,
-        "y": 1260,
+        "y": 1080,
         "wires": [
             [
-                "build_flux",
-                "58ae86aba52a56b9"
+                "build_flux"
             ]
         ]
     },
@@ -785,15 +784,15 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Bouw Flux Query",
-        "func": "// 1. Haal de gekozen datum op uit de URL (?datum=YYYY-MM-DD)\nlet datum = (msg.req && msg.req.query && msg.req.query.datum) \n            ? msg.req.query.datum \n            : new Date().toISOString().split('T')[0];\n\n// Laat onder de node zien welke datum de website opvraagt\nnode.status({ fill: \"green\", shape: \"dot\", text: \"Opgevraagd: \" + datum });\n\n// 2. Zet 00:00:00 en 23:59:59 om naar de juiste UTC-tijden voor InfluxDB\nlet start = new Date(`${datum}T00:00:00`).toISOString();\nlet stop = new Date(`${datum}T23:59:59.999`).toISOString();\n\n// Bewaar de datum voor het volgende blokje (Format voor Chart.js)\nmsg.gekozenDatum = datum;\n\n// 3. Haal alle 3 de metingen op uit bucket 'energie_db'\nmsg.query = `\n  from(bucket: \"energie_db\")\n    |> range(start: ${start}, stop: ${stop})\n    |> filter(fn: (r) => r[\"_measurement\"] == \"epex_kwartier\" or r[\"_measurement\"] == \"onbalans_kwartier\" or r[\"_measurement\"] == \"onbalans_minuut\")\n    |> filter(fn: (r) => r[\"_field\"] == \"prijs\")\n    |> drop(columns: [\"type\"])\n    |> pivot(rowKey:[\"_time\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n    |> sort(columns: [\"_time\"])\n`;\n\nreturn msg;",
+        "func": "// 1. Haal de datum op uit query, payload of rechtstreeks uit de URL\nlet datum = null;\nif (msg.req && msg.req.query && msg.req.query.datum) {\n    datum = msg.req.query.datum;\n} else if (msg.req && msg.req.url && msg.req.url.includes(\"datum=\")) {\n    let match = msg.req.url.match(/datum=([0-9]{4}-[0-9]{2}-[0-9]{2})/);\n    if (match) datum = match[1];\n} else if (msg.payload && msg.payload.datum) {\n    datum = msg.payload.datum;\n}\n\nif (!datum) {\n    datum = new Date().toISOString().split('T')[0];\n}\n\n// Laat onder het blokje in Node-RED zien welke datum binnenkomt!\nnode.status({ fill: \"green\", shape: \"dot\", text: \"Datum: \" + datum });\n\n// 2. Haal iets ruimer op (-2 uur tot +2 uur rondom de UTC dag) zodat tijdzone Zomer/Wintertijd nooit data mist!\nlet dStart = new Date(datum + \"T00:00:00Z\");\ndStart.setHours(dStart.getHours() - 3);\nlet dStop = new Date(datum + \"T23:59:59Z\");\ndStop.setHours(dStop.getHours() + 3);\n\nmsg.query = `\n  from(bucket: \"energie_db\")\n    |> range(start: ${dStart.toISOString()}, stop: ${dStop.toISOString()})\n    |> filter(fn: (r) => r[\"_measurement\"] == \"epex_kwartier\" or r[\"_measurement\"] == \"onbalans_kwartier\" or r[\"_measurement\"] == \"onbalans_minuut\")\n    |> filter(fn: (r) => r[\"_field\"] == \"prijs\")\n    |> keep(columns: [\"_time\", \"_measurement\", \"_value\"])\n    |> pivot(rowKey:[\"_time\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n    |> sort(columns: [\"_time\"])\n`;\n\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 620,
-        "y": 1260,
+        "x": 650,
+        "y": 1080,
         "wires": [
             [
                 "query_influx"
@@ -811,8 +810,8 @@
         "precision": "",
         "retentionPolicy": "",
         "org": "epex_org",
-        "x": 800,
-        "y": 1260,
+        "x": 850,
+        "y": 1080,
         "wires": [
             [
                 "format_chart"
@@ -824,15 +823,15 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Format voor Chart.js",
-        "func": "if (!msg.payload || msg.payload.length === 0) {\n    msg.payload = [];\n    return msg;\n}\n\nlet datum = msg.gekozenDatum || new Date().toISOString().split('T')[0];\nlet startDagMs = new Date(`${datum}T00:00:00`).getTime();\n\nlet epexMap = {};\nlet onbKwartierMap = {};\nlet onbMinuutMap = {};\n\n// 1. Verzamel alle waarden uit InfluxDB op basis van hun timestamp\nmsg.payload.forEach(row => {\n    let t = new Date(row._time).getTime();\n    if (row.epex_kwartier !== undefined && row.epex_kwartier !== null) {\n        epexMap[t] = Number(row.epex_kwartier);\n    }\n    if (row.onbalans_kwartier !== undefined && row.onbalans_kwartier !== null) {\n        onbKwartierMap[t] = Number(row.onbalans_kwartier);\n    }\n    if (row.onbalans_minuut !== undefined && row.onbalans_minuut !== null) {\n        onbMinuutMap[t] = Number(row.onbalans_minuut);\n    }\n});\n\n// 2. Bouw een vaste tijdlijn van 00:00 t/m 23:59 (zodat de X-as nooit vervormt)\nlet resultaat = [];\n\nfor (let q = 0; q < 96; q++) {\n    let kwartierMs = startDagMs + (q * 15 * 60000);\n    let epexPrijs = epexMap[kwartierMs] ?? null;\n    let onbKwartierPrijs = onbKwartierMap[kwartierMs] ?? null;\n\n    for (let m = 0; m < 15; m++) {\n        let minuutMs = kwartierMs + (m * 60000);\n        let d = new Date(minuutMs);\n        let tijdStr = d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n\n        resultaat.push({\n            tijdstip: `${datum} ${tijdStr}`,\n            prijs: epexPrijs,\n            onbalans_kwartier: onbKwartierPrijs,\n            onbalans_minuut: onbMinuutMap[minuutMs] ?? null\n        });\n    }\n}\n\nmsg.payload = resultaat;\nreturn msg;",
+        "func": "if (!msg.payload || !Array.isArray(msg.payload)) {\n    msg.payload = [];\n    return msg;\n}\n\nlet gevraagdeDatum = null;\nif (msg.req && msg.req.query && msg.req.query.datum) {\n    gevraagdeDatum = msg.req.query.datum;\n} else if (msg.req && msg.req.url && msg.req.url.includes(\"datum=\")) {\n    let match = msg.req.url.match(/datum=([0-9]{4}-[0-9]{2}-[0-9]{2})/);\n    if (match) gevraagdeDatum = match[1];\n}\n\n// Map om de inkomende data te bewaren per minuut (als timestamp)\nlet dataMapEpex = {};\nlet dataMapOnb15 = {};\nlet dataMapOnb1 = {};\n\nmsg.payload.forEach(row => {\n    if (!row._time) return;\n    let d = new Date(row._time);\n    let ms = d.getTime();\n\n    if (row.epex_kwartier !== undefined && row.epex_kwartier !== null) {\n        dataMapEpex[ms] = Number(row.epex_kwartier);\n    }\n    if (row.onbalans_kwartier !== undefined && row.onbalans_kwartier !== null) {\n        dataMapOnb15[ms] = Number(row.onbalans_kwartier);\n    }\n    if (row.onbalans_minuut !== undefined && row.onbalans_minuut !== null) {\n        dataMapOnb1[ms] = Number(row.onbalans_minuut);\n    }\n});\n\nlet doelDatumStr = gevraagdeDatum || new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Brussels' }).split(' ')[0];\nlet startDagMs = new Date(doelDatumStr + \"T00:00:00\").getTime();\n\nlet resultaat = [];\n\n// Loop over alle 96 kwartieren in een dag\nfor (let q = 0; q < 96; q++) {\n    let kwartierMs = startDagMs + (q * 15 * 60000);\n    \n    // De kwartier-prijs geldt voor de komende 15 minuten!\n    let prijsEpexKwartier = dataMapEpex[kwartierMs] ?? null;\n    let prijsOnb15Kwartier = dataMapOnb15[kwartierMs] ?? null;\n\n    // Loop nu over de 15 minuten BINNEN dit kwartier\n    for (let m = 0; m < 15; m++) {\n        let minuutMs = kwartierMs + (m * 60000);\n        let curD = new Date(minuutMs);\n        \n        let tijdStr = curD.getHours().toString().padStart(2, '0') + \":\" + curD.getMinutes().toString().padStart(2, '0');\n        let timestampVolledig = `${doelDatumStr} ${tijdStr}`;\n\n        resultaat.push({\n            tijdstip: timestampVolledig,\n            prijs: prijsEpexKwartier,             // Altijd ingevuld voor het hele kwartier\n            onbalans_kwartier: prijsOnb15Kwartier, // Altijd ingevuld voor het hele kwartier\n            onbalans_minuut: dataMapOnb1[minuutMs] ?? null\n        });\n    }\n}\n\nnode.status({ fill: \"blue\", shape: \"dot\", text: `${doelDatumStr}: ${resultaat.length} rijen` });\nmsg.payload = resultaat;\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1000,
-        "y": 1260,
+        "x": 1040,
+        "y": 1080,
         "wires": [
             [
                 "register_out"
@@ -840,21 +839,80 @@
         ]
     },
     {
-        "id": "58ae86aba52a56b9",
-        "type": "debug",
+        "id": "api_kwartierprofiel_in",
+        "type": "http in",
         "z": "44ae34a704e13388",
-        "name": "debug 2",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "statusVal": "",
-        "statusType": "auto",
+        "name": "",
+        "url": "/api/kwartierprofiel",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 440,
+        "y": 1140,
+        "wires": [
+            [
+                "build_flux_profiel"
+            ]
+        ]
+    },
+    {
+        "id": "build_flux_profiel",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Bouw Flux (Periode)",
+        "func": "let startDatum = (msg.req && msg.req.query && msg.req.query.start) \n                 ? msg.req.query.start \n                 : new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];\nlet eindDatum = (msg.req && msg.req.query && msg.req.query.eind) \n                ? msg.req.query.eind \n                : new Date().toISOString().split('T')[0];\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `Raw dump: ${startDatum} tot ${eindDatum}` });\n\nlet dStart = new Date(startDatum + \"T00:00:00Z\");\ndStart.setHours(dStart.getHours() - 3);\nlet dStop = new Date(eindDatum + \"T23:59:59Z\");\ndStop.setHours(dStop.getHours() + 3);\n\nmsg.query = `\nfrom(bucket: \"energie_db\")\n  |> range(start: ${dStart.toISOString()}, stop: ${dStop.toISOString()})\n  |> filter(fn: (r) => r[\"_measurement\"] == \"epex_kwartier\" or r[\"_measurement\"] == \"onbalans_kwartier\" or r[\"_measurement\"] == \"onbalans_minuut\")\n  |> filter(fn: (r) => r[\"_field\"] == \"prijs\")\n`;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 660,
-        "y": 1340,
-        "wires": []
+        "y": 1140,
+        "wires": [
+            [
+                "query_influx_profiel"
+            ]
+        ]
+    },
+    {
+        "id": "query_influx_profiel",
+        "type": "influxdb in",
+        "z": "44ae34a704e13388",
+        "influxdb": "c37561ff29513d8a",
+        "name": "InfluxDB 2.7",
+        "query": "",
+        "rawOutput": false,
+        "precision": "",
+        "retentionPolicy": "",
+        "org": "epex_org",
+        "x": 850,
+        "y": 1140,
+        "wires": [
+            [
+                "format_chart_profiel"
+            ]
+        ]
+    },
+    {
+        "id": "format_chart_profiel",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Bereken Gem, Min & Max",
+        "func": "if (!msg.payload || !Array.isArray(msg.payload)) {\n    msg.payload = [];\n    return msg;\n}\n\nlet startDatum = (msg.req && msg.req.query && msg.req.query.start) ? msg.req.query.start : null;\nlet eindDatum = (msg.req && msg.req.query && msg.req.query.eind) ? msg.req.query.eind : null;\n\n// Eén efficiënte formatter voor Datum én Tijd in de Belgische tijdzone\nconst dtFormatter = new Intl.DateTimeFormat('sv-SE', {\n    timeZone: 'Europe/Brussels',\n    year: 'numeric', month: '2-digit', day: '2-digit',\n    hour: '2-digit', minute: '2-digit', hour12: false\n});\n\nlet buckets = {};\n\nfor (let i = 0; i < msg.payload.length; i++) {\n    let row = msg.payload[i];\n    if (!row._time) continue;\n    \n    // Converteert bliksemsnel naar formaat \"YYYY-MM-DD HH:mm\"\n    let dtStr = dtFormatter.format(new Date(row._time));\n    let localDate = dtStr.substring(0, 10);\n    let tijdStr = dtStr.substring(11, 16);\n\n    // BUGFIX: Zorg dat de +/- 3 uur marge niet overbloedt naar andere dagen!\n    if (startDatum && localDate < startDatum) continue;\n    if (eindDatum && localDate > eindDatum) continue;\n\n    if (!buckets[tijdStr]) {\n        buckets[tijdStr] = { epex: [], onb15: [], onb1: [] };\n    }\n\n    if (row._measurement === \"epex_kwartier\") buckets[tijdStr].epex.push(row._value);\n    else if (row._measurement === \"onbalans_kwartier\") buckets[tijdStr].onb15.push(row._value);\n    else if (row._measurement === \"onbalans_minuut\") buckets[tijdStr].onb1.push(row._value);\n}\n\nfunction avg(arr) {\n    if (!arr || arr.length === 0) return null;\n    let sum = 0;\n    for (let i = 0; i < arr.length; i++) sum += arr[i];\n    return sum / arr.length;\n}\n\nlet resultaat = [];\nlet curEpexGem = null, curEpexMin = null, curEpexMax = null, curOnb15Gem = null;\n\nfor (let h = 0; h < 24; h++) {\n    for (let m = 0; m < 60; m++) {\n        let tijdStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');\n        let b = buckets[tijdStr] || { epex: [], onb15: [], onb1: [] };\n\n        if (m % 15 === 0) {\n            curEpexGem = avg(b.epex);\n            curEpexMin = b.epex.length > 0 ? Math.min(...b.epex) : null;\n            curEpexMax = b.epex.length > 0 ? Math.max(...b.epex) : null;\n            curOnb15Gem = avg(b.onb15);\n        }\n\n        resultaat.push({\n            tijdstip: tijdStr,\n            epex_gem: curEpexGem,\n            epex_min: curEpexMin,\n            epex_max: curEpexMax,\n            onb15_gem: curOnb15Gem,\n            onb1_gem: avg(b.onb1)\n        });\n    }\n}\n\nmsg.payload = resultaat;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1050,
+        "y": 1140,
+        "wires": [
+            [
+                "register_out"
+            ]
+        ]
     },
     {
         "id": "c37561ff29513d8a",
@@ -936,7 +994,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "287c95554cf34667",
+        "id": "a651fa32d5ebf918",
         "type": "global-config",
         "env": [],
         "modules": {
