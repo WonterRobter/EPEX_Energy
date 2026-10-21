@@ -915,6 +915,82 @@
         ]
     },
     {
+        "id": "api_maandoverzicht",
+        "type": "http in",
+        "z": "44ae34a704e13388",
+        "name": "",
+        "url": "/api/maandoverzicht",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 450,
+        "y": 1200,
+        "wires": [
+            [
+                "build_flux_maand"
+            ]
+        ]
+    },
+    {
+        "id": "build_flux_maand",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Bouw Flux (Maand)",
+        "func": "let jaar = (msg.req && msg.req.query && msg.req.query.jaar) ? parseInt(msg.req.query.jaar) : new Date().getFullYear();\nlet maand = (msg.req && msg.req.query && msg.req.query.maand) ? parseInt(msg.req.query.maand) : (new Date().getMonth() + 1);\n\n// Maak een keiharde 'Prefix' string (bijv. \"2026-10-\") om later streng te filteren\nlet strJaar = String(jaar);\nlet strMaand = String(maand).padStart(2, '0');\nlet targetPrefix = `${strJaar}-${strMaand}-`;\n\nlet aantalDagen = new Date(jaar, maand, 0).getDate();\n\n// Pak héél ruim (+- 4 uur) de UTC grenzen, we filteren de overloop er in de volgende stap toch uit!\nlet dStart = new Date(Date.UTC(jaar, maand - 1, 1, -4, 0, 0));\nlet dStop = new Date(Date.UTC(jaar, maand, 0, 27, 59, 59));\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${strMaand}-${strJaar} (${aantalDagen}d)` });\n\nmsg.query = `\nfrom(bucket: \"energie_db\")\n  |> range(start: ${dStart.toISOString()}, stop: ${dStop.toISOString()})\n  |> filter(fn: (r) => r[\"_measurement\"] == \"epex_kwartier\" or r[\"_measurement\"] == \"onbalans_kwartier\" or r[\"_measurement\"] == \"onbalans_minuut\")\n  |> filter(fn: (r) => r[\"_field\"] == \"prijs\")\n`;\n\nmsg.targetPrefix = targetPrefix;\nmsg.aantalDagen = aantalDagen;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 1200,
+        "wires": [
+            [
+                "query_influx_maand"
+            ]
+        ]
+    },
+    {
+        "id": "query_influx_maand",
+        "type": "influxdb in",
+        "z": "44ae34a704e13388",
+        "influxdb": "c37561ff29513d8a",
+        "name": "InfluxDB 2.7",
+        "query": "",
+        "rawOutput": false,
+        "precision": "",
+        "retentionPolicy": "",
+        "org": "epex_org",
+        "x": 850,
+        "y": 1200,
+        "wires": [
+            [
+                "calc_maand_turbo"
+            ]
+        ]
+    },
+    {
+        "id": "calc_maand_turbo",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Bereken Per Dag (Turbo)",
+        "func": "if (!msg.payload || !Array.isArray(msg.payload)) {\n    msg.payload = [];\n    return msg;\n}\n\nconst dtFormatter = new Intl.DateTimeFormat('sv-SE', {\n    timeZone: 'Europe/Brussels',\n    year: 'numeric', month: '2-digit', day: '2-digit'\n});\n\nlet buckets = {};\n\nfor (let i = 0; i < msg.payload.length; i++) {\n    let row = msg.payload[i];\n    if (!row._time) continue;\n    \n    let dtStr = dtFormatter.format(new Date(row._time));\n    \n    // DE BUGFIX: Als de datum NIET begint met \"2026-10-\", sla hem dan genadeloos over!\n    if (!dtStr.startsWith(msg.targetPrefix)) continue;\n\n    let dagNummer = parseInt(dtStr.split('-')[2], 10);\n\n    if (!buckets[dagNummer]) {\n        buckets[dagNummer] = { epex: [], onb15: [], onb1: [] };\n    }\n\n    if (row._measurement === \"epex_kwartier\") buckets[dagNummer].epex.push(row._value);\n    else if (row._measurement === \"onbalans_kwartier\") buckets[dagNummer].onb15.push(row._value);\n    else if (row._measurement === \"onbalans_minuut\") buckets[dagNummer].onb1.push(row._value);\n}\n\nfunction avg(arr) {\n    if (!arr || arr.length === 0) return null;\n    let sum = 0;\n    for (let i = 0; i < arr.length; i++) sum += arr[i];\n    return sum / arr.length;\n}\n\nlet resultaat = [];\n\nfor (let d = 1; d <= msg.aantalDagen; d++) {\n    let b = buckets[d] || { epex: [], onb15: [], onb1: [] };\n\n    resultaat.push({\n        dag: d,\n        epex_gem: avg(b.epex),\n        epex_min: b.epex.length > 0 ? Math.min(...b.epex) : null,\n        epex_max: b.epex.length > 0 ? Math.max(...b.epex) : null,\n        onb15_gem: avg(b.onb15),\n        onb1_gem: avg(b.onb1)\n    });\n}\n\nmsg.payload = resultaat;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1050,
+        "y": 1200,
+        "wires": [
+            [
+                "register_out"
+            ]
+        ]
+    },
+    {
         "id": "c37561ff29513d8a",
         "type": "influxdb",
         "hostname": "127.0.0.1",
@@ -994,7 +1070,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "a651fa32d5ebf918",
+        "id": "5b7206d5c9a4d8a0",
         "type": "global-config",
         "env": [],
         "modules": {
