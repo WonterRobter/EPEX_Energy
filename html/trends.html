@@ -9,7 +9,6 @@
     <title>Trends - EPEXenergy</title>
 </head>
 <body class="dark">
-    
     <!-- ZIJBALK -->
     <section id="sidebar">
         <div>
@@ -28,20 +27,18 @@
                         </div>
                         <i class='bx bx-chevron-down'></i>
                     </a>
-                    <!-- Alle 4 de subtabs binnen trends.html -->
                     <ul class="sub-menu">
-                        <!-- We sturen ze nu naar trends.html mét een instructie in de URL! -->
-                        <li><a href="trends.html?tab=kwartier" class="sub-tab-link" data-tab="kwartier">Kwartierprofielen</a></li>
+                        <li><a href="trends.html?tab=kwartier" class="sub-tab-link active-sub" data-tab="kwartier">Kwartierprofielen</a></li>
                         <li><a href="trends.html?tab=maand" class="sub-tab-link" data-tab="maand">Maandoverzicht</a></li>
-                        <li><a href="trends.html?tab=jaar" class="sub-tab-link" data-tab="jaar">Jaaroverzicht</a></li>
                         <li><a href="trends.html?tab=seizoen" class="sub-tab-link" data-tab="seizoen">Seizoensprofiel</a></li>
+                        <li><a href="trends.html?tab=jaar" class="sub-tab-link" data-tab="jaar">Jaaroverzicht</a></li>
                     </ul>
                 </li>
                 <li><a href="meldingen.html"><i class='bx bxs-bell'></i><span class="text">Meldingen</span></a></li>
-                <li><a href="planner.html"><i class='bx bx-time-five'></i><span class="text">Planner</span></a></li>
+                <li><a href="info.html"><i class='bx bx-info-circle'></i><span class="text">Info (Over)</span></a></li>
             </ul>
 
-            <!-- PERIODE KALENDER WIDGET -->
+            <!-- 1. PERIODE KALENDER WIDGET -->
             <div class="kalender-sectie" id="periode-kalender-sectie">
                 <p style="font-size: 10px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px;">KIES PERIODE</p>
                 <div class="kalender-box">
@@ -53,9 +50,33 @@
                     <div class="kalender-weekdagen">
                         <div>ma</div><div>di</div><div>wo</div><div>do</div><div>vr</div><div>za</div><div>zo</div>
                     </div>
-                    <div id="kalender-dagen">
-                        <!-- Javascript vult hier de dagen in -->
+                    <div id="kalender-dagen"></div>
+                </div>
+            </div>
+
+            <!-- 2. MAAND KALENDER WIDGET -->
+            <div class="kalender-sectie" id="maand-kalender-sectie" style="display: none;">
+                <p style="font-size: 10px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px;">KIES MAAND</p>
+                <div class="kalender-box">
+                    <div class="kalender-header">
+                        <i class='bx bx-chevron-left' id="mk-prev-year"></i>
+                        <span id="mk-year-label">2026</span>
+                        <i class='bx bx-chevron-right' id="mk-next-year"></i>
                     </div>
+                    <div id="mk-maanden-grid" class="kalender-grid-3x4"></div>
+                </div>
+            </div>
+
+            <!-- 3. JAAR KALENDER WIDGET -->
+            <div class="kalender-sectie" id="jaar-kalender-sectie" style="display: none;">
+                <p style="font-size: 10px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px;">KIES JAAR</p>
+                <div class="kalender-box">
+                    <div class="kalender-header">
+                        <i class='bx bx-chevron-left' id="jk-prev-range"></i>
+                        <span id="jk-range-label">2019 - 2030</span>
+                        <i class='bx bx-chevron-right' id="jk-next-range"></i>
+                    </div>
+                    <div id="jk-jaren-grid" class="kalender-grid-3x4"></div>
                 </div>
             </div>
         </div> 
@@ -66,13 +87,13 @@
             <li><a href="login.html" class="logout"><i class='bx bx-power-off'></i><span class="text">Uitloggen</span></a></li>
         </ul>
     </section>
+    <div id="sidebar-overlay"></div>
 
     <!-- INHOUD RECHTS -->
     <section id="content">
         <nav>
             <i class='bx bx-menu bx-sm'></i>
-            <a href="#" class="nav-link">Analyse Dashboard</a>
-            <form action="#"><div class="form-input" style="display: none;"></div></form>
+            <form action="#" style="margin-right: auto;"><div class="form-input" style="display: none;"></div></form>
             <input type="checkbox" class="checkbox" id="switch-mode" checked hidden />
             <label class="swith-lm" for="switch-mode"><i class="bx bxs-moon"></i><i class="bx bx-sun"></i><div class="ball"></div></label>
             <a href="profiel.html" class="profile" id="profileIcon"><img src="https://ui-avatars.com/api/?name=Wouter+D&background=3C91E6&color=fff" alt="Profile"></a>
@@ -86,64 +107,29 @@
                 </div>
             </div>
 
-            <!-- De 3 Statistiek Blokken -->
-            <ul class="box-info">
-                <li>
-                    <span class="text">
-                        <p>Gemiddelde (Periode)</p>
-                        <h3 id="profiel-gem">Laden...</h3>
-                    </span>
-                </li>
-                <li>
-                    <span class="text">
-                        <p>Goedkoopste Kwartier (Gem)</p>
-                        <h3 id="profiel-min">Laden...</h3>
-                    </span>
-                </li>
-                <li>
-                    <span class="text">
-                        <p>Duurste Kwartier (Gem)</p>
-                        <h3 id="profiel-max">Laden...</h3>
-                    </span>
-                </li>
+            <ul class="box-info" style="margin-bottom: 24px;">
+                <li><span class="text"><p>Gemiddelde (Periode)</p><h3 id="profiel-gem">Laden...</h3></span></li>
+                <li><span class="text"><p>Goedkoopste Kwartier (Gem)</p><h3 id="profiel-min">Laden...</h3></span></li>
+                <li><span class="text"><p>Duurste Kwartier (Gem)</p><h3 id="profiel-max">Laden...</h3></span></li>
             </ul>
 
-            <!-- Legenda rechtsboven de grafiek -->
             <div class="chart-controls" style="justify-content: flex-end;">
                 <div class="chart-legend" id="profiel-legend">
-                    <div class="legend-item" data-dataset="0">
-                        <span class="legend-box" style="background: #22d3ee;"></span>
-                        <span class="legend-text">Gem. EPEX</span>
-                    </div>
-                    <div class="legend-item" data-dataset="1">
-                        <span class="legend-box" style="background: #f97316;"></span>
-                        <span class="legend-text">Gem. Onbalans (15m)</span>
-                    </div>
-                    <div class="legend-item hidden-dataset" data-dataset="2">
-                        <span class="legend-box" style="background: #a855f7;"></span>
-                        <span class="legend-text">Gem. Onbalans (1m)</span>
-                    </div>
-                    <div class="legend-item" data-dataset="3">
-                        <span class="legend-line" style="border-color: #10b981;"></span>
-                        <span class="legend-text">Min EPEX</span>
-                    </div>
-                    <div class="legend-item" data-dataset="4">
-                        <span class="legend-line" style="border-color: #ef4444;"></span>
-                        <span class="legend-text">Max EPEX</span>
-                    </div>
+                    <div class="legend-item" data-dataset="0"><span class="legend-box" style="background: #22d3ee;"></span><span class="legend-text">Gem. EPEX</span></div>
+                    <div class="legend-item" data-dataset="1"><span class="legend-box" style="background: #f97316;"></span><span class="legend-text">Gem. Onbalans (15m)</span></div>
+                    <div class="legend-item hidden-dataset" data-dataset="2"><span class="legend-box" style="background: #a855f7;"></span><span class="legend-text">Gem. Onbalans (1m)</span></div>
+                    <div class="legend-item" data-dataset="3"><span class="legend-line" style="border-color: #10b981;"></span><span class="legend-text">Min EPEX</span></div>
+                    <div class="legend-item" data-dataset="4"><span class="legend-line" style="border-color: #ef4444;"></span><span class="legend-text">Max EPEX</span></div>
                 </div>
             </div>
 
             <div class="table-data">
                 <div class="order">
-                    <div class="chart-wrapper">
-                        <canvas id="profielGrafiek"></canvas>
-                    </div>
+                    <div class="chart-wrapper"><canvas id="profielGrafiek"></canvas></div>
                 </div>
             </div>
         </main>
 
-        <!-- TAB 2: MAANDOVERZICHT -->
         <!-- TAB 2: MAANDOVERZICHT -->
         <main id="view-maand" style="display: none;">
             <div class="head-title">
@@ -152,82 +138,87 @@
                 </div>
             </div>
 
-            <!-- Maand Navigatie (In de chart-controls) -->
-            <div class="chart-controls" style="justify-content: space-between; margin-bottom: 24px; position: relative;">
-                <div class="date-nav" style="position: relative;">
-                    <button id="btn-prev-maand" title="Vorige Maand"><i class='bx bxs-left-arrow'></i></button>
-                    <button id="btn-maand-selector" style="font-weight: 700; cursor: pointer; background: var(--light); color: var(--blue);">oktober 2026</button>
-                    <button id="btn-next-maand" title="Volgende Maand"><i class='bx bxs-right-arrow'></i></button>
+            <ul class="box-info" style="margin-bottom: 24px;">
+                <li><span class="text"><p>Maandgemiddelde</p><h3 id="maand-stat-gem">Laden...</h3></span></li>
+                <li><span class="text"><p>Goedkoopste Dag (Gem)</p><h3 id="maand-stat-min">Laden...</h3></span></li>
+                <li><span class="text"><p>Duurste Dag (Gem)</p><h3 id="maand-stat-max">Laden...</h3></span></li>
+            </ul>
 
-                    <!-- Het nieuwe Maand-Kiezer Pop-upje -->
-                    <div id="maand-picker-modal" class="kalender-box" style="display: none; position: absolute; top: 45px; left: 50%; transform: translateX(-50%); z-index: 100; width: 240px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
-                        <div class="kalender-header">
-                            <i class='bx bx-chevron-left' id="mp-prev-year" style="cursor:pointer;"></i>
-                            <span id="mp-year">2026</span>
-                            <i class='bx bx-chevron-right' id="mp-next-year" style="cursor:pointer;"></i>
-                        </div>
-                        <div id="mp-months" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px;">
-                            <!-- JS vult hier de 12 maanden in -->
-                        </div>
-                    </div>
+            <div class="chart-controls" style="justify-content: space-between;">
+                <div class="date-nav">
+                    <button id="btn-prev-maand" title="Vorige Maand"><i class='bx bxs-left-arrow'></i></button>
+                    <button id="btn-maand-selector" style="font-weight: 700; cursor: pointer;">Deze maand</button>
+                    <button id="btn-next-maand" title="Volgende Maand"><i class='bx bxs-right-arrow'></i></button>
                 </div>
 
                 <div class="chart-legend" id="maand-legend">
-                    <div class="legend-item" data-dataset="0">
-                        <span class="legend-box" style="background: #22d3ee;"></span>
-                        <span class="legend-text">Gem. EPEX</span>
-                    </div>
-                    <div class="legend-item" data-dataset="1">
-                        <span class="legend-box" style="background: #f97316;"></span>
-                        <span class="legend-text">Gem. Onbalans (15m)</span>
-                    </div>
-                    <div class="legend-item hidden-dataset" data-dataset="2">
-                        <span class="legend-box" style="background: #a855f7;"></span>
-                        <span class="legend-text">Gem. Onbalans (1m)</span>
-                    </div>
-                    <div class="legend-item" data-dataset="3">
-                        <span class="legend-line" style="border-color: #10b981;"></span>
-                        <span class="legend-text">Min EPEX</span>
-                    </div>
-                    <div class="legend-item" data-dataset="4">
-                        <span class="legend-line" style="border-color: #ef4444;"></span>
-                        <span class="legend-text">Max EPEX</span>
-                    </div>
+                    <div class="legend-item" data-dataset="0"><span class="legend-box" style="background: #22d3ee;"></span><span class="legend-text">Gem. EPEX</span></div>
+                    <div class="legend-item" data-dataset="1"><span class="legend-box" style="background: #f97316;"></span><span class="legend-text">Gem. Onbalans (15m)</span></div>
+                    <div class="legend-item hidden-dataset" data-dataset="2"><span class="legend-box" style="background: #a855f7;"></span><span class="legend-text">Gem. Onbalans (1m)</span></div>
+                    <div class="legend-item" data-dataset="3"><span class="legend-line" style="border-color: #10b981;"></span><span class="legend-text">Min EPEX</span></div>
+                    <div class="legend-item" data-dataset="4"><span class="legend-line" style="border-color: #ef4444;"></span><span class="legend-text">Max EPEX</span></div>
                 </div>
             </div>
 
-            <!-- Maand Statistieken met extra margin onderaan! -->
+            <div class="table-data">
+                <div class="order">
+                    <div class="chart-wrapper"><canvas id="maandGrafiek"></canvas></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- TAB 3: JAAROVERZICHT -->
+        <main id="view-jaar" style="display: none;">
+            <div class="head-title">
+                <div class="left">
+                    <h1 id="jaar-titel">Jaaroverzicht (----)</h1>
+                </div>
+            </div>
+
             <ul class="box-info" style="margin-bottom: 24px;">
-                <li>
-                    <span class="text">
-                        <p>Maandgemiddelde</p>
-                        <h3 id="maand-stat-gem">Laden...</h3>
-                    </span>
-                </li>
-                <li>
-                    <span class="text">
-                        <p>Goedkoopste Dag (Gem)</p>
-                        <h3 id="maand-stat-min">Laden...</h3>
-                    </span>
-                </li>
-                <li>
-                    <span class="text">
-                        <p>Duurste Dag (Gem)</p>
-                        <h3 id="maand-stat-max">Laden...</h3>
-                    </span>
-                </li>
+                <li><span class="text"><p>Jaargemiddelde</p><h3 id="jaar-stat-gem">Laden...</h3></span></li>
+                <li><span class="text"><p>Goedkoopste Maand (Gem)</p><h3 id="jaar-stat-min">Laden...</h3></span></li>
+                <li><span class="text"><p>Duurste Maand (Gem)</p><h3 id="jaar-stat-max">Laden...</h3></span></li>
             </ul>
+
+            <div class="chart-controls" style="justify-content: space-between;">
+                <div class="date-nav">
+                    <button id="btn-prev-jaar" title="Vorig Jaar"><i class='bx bxs-left-arrow'></i></button>
+                    <button id="btn-jaar-selector" style="font-weight: 700; cursor: pointer;">Dit jaar</button>
+                    <button id="btn-next-jaar" title="Volgend Jaar"><i class='bx bxs-right-arrow'></i></button>
+                </div>
+
+                <div class="chart-legend" id="jaar-legend">
+                    <div class="legend-item" data-dataset="0"><span class="legend-box" style="background: #22d3ee;"></span><span class="legend-text">Gem. EPEX</span></div>
+                    <div class="legend-item" data-dataset="1"><span class="legend-box" style="background: #f97316;"></span><span class="legend-text">Gem. Onbalans (15m)</span></div>
+                    <div class="legend-item hidden-dataset" data-dataset="2"><span class="legend-box" style="background: #a855f7;"></span><span class="legend-text">Gem. Onbalans (1m)</span></div>
+                    <div class="legend-item" data-dataset="3"><span class="legend-line" style="border-color: #10b981;"></span><span class="legend-text">Min EPEX</span></div>
+                    <div class="legend-item" data-dataset="4"><span class="legend-line" style="border-color: #ef4444;"></span><span class="legend-text">Max EPEX</span></div>
+                </div>
+            </div>
 
             <div class="table-data">
                 <div class="order">
-                    <div class="chart-wrapper">
-                        <canvas id="maandGrafiek"></canvas>
-                    </div>
+                    <div class="chart-wrapper"><canvas id="jaarGrafiek"></canvas></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- TAB 4: SEIZOENSPROFIEL -->
+        <main id="view-seizoen" style="display: none;">
+            <div class="head-title">
+                <div class="left">
+                    <h1 id="seizoen-titel">Seizoensprofiel</h1>
+                </div>
+            </div>
+            <div class="table-data">
+                <div class="order">
+                    <p style="color: var(--dark-grey);">Hier komt zo meteen het Seizoensprofiel!</p>
                 </div>
             </div>
         </main>
     </section>
 
-    <script src="js/trends.js?v=8"></script>
+    <script src="js/trends.js?v=9"></script>
 </body>
 </html>

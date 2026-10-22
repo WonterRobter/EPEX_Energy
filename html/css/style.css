@@ -1,23 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Poppins:wght@400;500;600;700&display=swap');
 
-* {
+*, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-a {
-    text-decoration: none;
-}
-
-li {
-    list-style: none;
-}
+a { text-decoration: none; color: inherit; }
+li { list-style: none; }
 
 :root {
     --poppins: 'Poppins', sans-serif;
     --lato: 'Lato', sans-serif;
-
     --light: #F9F9F9;
     --blue: #3C91E6;
     --cyan: #22d3ee;
@@ -46,13 +40,10 @@ html, body {
     font-family: var(--poppins);
 }
 
-/* ==========================================
-   SIDEBAR (Verbreed naar 260px voor kalender)
-   ========================================== */
+/* ================= SIDEBAR ================= */
 #sidebar {
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 0; left: 0;
     width: 260px;
     height: 100vh;
     background: var(--light);
@@ -65,14 +56,11 @@ html, body {
     border-right: 1px solid rgba(56, 189, 248, 0.12);
 }
 
-#sidebar.hide {
-    width: 60px;
-}
-
+#sidebar.hide { width: 60px; }
 #sidebar.hide .text,
-#sidebar.hide .kalender-sectie {
-    display: none;
-}
+#sidebar.hide .kalender-sectie,
+#sidebar.hide .sub-menu,
+#sidebar.hide .dropdown-btn .bx-chevron-down { display: none !important; }
 
 #sidebar .brand {
     font-size: 20px;
@@ -87,18 +75,9 @@ html, body {
     width: 100%;
     padding: 0 12px;
 }
-
-#sidebar .side-menu.top {
-    margin-top: 10px;
-}
-
-#sidebar .side-menu.bottom {
-    margin-bottom: 12px;
-}
-
-#sidebar .side-menu li {
-    margin-bottom: 4px;
-}
+#sidebar .side-menu.top { margin-top: 10px; }
+#sidebar .side-menu.bottom { margin-bottom: 12px; }
+#sidebar .side-menu li { margin-bottom: 4px; }
 
 #sidebar .side-menu li a {
     width: 100%;
@@ -133,360 +112,12 @@ html, body {
     font-weight: 600;
 }
 
-#sidebar .side-menu li a.logout {
-    color: var(--red);
-}
+#sidebar .side-menu li a.logout { color: var(--red); }
 
-/* ==========================================
-   KALENDER WIDGET (Strakke Versie 2 Look)
-   ========================================== */
-.kalender-sectie {
-    padding: 16px 14px;
-    color: var(--dark-grey);
-}
-
-.kalender-box {
-    background: #09101d;
-    border: 1px solid #0284c7;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.kalender-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 12px;
-    color: #ffffff;
-}
-
-.kalender-header i {
-    cursor: pointer;
-    font-size: 18px;
-    color: var(--dark-grey);
-    transition: 0.2s;
-}
-
-.kalender-header i:hover {
-    color: #ffffff;
-}
-
-#kalender-maand {
-    font-size: 14px;
-    font-weight: 600;
-    color: #38bdf8;
-}
-
-.kalender-weekdagen {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    text-align: center;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 4px 8px;
-    background: rgba(255, 255, 255, 0.05);
-    color: #ffffff;
-}
-
-#kalender-dagen {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    text-align: center;
-    padding: 10px 8px;
-    row-gap: 6px;
-    column-gap: 2px;
-}
-
-.cal-day {
-    width: 26px;
-    height: 26px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    font-size: 11px;
-    cursor: pointer;
-    color: #cbd5e1;
-    background: rgba(56, 189, 248, 0.08);
-    transition: 0.15s ease;
-}
-
-.cal-day:hover {
-    background: rgba(56, 189, 248, 0.3);
-    color: #ffffff;
-}
-
-.cal-day.selected {
-    background: #38bdf8;
-    color: #070b14;
-    font-weight: 700;
-    box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
-}
-
-.cal-day.today:not(.selected) {
-    border: 1px solid #38bdf8;
-    color: #38bdf8;
-}
-
-/* ==========================================
-   CONTENT & NAVBAR (Aangepast op 260px zijbalk)
-   ========================================== */
-#content {
-    position: relative;
-    width: calc(100% - 260px);
-    left: 260px;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    transition: .3s ease;
-}
-
-#sidebar.hide ~ #content {
-    width: calc(100% - 60px);
-    left: 60px;
-}
-
-#content nav {
-    height: 46px;
-    min-height: 46px;
-    background: var(--light);
-    padding: 0 24px;
-    display: flex;
-    align-items: center;
-    grid-gap: 20px;
-    font-family: var(--lato);
-    border-bottom: 1px solid rgba(56, 189, 248, 0.12);
-}
-
-#content nav a { color: var(--dark); }
-#content nav .bx.bx-menu { cursor: pointer; color: var(--dark); }
-#content nav .nav-link { font-size: 14px; }
-#content nav form { margin-right: auto; }
-#content nav .profile img {
-    width: 30px;
-    height: 30px;
-    object-fit: cover;
-    border-radius: 50%;
-}
-
-/* Dark/Light mode schakelaar */
-#content nav .swith-lm {
-    background-color: var(--grey);
-    border-radius: 50px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 3px;
-    position: relative;
-    height: 21px;
-    width: 45px;
-    transform: scale(1.1);
-}
-
-#content nav .swith-lm .ball {
-    background-color: var(--blue);
-    border-radius: 50%;
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    height: 17px;
-    width: 17px;
-    transition: transform 0.3s ease, background-color 0.3s ease;
-}
-
-#content nav .checkbox:checked + .swith-lm .ball {
-    transform: translateX(24px);
-    background-color: var(--orange);
-}
-
-.bxs-moon { color: var(--yellow); font-size: 12px; }
-.bx-sun { color: var(--orange); font-size: 12px; }
-
-/* ==========================================
-   MAIN (1 Pagina, Niet Scrollbaar)
-   ========================================== */
-#content main {
-    flex: 1;
-    width: 100%;
-    padding: 14px 24px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-#content main .head-title .left h1 {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--dark);
-    line-height: 1.2;
-}
-
-/* Live Indicator onder titel */
-.live-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--dark-grey);
-    margin-top: 4px;
-}
-
-.pulse-dot {
-    width: 8px;
-    height: 8px;
-    background-color: var(--green);
-    border-radius: 50%;
-    box-shadow: 0 0 8px var(--green);
-}
-
-/* De 3 Statistiek Blokken */
-#content main .box-info {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-gap: 16px;
-    margin-top: 12px;
-    width: 100%;
-}
-
-#content main .box-info li {
-    padding: 12px 18px;
-    background: var(--light);
-    border: 1px solid rgba(56, 189, 248, 0.22);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-}
-
-#content main .box-info li .text p {
-    font-size: 12px;
-    color: var(--dark-grey);
-    margin-bottom: 4px;
-}
-
-#content main .box-info li .text h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--dark);
-}
-
-.unit-label {
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--dark-grey);
-}
-
-/* ==========================================
-   CONTROLS BALK (< Vandaag > & Legenda)
-   ========================================== */
-.chart-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 12px;
-    margin-bottom: 8px;
-}
-
-.date-nav {
-    display: flex;
-    gap: 6px;
-}
-
-.date-nav button {
-    background: var(--light);
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    color: var(--dark);
-    padding: 5px 12px;
-    border-radius: 5px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: 0.2s ease;
-}
-
-.date-nav button#btn-today {
-    color: var(--cyan);
-}
-
-.date-nav button:hover {
-    background: rgba(56, 189, 248, 0.15);
-    border-color: var(--cyan);
-}
-
-/* Klikbare Legenda Rechts */
-.chart-legend {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    cursor: pointer;
-    font-size: 12px;
-    color: var(--dark);
-    user-select: none;
-    transition: opacity 0.2s ease;
-}
-
-.legend-box {
-    width: 12px;
-    height: 12px;
-    border-radius: 3px;
-    display: inline-block;
-}
-
-/* Doorstreepte stijl als een grafieklijn uit staat */
-.legend-item.hidden-dataset {
-    opacity: 0.45;
-}
-
-.legend-item.hidden-dataset .legend-text {
-    text-decoration: line-through;
-    color: var(--dark-grey);
-}
-
-/* ==========================================
-   GRAFIEK VAK
-   ========================================== */
-#content main .table-data {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    min-height: 0;
-}
-
-#content main .table-data .order {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    border-radius: 8px;
-    background: var(--light);
-    border: 1px solid rgba(56, 189, 248, 0.22);
-    padding: 16px;
-    min-height: 0;
-}
-
-.chart-wrapper {
-    flex: 1;
-    position: relative;
-    width: 100%;
-    min-height: 0;
-}
-
-/* ==========================================
-   DROPDOWN MENU (Trends)
-   ========================================== */
+/* Dropdown Submenu */
 #sidebar .side-menu li .dropdown-btn {
     display: flex;
-    justify-content: space-between; /* Zorgt dat het pijltje rechts staat */
+    justify-content: space-between;
     align-items: center;
     width: 100%;
     cursor: pointer;
@@ -494,48 +125,14 @@ html, body {
 
 #sidebar .side-menu li .dropdown-btn .bx-chevron-down {
     transition: transform 0.3s ease;
-    min-width: 20px; /* Overschrijft de brede icon-margin */
+    min-width: 20px;
     font-size: 16px;
 }
 
-/* Roteer het pijltje als hij open staat */
 #sidebar .side-menu li.show-menu .dropdown-btn .bx-chevron-down {
     transform: rotate(-180deg);
 }
 
-/* Het verborgen submenu */
-#sidebar .side-menu .sub-menu {
-    display: none;
-    padding-left: 36px; /* Inspringen zodat het onder de iconen valt */
-    margin-top: 4px;
-    margin-bottom: 8px;
-}
-
-#sidebar .side-menu li.show-menu .sub-menu {
-    display: block;
-}
-
-#sidebar .side-menu .sub-menu li a {
-    height: 32px; /* Iets dunner dan hoofdmenu-knoppen */
-    font-size: 13px;
-    color: var(--dark-grey);
-    border-radius: 6px;
-}
-
-#sidebar .side-menu .sub-menu li a:hover,
-#sidebar .side-menu .sub-menu li a.active-sub {
-    color: var(--blue);
-    background: transparent;
-    font-weight: 600;
-}
-
-/* Als sidebar dicht is, mag het submenu niet zichtbaar zijn */
-#sidebar.hide .sub-menu,
-#sidebar.hide .dropdown-btn .bx-chevron-down {
-    display: none !important;
-}
-
-/* Het verborgen submenu met vloeiende animatie (zoals in de video) */
 #sidebar .side-menu .sub-menu {
     max-height: 0;
     overflow: hidden;
@@ -545,7 +142,7 @@ html, body {
 }
 
 #sidebar .side-menu li.show-menu .sub-menu {
-    max-height: 200px; /* Hoog genoeg voor 4 a 5 items */
+    max-height: 200px;
     margin-top: 4px;
     margin-bottom: 8px;
 }
@@ -567,66 +164,285 @@ html, body {
     opacity: 1;
 }
 
-/* Als sidebar dicht is, verberg submenu direct */
-#sidebar.hide .sub-menu,
-#sidebar.hide .dropdown-btn .bx-chevron-down {
+/* ================= KALENDER WIDGET ================= */
+.kalender-sectie { padding: 16px 14px; color: var(--dark-grey); }
+.kalender-box {
+    background: #09101d;
+    border: 1px solid #0284c7;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.kalender-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    color: #ffffff;
+}
+
+.kalender-header i {
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--dark-grey);
+    transition: 0.2s;
+}
+.kalender-header i:hover { color: #ffffff; }
+#kalender-maand { font-size: 14px; font-weight: 600; color: #38bdf8; }
+
+.kalender-weekdagen, #kalender-dagen {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+}
+
+.kalender-weekdagen {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+}
+
+#kalender-dagen {
+    padding: 10px 8px;
+    row-gap: 6px;
+    column-gap: 2px;
+}
+
+.cal-day {
+    width: 26px; height: 26px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 11px;
+    cursor: pointer;
+    color: #cbd5e1;
+    background: rgba(56, 189, 248, 0.08);
+    transition: 0.15s ease;
+}
+
+.cal-day:hover { background: rgba(56, 189, 248, 0.3); color: #ffffff; }
+.cal-day.selected, .cal-day.range-start, .cal-day.range-end {
+    background: #38bdf8 !important;
+    color: #070b14 !important;
+    font-weight: 700;
+}
+.cal-day.range-start { border-radius: 50% 4px 4px 50%; }
+.cal-day.range-end { border-radius: 4px 50% 50% 4px; }
+.cal-day.range-start.range-end { border-radius: 50%; }
+.cal-day.in-range { background: rgba(34, 211, 238, 0.22) !important; color: #cbd5e1 !important; }
+.cal-day.today:not(.selected) { border: 1px solid #38bdf8; color: #38bdf8; }
+
+/* ================= CONTENT & NAVBAR ================= */
+#content {
+    position: relative;
+    width: calc(100% - 260px);
+    left: 260px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: .3s ease;
+}
+
+#sidebar.hide ~ #content { width: calc(100% - 60px); left: 60px; }
+
+#content nav {
+    height: 46px; min-height: 46px;
+    background: var(--light);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-family: var(--lato);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.12);
+}
+
+#content nav .bx-menu { cursor: pointer; }
+#content nav .nav-link { font-size: 14px; }
+#content nav form { margin-right: auto; }
+#content nav .profile img { width: 30px; height: 30px; object-fit: cover; border-radius: 50%; }
+
+/* Dark/Light mode switch */
+#content nav .swith-lm {
+    background-color: var(--grey);
+    border-radius: 50px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3px;
+    position: relative;
+    height: 21px; width: 45px;
+    transform: scale(1.1);
+}
+
+#content nav .swith-lm .ball {
+    background-color: var(--blue);
+    border-radius: 50%;
+    position: absolute;
+    top: 2px; left: 2px;
+    height: 17px; width: 17px;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+#content nav .checkbox:checked + .swith-lm .ball {
+    transform: translateX(24px);
+    background-color: var(--orange);
+}
+
+.bxs-moon { color: var(--yellow); font-size: 12px; }
+.bx-sun { color: var(--orange); font-size: 12px; }
+
+/* ================= MAIN & WIDGETS ================= */
+#content main {
+    flex: 1; width: 100%;
+    padding: 14px 24px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#content main .head-title .left h1 {
+    font-size: 20px; font-weight: 600;
+    color: var(--dark); line-height: 1.2;
+}
+
+.live-status { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--dark-grey); margin-top: 4px; }
+.pulse-dot { width: 8px; height: 8px; background-color: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); }
+
+#content main .box-info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px; margin-top: 12px; width: 100%;
+}
+
+#content main .box-info li {
+    padding: 12px 18px;
+    background: var(--light);
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    border-radius: 8px;
+    display: flex; align-items: center;
+}
+
+#content main .box-info li .text p { font-size: 12px; color: var(--dark-grey); margin-bottom: 4px; }
+#content main .box-info li .text h3 { font-size: 16px; font-weight: 600; color: var(--dark); }
+.unit-label { font-size: 13px; font-weight: 400; color: var(--dark-grey); }
+
+/* Controls & Legend */
+.chart-controls { display: flex; justify-content: space-between; align-items: center; margin: 12px 0 8px; }
+.date-nav { display: flex; gap: 6px; }
+
+.date-nav button {
+    background: var(--light);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: var(--dark);
+    padding: 5px 12px; border-radius: 5px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: 0.2s ease;
+}
+.date-nav button#btn-today { color: var(--cyan); }
+.date-nav button:hover { background: rgba(56, 189, 248, 0.15); border-color: var(--cyan); }
+
+.chart-legend { display: flex; align-items: center; gap: 18px; }
+.legend-item { display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 12px; color: var(--dark); user-select: none; transition: opacity 0.2s ease; }
+.legend-box { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.legend-item.hidden-dataset { opacity: 0.45; }
+.legend-item.hidden-dataset .legend-text { text-decoration: line-through; color: var(--dark-grey); }
+.legend-line { width: 14px; height: 0; border-top: 2px dashed; display: inline-block; }
+
+/* Table / Chart area */
+#content main .table-data, #content main .table-data .order, .chart-wrapper {
+    flex: 1; display: flex; flex-direction: column; width: 100%; min-height: 0;
+}
+#content main .table-data .order {
+    border-radius: 8px; background: var(--light);
+    border: 1px solid rgba(56, 189, 248, 0.22); padding: 16px;
+}
+.chart-wrapper { position: relative; }
+
+/* Maand/Jaar Kiezer & Modals */
+.mp-month-btn, .cal-item-btn {
+    text-align: center; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.2s ease;
+}
+.mp-month-btn { background: rgba(139, 155, 180, 0.1); color: var(--dark-grey); padding: 8px 0; }
+.mp-month-btn:hover, .mp-month-btn.selected { background: var(--blue); color: #fff; }
+.mp-month-btn.selected { font-weight: bold; }
+
+.kalender-grid-3x4 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding-top: 6px; }
+.cal-item-btn { padding: 8px 4px; font-weight: 500; color: var(--dark); background: rgba(139, 155, 180, 0.08); }
+.cal-item-btn:hover { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+.cal-item-btn.active { background: #38bdf8 !important; color: #070b14 !important; font-weight: 700; }
+
+/* ================= LIGHT MODE FIXES ================= */
+body:not(.dark) .kalender-sectie p { color: var(--dark-grey); }
+body:not(.dark) .kalender-box { background: var(--light); border: 1px solid #cbd5e1; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04); }
+body:not(.dark) .kalender-header { color: var(--dark); border-bottom: 1px solid #e2e8f0; }
+body:not(.dark) .kalender-header i { color: var(--dark-grey); }
+body:not(.dark) .kalender-weekdagen { background: #f1f5f9; color: #475569; }
+body:not(.dark) .cal-day { color: #1e293b; background: transparent; }
+body:not(.dark) .cal-day:hover { background: #e2e8f0; }
+body:not(.dark) .cal-day.in-range { background: rgba(56, 189, 248, 0.25) !important; color: #0f172a !important; }
+body:not(.dark) .cal-day.today { border-color: var(--blue); color: var(--blue); }
+body:not(.dark) .cal-item-btn { background: #f1f5f9; color: #1e293b; }
+body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
+
+
+/* ==========================================
+   VASTE ZIJBALK OP DESKTOP & OVERLAY OP MOBIEL
+   ========================================== */
+
+/* Verberg het hamburger-menu standaard op brede schermen */
+#content nav .bx-menu {
     display: none !important;
 }
 
-/* ==========================================
-   PERIODE KALENDER STIJLEN (Trends)
-   ========================================== */
-.cal-day.range-start {
-    background: #38bdf8 !important;
-    color: #070b14 !important;
-    font-weight: 700;
-    border-radius: 50% 4px 4px 50%;
+/* Donkere waas achter het menu als hij op gsm openstaat */
+#sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1999;
+    backdrop-filter: blur(2px);
 }
 
-.cal-day.range-end {
-    background: #38bdf8 !important;
-    color: #070b14 !important;
-    font-weight: 700;
-    border-radius: 4px 50% 50% 4px;
-}
+/* Als het scherm smaller is dan de hoogte (Portret / GSM) */
+@media (max-aspect-ratio: 1/1), (max-width: 768px) {
+    /* Toon de hamburger-knop weer */
+    #content nav .bx-menu {
+        display: block !important;
+        cursor: pointer;
+    }
 
-.cal-day.range-start.range-end {
-    border-radius: 50%;
-}
+    /* Laat de hoofdinhoud de volledige schermbreedte gebruiken */
+    #content {
+        width: 100% !important;
+        left: 0 !important;
+    }
 
-.cal-day.in-range {
-    background: rgba(34, 211, 238, 0.22) !important;
-    color: #cbd5e1 !important;
-}
+    /* Verberg de zijbalk standaard links buiten beeld (zwevend boven de grafiek) */
+    #sidebar {
+        position: fixed !important;
+        left: -280px !important;
+        width: 260px !important;
+        z-index: 2000 !important;
+        transition: left 0.3s ease !important;
+        box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
+    }
 
-.legend-line {
-    width: 14px;
-    height: 0;
-    border-top: 2px dashed;
-    display: inline-block;
-}
+    /* Schuif de zijbalk over de grafiek heen als .mobile-open actief is */
+    #sidebar.mobile-open {
+        left: 0 !important;
+    }
 
-/* ==========================================
-   MAAND-KIEZER MODAL (Trends)
-   ========================================== */
-.mp-month-btn {
-    background: rgba(139, 155, 180, 0.1);
-    color: var(--dark-grey);
-    border-radius: 6px;
-    text-align: center;
-    padding: 8px 0;
-    cursor: pointer;
-    font-size: 12px;
-    transition: all 0.2s ease;
-}
-
-.mp-month-btn:hover {
-    background: var(--blue);
-    color: #fff;
-}
-
-.mp-month-btn.selected {
-    background: var(--blue);
-    color: #fff;
-    font-weight: bold;
+    #sidebar.mobile-open ~ #sidebar-overlay {
+        display: block;
+    }
 }

@@ -10,18 +10,35 @@ if (!ingelogdeGebruiker) {
 */
 
 // ==========================================
-// 1. ZIJBALK, DROPDOWN & DARK MODE LOGICA
+// 1. ZIJBALK (MOBIEL OVERLAY), DROPDOWN & DARK MODE
 // ==========================================
-const allSideMenu = document.querySelectorAll('#sidebar .side-menu.top > li > a:not(.dropdown-btn)');
+const sidebar = document.getElementById('sidebar');
+const menuBar = document.querySelector('#content nav .bx.bx-menu');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+function sluitMobielMenu() {
+    sidebar.classList.remove('mobile-open');
+}
+
+if (menuBar) {
+    menuBar.addEventListener('click', () => {
+        sidebar.classList.toggle('mobile-open');
+    });
+}
+
+if (sidebarOverlay) {
+    sidebarOverlay.addEventListener('click', sluitMobielMenu);
+}
+
+// Sluit het mobiele menu zodra je op een echte link klikt (behalve de Trends-uitklapknop zelf)
+const allSideMenu = document.querySelectorAll('#sidebar .side-menu a:not(.dropdown-btn)');
 allSideMenu.forEach(item => {
-    const li = item.parentElement;
     item.addEventListener('click', function () {
-        allSideMenu.forEach(i => i.parentElement.classList.remove('active'));
-        li.classList.add('active');
+        sluitMobielMenu();
     });
 });
 
-// Dropdown functionaliteit: ENKEL open/dicht klappen, niet selecteren!
+// Dropdown functionaliteit voor Trends: ENKEL open/dicht klappen
 const allDropdowns = document.querySelectorAll('#sidebar .dropdown-btn');
 allDropdowns.forEach(btn => {
     btn.addEventListener('click', function(e) {
@@ -29,16 +46,6 @@ allDropdowns.forEach(btn => {
         const parentLi = this.parentElement;
         parentLi.classList.toggle('show-menu');
     });
-});
-
-const menuBar = document.querySelector('#content nav .bx.bx-menu');
-const sidebar = document.getElementById('sidebar');
-menuBar.addEventListener('click', () => {
-    sidebar.classList.toggle('hide');
-    // Sluit alle dropdowns als de zijbalk krimpt
-    if (sidebar.classList.contains('hide')) {
-        document.querySelectorAll('#sidebar .side-menu li.dropdown').forEach(li => li.classList.remove('show-menu'));
-    }
 });
 
 const switchMode = document.getElementById('switch-mode');

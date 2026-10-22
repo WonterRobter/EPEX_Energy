@@ -1,15 +1,33 @@
 // ==========================================
-// 1. ZIJBALK, DROPDOWN & DARK MODE LOGICA
+// 1. ZIJBALK (MOBIEL OVERLAY), DROPDOWN & DARK MODE
 // ==========================================
-const allSideMenu = document.querySelectorAll('#sidebar .side-menu.top > li > a:not(.dropdown-btn)');
+const sidebar = document.getElementById('sidebar');
+const menuBar = document.querySelector('#content nav .bx.bx-menu');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+function sluitMobielMenu() {
+    sidebar.classList.remove('mobile-open');
+}
+
+if (menuBar) {
+    menuBar.addEventListener('click', () => {
+        sidebar.classList.toggle('mobile-open');
+    });
+}
+
+if (sidebarOverlay) {
+    sidebarOverlay.addEventListener('click', sluitMobielMenu);
+}
+
+// Sluit het mobiele menu zodra je op een echte link klikt (behalve de Trends-uitklapknop zelf)
+const allSideMenu = document.querySelectorAll('#sidebar .side-menu a:not(.dropdown-btn)');
 allSideMenu.forEach(item => {
-    const li = item.parentElement;
     item.addEventListener('click', function () {
-        allSideMenu.forEach(i => i.parentElement.classList.remove('active'));
-        li.classList.add('active');
+        sluitMobielMenu();
     });
 });
 
+// Dropdown functionaliteit voor Trends: ENKEL open/dicht klappen
 const allDropdowns = document.querySelectorAll('#sidebar .dropdown-btn');
 allDropdowns.forEach(btn => {
     btn.addEventListener('click', function(e) {
@@ -17,15 +35,6 @@ allDropdowns.forEach(btn => {
         const parentLi = this.parentElement;
         parentLi.classList.toggle('show-menu');
     });
-});
-
-const menuBar = document.querySelector('#content nav .bx.bx-menu');
-const sidebar = document.getElementById('sidebar');
-menuBar.addEventListener('click', () => {
-    sidebar.classList.toggle('hide');
-    if (sidebar.classList.contains('hide')) {
-        document.querySelectorAll('#sidebar .side-menu li.dropdown').forEach(li => li.classList.remove('show-menu'));
-    }
 });
 
 const switchMode = document.getElementById('switch-mode');
@@ -48,43 +57,61 @@ switchMode.addEventListener('change', function () {
 });
 
 // ==========================================
-// 2. SUB-TABS WISSELEN BINNEN TRENDS.HTML (Met URL Support)
+// 2. SUB-TABS WISSELEN BINNEN TRENDS.HTML (Met Zijbalk-Kalenders)
 // ==========================================
 const subTabLinks = document.querySelectorAll('.sub-tab-link');
 const viewKwartier = document.getElementById('view-kwartier');
 const viewMaand = document.getElementById('view-maand');
-const kalenderSectie = document.getElementById('periode-kalender-sectie');
+const viewSeizoen = document.getElementById('view-seizoen');
+const viewJaar = document.getElementById('view-jaar');
+
+const kalenderPeriodeSectie = document.getElementById('periode-kalender-sectie');
+const kalenderMaandSectie = document.getElementById('maand-kalender-sectie');
+const kalenderJaarSectie = document.getElementById('jaar-kalender-sectie');
 
 function openTab(tabNaam) {
     subTabLinks.forEach(l => l.classList.remove('active-sub'));
     const targetLink = document.querySelector(`.sub-tab-link[data-tab="${tabNaam}"]`);
     if (targetLink) targetLink.classList.add('active-sub');
 
+    // Verberg eerst alle schermen en zijbalk-kalenders
     viewKwartier.style.display = 'none';
     viewMaand.style.display = 'none';
-    kalenderSectie.style.display = 'none'; 
+    if (viewSeizoen) viewSeizoen.style.display = 'none';
+    if (viewJaar) viewJaar.style.display = 'none';
+    
+    kalenderPeriodeSectie.style.display = 'none';
+    kalenderMaandSectie.style.display = 'none';
+    kalenderJaarSectie.style.display = 'none';
 
     if (tabNaam === 'kwartier') {
         viewKwartier.style.display = 'flex';
-        kalenderSectie.style.display = 'block';
+        kalenderPeriodeSectie.style.display = 'block';
         laadKwartierProfielData();
     } else if (tabNaam === 'maand') {
         viewMaand.style.display = 'flex';
+        kalenderMaandSectie.style.display = 'block';
+        bouwZijbalkMaandKalender();
         laadMaandOverzicht();
+    } else if (tabNaam === 'seizoen') {
+        if (viewSeizoen) viewSeizoen.style.display = 'flex';
+    } else if (tabNaam === 'jaar') {
+        viewJaar.style.display = 'flex';
+        kalenderJaarSectie.style.display = 'block';
+        bouwZijbalkJaarKalender();
+        laadJaarOverzicht();
     }
 }
 
-// Luister naar normale kliks in het menu
 subTabLinks.forEach(link => {
     link.addEventListener('click', function(e) {
         e.preventDefault();
-        openTab(this.getAttribute('data-tab'));
-        // Update stilletjes de URL zodat je pagina-refresh op dezelfde tab blijft
-        window.history.pushState({}, '', `trends.html?tab=${this.getAttribute('data-tab')}`);
+        const gekozenTab = this.getAttribute('data-tab');
+        openTab(gekozenTab);
+        window.history.pushState({}, '', `trends.html?tab=${gekozenTab}`);
     });
 });
 
-// Zodra de pagina laadt: check of we via een andere pagina komen met ?tab=maand in de link!
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab') || 'kwartier';
@@ -490,65 +517,64 @@ async function laadKwartierProfielData() {
 }
 
 // ==========================================
-// 7. MAANDOVERZICHT LOGICA, KIEZER & GRAFIEK
+// 7. MAANDOVERZICHT LOGICA & ZIJBALK MAAND-KALENDER
 // ==========================================
 let actieveMaandDatum = new Date();
+let maandKalenderJaar = actieveMaandDatum.getFullYear();
 let maandGrafiek = null;
 let datasetZichtbaarMaand = [true, true, false, true, true];
 
-const maandNamenLijst = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
+const maandNamenKort = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 const maandNamenVol = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
 
-// Maand-Kiezer Logica
-const btnMaandSelector = document.getElementById('btn-maand-selector');
-const maandPickerModal = document.getElementById('maand-picker-modal');
-let pickerJaar = actieveMaandDatum.getFullYear();
+function bouwZijbalkMaandKalender() {
+    document.getElementById('mk-year-label').innerText = maandKalenderJaar;
+    const grid = document.getElementById('mk-maanden-grid');
+    grid.innerHTML = '';
 
-btnMaandSelector.addEventListener('click', () => {
-    maandPickerModal.style.display = maandPickerModal.style.display === 'none' ? 'block' : 'none';
-    pickerJaar = actieveMaandDatum.getFullYear();
-    tekenMaandPicker();
-});
-
-document.getElementById('mp-prev-year').addEventListener('click', () => { pickerJaar--; tekenMaandPicker(); });
-document.getElementById('mp-next-year').addEventListener('click', () => { pickerJaar++; tekenMaandPicker(); });
-
-function tekenMaandPicker() {
-    document.getElementById('mp-year').innerText = pickerJaar;
-    const container = document.getElementById('mp-months');
-    container.innerHTML = '';
-    
-    for (let i = 0; i < 12; i++) {
-        const div = document.createElement('div');
-        div.className = 'mp-month-btn';
-        if (pickerJaar === actieveMaandDatum.getFullYear() && i === actieveMaandDatum.getMonth()) {
-            div.classList.add('selected');
+    for (let m = 0; m < 12; m++) {
+        const btn = document.createElement('div');
+        btn.className = 'cal-item-btn';
+        if (maandKalenderJaar === actieveMaandDatum.getFullYear() && m === actieveMaandDatum.getMonth()) {
+            btn.classList.add('active');
         }
-        div.innerText = maandNamenLijst[i];
-        div.addEventListener('click', () => {
-            actieveMaandDatum.setFullYear(pickerJaar);
-            actieveMaandDatum.setMonth(i);
-            maandPickerModal.style.display = 'none';
+        btn.innerText = maandNamenKort[m];
+        btn.addEventListener('click', () => {
+            actieveMaandDatum.setFullYear(maandKalenderJaar);
+            actieveMaandDatum.setMonth(m);
+            bouwZijbalkMaandKalender();
             laadMaandOverzicht();
         });
-        container.appendChild(div);
+        grid.appendChild(btn);
     }
 }
 
-// Sluit popup als je ergens anders klikt
-document.addEventListener('click', (e) => {
-    if (!btnMaandSelector.contains(e.target) && !maandPickerModal.contains(e.target)) {
-        maandPickerModal.style.display = 'none';
-    }
+document.getElementById('mk-prev-year').addEventListener('click', () => {
+    maandKalenderJaar--;
+    bouwZijbalkMaandKalender();
+});
+document.getElementById('mk-next-year').addEventListener('click', () => {
+    maandKalenderJaar++;
+    bouwZijbalkMaandKalender();
 });
 
+// Pijltjes & "Deze maand"-knop boven de grafiek
 document.getElementById('btn-prev-maand').addEventListener('click', () => {
     actieveMaandDatum.setMonth(actieveMaandDatum.getMonth() - 1);
+    maandKalenderJaar = actieveMaandDatum.getFullYear();
+    bouwZijbalkMaandKalender();
     laadMaandOverzicht();
 });
-
 document.getElementById('btn-next-maand').addEventListener('click', () => {
     actieveMaandDatum.setMonth(actieveMaandDatum.getMonth() + 1);
+    maandKalenderJaar = actieveMaandDatum.getFullYear();
+    bouwZijbalkMaandKalender();
+    laadMaandOverzicht();
+});
+document.getElementById('btn-maand-selector').addEventListener('click', () => {
+    actieveMaandDatum = new Date();
+    maandKalenderJaar = actieveMaandDatum.getFullYear();
+    bouwZijbalkMaandKalender();
     laadMaandOverzicht();
 });
 
@@ -570,7 +596,6 @@ async function laadMaandOverzicht() {
     const maandNaamVol = maandNamenVol[maand - 1];
 
     document.getElementById('maand-titel').innerText = `Maandoverzicht (${maandNaamVol} ${jaar})`;
-    btnMaandSelector.innerText = `${maandNaamVol} ${jaar}`;
 
     try {
         const url = `http://192.168.1.130:1880/api/maandoverzicht?jaar=${jaar}&maand=${maand}&_t=${Date.now()}`;
@@ -591,16 +616,10 @@ async function laadMaandOverzicht() {
         let goedkoopsteGem = Infinity, goedkoopsteDag = "--";
         let duursteGem = -Infinity, duursteDag = "--";
 
-        let labelsDag = [];
-        let dataEpexGem = [];
-        let dataOnb15Gem = [];
-        let dataOnb1Gem = [];
-        let dataEpexMin = [];
-        let dataEpexMax = [];
+        let labelsDag = [], dataEpexGem = [], dataOnb15Gem = [], dataOnb1Gem = [], dataEpexMin = [], dataEpexMax = [];
 
         data.forEach(item => {
             labelsDag.push(`${item.dag} ${maandNaamVol.substring(0, 3)}`);
-
             dataEpexGem.push(item.epex_gem);
             dataOnb15Gem.push(item.onb15_gem);
             dataOnb1Gem.push(item.onb1_gem);
@@ -618,7 +637,6 @@ async function laadMaandOverzicht() {
         const maandGem = aantalDagen > 0 ? (som / aantalDagen) : 0;
 
         document.getElementById('maand-stat-gem').innerHTML = `<span style="color: ${bepaalPrijsKleur(maandGem)};">€ ${maandGem.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
-        // HIER IS TEKST GEFIXT NAAR BIJV "19 oktober"
         document.getElementById('maand-stat-min').innerHTML = `<span style="color: #ffffff; font-size: 20px;">${goedkoopsteDag} ${maandNaamVol}</span> <span style="color: ${bepaalPrijsKleur(goedkoopsteGem)}; font-size: 13px;">(€${goedkoopsteGem.toFixed(2)})</span>`;
         document.getElementById('maand-stat-max').innerHTML = `<span style="color: #ffffff; font-size: 20px;">${duursteDag} ${maandNaamVol}</span> <span style="color: ${bepaalPrijsKleur(duursteGem)}; font-size: 13px;">(€${duursteGem.toFixed(2)})</span>`;
 
@@ -629,7 +647,6 @@ async function laadMaandOverzicht() {
             maandGrafiek.data.datasets[2].data = dataOnb1Gem;
             maandGrafiek.data.datasets[3].data = dataEpexMin;
             maandGrafiek.data.datasets[4].data = dataEpexMax;
-            
             datasetZichtbaarMaand.forEach((zichtbaar, idx) => { maandGrafiek.setDatasetVisibility(idx, zichtbaar); });
             maandGrafiek.update();
             return;
@@ -661,9 +678,167 @@ async function laadMaandOverzicht() {
                 }
             }
         });
-
     } catch (error) {
         console.error("Fout bij ophalen van maandoverzicht:", error);
+    }
+}
+
+// ==========================================
+// 8. JAAROVERZICHT LOGICA & ZIJBALK JAAR-KALENDER
+// ==========================================
+let actiefJaar = new Date().getFullYear();
+let jaarGridStart = actiefJaar - 5; // Toont blok van 12 jaar rondom huidig jaar
+let jaarGrafiek = null;
+let datasetZichtbaarJaar = [true, true, false, true, true];
+
+function bouwZijbalkJaarKalender() {
+    const eindJaar = jaarGridStart + 11;
+    document.getElementById('jk-range-label').innerText = `${jaarGridStart} - ${eindJaar}`;
+    const grid = document.getElementById('jk-jaren-grid');
+    grid.innerHTML = '';
+
+    for (let y = jaarGridStart; y <= eindJaar; y++) {
+        const btn = document.createElement('div');
+        btn.className = 'cal-item-btn';
+        if (y === actiefJaar) btn.classList.add('active');
+        btn.innerText = y;
+        btn.addEventListener('click', () => {
+            actiefJaar = y;
+            bouwZijbalkJaarKalender();
+            laadJaarOverzicht();
+        });
+        grid.appendChild(btn);
+    }
+}
+
+document.getElementById('jk-prev-range').addEventListener('click', () => {
+    jaarGridStart -= 12;
+    bouwZijbalkJaarKalender();
+});
+document.getElementById('jk-next-range').addEventListener('click', () => {
+    jaarGridStart += 12;
+    bouwZijbalkJaarKalender();
+});
+
+// Pijltjes & "Dit jaar"-knop boven de grafiek
+document.getElementById('btn-prev-jaar').addEventListener('click', () => {
+    actiefJaar--;
+    if (actiefJaar < jaarGridStart) jaarGridStart -= 12;
+    bouwZijbalkJaarKalender();
+    laadJaarOverzicht();
+});
+document.getElementById('btn-next-jaar').addEventListener('click', () => {
+    actiefJaar++;
+    if (actiefJaar > jaarGridStart + 11) jaarGridStart += 12;
+    bouwZijbalkJaarKalender();
+    laadJaarOverzicht();
+});
+document.getElementById('btn-jaar-selector').addEventListener('click', () => {
+    actiefJaar = new Date().getFullYear();
+    jaarGridStart = actiefJaar - 5;
+    bouwZijbalkJaarKalender();
+    laadJaarOverzicht();
+});
+
+document.querySelectorAll('#jaar-legend .legend-item').forEach(item => {
+    item.addEventListener('click', function () {
+        const index = parseInt(this.getAttribute('data-dataset'));
+        datasetZichtbaarJaar[index] = !datasetZichtbaarJaar[index];
+        this.classList.toggle('hidden-dataset', !datasetZichtbaarJaar[index]);
+        if (jaarGrafiek) {
+            jaarGrafiek.setDatasetVisibility(index, datasetZichtbaarJaar[index]);
+            jaarGrafiek.update();
+        }
+    });
+});
+
+async function laadJaarOverzicht() {
+    document.getElementById('jaar-titel').innerText = `Jaaroverzicht (${actiefJaar})`;
+
+    try {
+        const url = `http://192.168.1.130:1880/api/jaaroverzicht?jaar=${actiefJaar}&_t=${Date.now()}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const heeftData = data && data.some(d => d.epex_gem !== null);
+
+        if (!heeftData) {
+            document.getElementById('jaar-stat-gem').innerText = "Geen data";
+            document.getElementById('jaar-stat-min').innerText = "Geen data";
+            document.getElementById('jaar-stat-max').innerText = "Geen data";
+            if (jaarGrafiek) { jaarGrafiek.destroy(); jaarGrafiek = null; }
+            return;
+        }
+
+        let som = 0, aantalMaanden = 0;
+        let goedkoopsteGem = Infinity, goedkoopsteMaandNaam = "--";
+        let duursteGem = -Infinity, duursteMaandNaam = "--";
+
+        let labelsMaand = [], dataEpexGem = [], dataOnb15Gem = [], dataOnb1Gem = [], dataEpexMin = [], dataEpexMax = [];
+
+        data.forEach(item => {
+            const mIndex = item.maand - 1;
+            labelsMaand.push(maandNamenVol[mIndex]);
+            dataEpexGem.push(item.epex_gem);
+            dataOnb15Gem.push(item.onb15_gem);
+            dataOnb1Gem.push(item.onb1_gem);
+            dataEpexMin.push(item.epex_min);
+            dataEpexMax.push(item.epex_max);
+
+            if (item.epex_gem !== null && !isNaN(item.epex_gem)) {
+                som += item.epex_gem;
+                aantalMaanden++;
+                if (item.epex_gem < goedkoopsteGem) { goedkoopsteGem = item.epex_gem; goedkoopsteMaandNaam = maandNamenVol[mIndex]; }
+                if (item.epex_gem > duursteGem) { duursteGem = item.epex_gem; duursteMaandNaam = maandNamenVol[mIndex]; }
+            }
+        });
+
+        const jaarGem = aantalMaanden > 0 ? (som / aantalMaanden) : 0;
+
+        document.getElementById('jaar-stat-gem').innerHTML = `<span style="color: ${bepaalPrijsKleur(jaarGem)};">€ ${jaarGem.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
+        document.getElementById('jaar-stat-min').innerHTML = `<span style="color: #ffffff; font-size: 20px;">${goedkoopsteMaandNaam}</span> <span style="color: ${bepaalPrijsKleur(goedkoopsteGem)}; font-size: 13px;">(€${goedkoopsteGem.toFixed(2)})</span>`;
+        document.getElementById('jaar-stat-max').innerHTML = `<span style="color: #ffffff; font-size: 20px;">${duursteMaandNaam}</span> <span style="color: ${bepaalPrijsKleur(duursteGem)}; font-size: 13px;">(€${duursteGem.toFixed(2)})</span>`;
+
+        if (jaarGrafiek) {
+            jaarGrafiek.data.labels = labelsMaand;
+            jaarGrafiek.data.datasets[0].data = dataEpexGem;
+            jaarGrafiek.data.datasets[1].data = dataOnb15Gem;
+            jaarGrafiek.data.datasets[2].data = dataOnb1Gem;
+            jaarGrafiek.data.datasets[3].data = dataEpexMin;
+            jaarGrafiek.data.datasets[4].data = dataEpexMax;
+            datasetZichtbaarJaar.forEach((zichtbaar, idx) => { jaarGrafiek.setDatasetVisibility(idx, zichtbaar); });
+            jaarGrafiek.update();
+            return;
+        }
+
+        const ctx = document.getElementById('jaarGrafiek').getContext('2d');
+        jaarGrafiek = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labelsMaand,
+                datasets: [
+                    { type: 'bar', label: 'Gem. EPEX', data: dataEpexGem, backgroundColor: 'rgba(34, 211, 238, 0.65)', borderColor: '#22d3ee', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarJaar[0] },
+                    { type: 'bar', label: 'Gem. Onbalans (15m)', data: dataOnb15Gem, backgroundColor: 'rgba(249, 115, 22, 0.65)', borderColor: '#f97316', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarJaar[1] },
+                    { type: 'bar', label: 'Gem. Onbalans (1m)', data: dataOnb1Gem, backgroundColor: 'rgba(168, 85, 247, 0.65)', borderColor: '#a855f7', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarJaar[2] },
+                    { type: 'line', label: 'Min EPEX', data: dataEpexMin, borderColor: '#10b981', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 3, pointBackgroundColor: '#10b981', hidden: !datasetZichtbaarJaar[3] },
+                    { type: 'line', label: 'Max EPEX', data: dataEpexMax, borderColor: '#ef4444', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 3, pointBackgroundColor: '#ef4444', hidden: !datasetZichtbaarJaar[4] }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, animation: { duration: 350, easing: 'easeOutQuart' },
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#8b9bb4' } },
+                    y: { suggestedMin: 0, grid: { color: (ctx) => ctx.tick.value === 0 ? 'rgba(255, 255, 255, 0.15)' : 'rgba(139, 155, 180, 0.08)' }, ticks: { color: '#8b9bb4' }, title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: function(ctx) { const val = ctx.parsed.y; if (val === null || val === undefined) return null; return ` ${ctx.dataset.label}: € ${Math.round(val)} /MWh`; } } }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Fout bij ophalen van jaaroverzicht:", error);
     }
 }
 
