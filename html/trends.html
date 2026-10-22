@@ -208,12 +208,26 @@
         <main id="view-seizoen" style="display: none;">
             <div class="head-title">
                 <div class="left">
-                    <h1 id="seizoen-titel">Seizoensprofiel</h1>
+                    <h1 id="seizoen-titel">Seizoensprofielen</h1>
                 </div>
             </div>
+
+            <!-- Vergelijk-balk (met vinkjes voor 2025, 2026, 2027, etc.) -->
+            <div class="seizoen-vergelijk-balk">
+                <span>Vergelijk:</span>
+                <div id="seizoen-jaren-checks" style="display: flex; gap: 14px; flex-wrap: wrap;">
+                    <!-- JS vult hier automatisch de jaren met vinkjes in -->
+                </div>
+            </div>
+
             <div class="table-data">
                 <div class="order">
-                    <p style="color: var(--dark-grey);">Hier komt zo meteen het Seizoensprofiel!</p>
+                    <!-- Gecentreerde legenda met gekleurde ringen (zoals in je screenshot) -->
+                    <div id="seizoen-legend" class="seizoen-legend-bar"></div>
+
+                    <div class="chart-wrapper">
+                        <canvas id="seizoenGrafiek"></canvas>
+                    </div>
                 </div>
             </div>
         </main>

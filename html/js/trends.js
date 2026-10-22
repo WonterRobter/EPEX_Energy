@@ -95,6 +95,8 @@ function openTab(tabNaam) {
         laadMaandOverzicht();
     } else if (tabNaam === 'seizoen') {
         if (viewSeizoen) viewSeizoen.style.display = 'flex';
+        initSeizoenJaarChecks();
+        laadSeizoensProfiel();
     } else if (tabNaam === 'jaar') {
         viewJaar.style.display = 'flex';
         kalenderJaarSectie.style.display = 'block';
@@ -839,6 +841,198 @@ async function laadJaarOverzicht() {
         });
     } catch (error) {
         console.error("Fout bij ophalen van jaaroverzicht:", error);
+    }
+}
+
+// ==========================================
+// 9. SEIZOENSPROFIEL LOGICA & KLEURVERVAGING BIJ VERGELIJKEN
+// ==========================================
+let seizoenGrafiek = null;
+let geselecteerdeSeizoenJaren = [new Date().getFullYear()];
+let seizoenChecksGeinit = false;
+
+// Houdt bij welke individuele seizoenslijnen (bijv. "Lente 2026") aan of uit staan
+let verborgenSeizoenLijnen = {};
+
+// Basiskleuren per seizoen [R, G, B] (Groen, Geel, Oranje, Cyaanblauw)
+const SEIZOEN_KLEUREN_RGB = {
+    Lente:  [16, 185, 129],  // #10b981 (Groen)
+    Zomer:  [234, 179, 8],   // #eab308 (Geel)
+    Herfst: [249, 115, 22],  // #f97316 (Oranje)
+    Winter: [56, 189, 248]   // #38bdf8 (Lichtblauw)
+};
+
+function initSeizoenJaarChecks() {
+    if (seizoenChecksGeinit) return;
+    seizoenChecksGeinit = true;
+
+    const container = document.getElementById('seizoen-jaren-checks');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const huidigJaar = new Date().getFullYear();
+    // Toon vinkjes voor vorig jaar, dit jaar en volgend jaar (bijv. 2025, 2026, 2027)
+    const beschikbareJaren = [huidigJaar - 1, huidigJaar, huidigJaar + 1];
+
+    beschikbareJaren.forEach(jaar => {
+        const label = document.createElement('label');
+        label.className = 'seizoen-jaar-check';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = jaar;
+        cb.checked = geselecteerdeSeizoenJaren.includes(jaar);
+
+        cb.addEventListener('change', () => {
+            const aangevinkt = Array.from(container.querySelectorAll('input:checked')).map(el => parseInt(el.value, 10));
+            // Zorg dat er altijd minimaal 1 jaar aangevinkt blijft
+            if (aangevinkt.length === 0) {
+                cb.checked = true;
+                return;
+            }
+            geselecteerdeSeizoenJaren = aangevinkt.sort((a, b) => a - b);
+            laadSeizoensProfiel();
+        });
+
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(jaar));
+        container.appendChild(label);
+    });
+}
+
+async function laadSeizoensProfiel() {
+    try {
+        const jarenParam = geselecteerdeSeizoenJaren.join(',');
+        const url = `http://192.168.1.130:1880/api/seizoensprofiel?jaren=${jarenParam}&_t=${Date.now()}`;
+        const response = await fetch(url);
+        const result = await response.json();
+
+        if (!result || !result.jaren) return;
+
+        const labelsTijd = result.labels || [];
+        const seizoenenVolgorde = ["Lente", "Zomer", "Herfst", "Winter"];
+
+        // Bepaal het nieuwste aangevinkte jaar -> dat jaar krijgt 100% felle kleuren!
+        // Elk ouder jaar vervaagt automatisch (lagere opacity + iets dunnere lijn)
+        const maxJaar = Math.max(...geselecteerdeSeizoenJaren);
+
+        let datasets = [];
+        const legendContainer = document.getElementById('seizoen-legend');
+        legendContainer.innerHTML = '';
+
+        geselecteerdeSeizoenJaren.forEach(jaar => {
+            const jaarData = result.jaren[jaar];
+            if (!jaarData) return;
+
+            const jarenVerschil = maxJaar - jaar;
+            // Nieuwste jaar = 1.0 (fel), 1 jaar ouder = 0.42 (vervaagd), 2+ jaar ouder = 0.25
+            const alpha = jarenVerschil === 0 ? 1.0 : (jarenVerschil === 1 ? 0.42 : 0.25);
+            const lijnDikte = jarenVerschil === 0 ? 2.2 : 1.5;
+
+            seizoenenVolgorde.forEach(seizoen => {
+                const reeks = jaarData[seizoen] || [];
+                const heeftData = reeks.some(v => v !== null && v !== undefined);
+
+                // Als een toekomstig jaar/seizoen nog helemaal geen data heeft in een extra jaar, sla over
+                // (Voor het hoofdjaar tonen we de 4 seizoenen altijd netjes in de legenda)
+                if (!heeftData && geselecteerdeSeizoenJaren.length > 1 && jaar !== geselecteerdeSeizoenJaren[0]) {
+                    return;
+                }
+
+                const [r, g, b] = SEIZOEN_KLEUREN_RGB[seizoen];
+                const kleurRgba = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                const labelNaam = `${seizoen} ${jaar}`;
+                const datasetIndex = datasets.length;
+                const isVerborgen = !!verborgenSeizoenLijnen[labelNaam];
+
+                datasets.push({
+                    label: labelNaam,
+                    data: reeks,
+                    borderColor: kleurRgba,
+                    backgroundColor: 'transparent',
+                    borderWidth: lijnDikte,
+                    stepped: true,
+                    fill: false,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    hidden: isVerborgen
+                });
+
+                // Maak het klikbare ronde legenda-item boven de grafiek
+                const legItem = document.createElement('div');
+                legItem.className = 'seizoen-legend-item' + (isVerborgen ? ' hidden-dataset' : '');
+                legItem.innerHTML = `<span class="seizoen-ring" style="border-color: ${kleurRgba};"></span><span>${labelNaam}</span>`;
+
+                legItem.addEventListener('click', () => {
+                    verborgenSeizoenLijnen[labelNaam] = !verborgenSeizoenLijnen[labelNaam];
+                    const nuVerborgen = verborgenSeizoenLijnen[labelNaam];
+                    legItem.classList.toggle('hidden-dataset', nuVerborgen);
+                    if (seizoenGrafiek) {
+                        seizoenGrafiek.setDatasetVisibility(datasetIndex, !nuVerborgen);
+                        seizoenGrafiek.update();
+                    }
+                });
+
+                legendContainer.appendChild(legItem);
+            });
+        });
+
+        if (seizoenGrafiek) {
+            seizoenGrafiek.destroy();
+            seizoenGrafiek = null;
+        }
+
+        const ctx = document.getElementById('seizoenGrafiek').getContext('2d');
+        seizoenGrafiek = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labelsTijd,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 350, easing: 'easeOutQuart' },
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            color: '#8b9bb4',
+                            autoSkip: false,
+                            maxRotation: 0,
+                            callback: function(val) {
+                                const label = this.getLabelForValue(val);
+                                return label && label.endsWith(':00') ? label : '';
+                            }
+                        }
+                    },
+                    y: {
+                        suggestedMin: 0,
+                        grid: {
+                            color: (ctx) => ctx.tick.value === 0 ? 'rgba(255, 255, 255, 0.15)' : 'rgba(139, 155, 180, 0.08)'
+                        },
+                        ticks: { color: '#8b9bb4' },
+                        title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const val = ctx.parsed.y;
+                                if (val === null || val === undefined) return null;
+                                return ` ${ctx.dataset.label}: € ${val.toFixed(2)} /MWh`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Fout bij ophalen van seizoensprofiel:", error);
     }
 }
 
