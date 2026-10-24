@@ -509,3 +509,141 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
     display: inline-block;
     background: rgba(0, 0, 0, 0.25);
 }
+
+/* ==========================================
+   MOBIELE APP LAYOUT (ENKEL GSM / PORTRET)
+   ========================================== */
+@media (max-aspect-ratio: 1/1), (max-width: 768px) {
+    /* 1. Hamburger & Kruisje */
+    #content nav .bx-menu {
+        display: block !important;
+        cursor: pointer;
+    }
+    #close-mobile-menu {
+        display: block !important;
+    }
+
+    /* 2. Zijbalk & Klikbare Overlay daarnaast */
+    #content {
+        width: 100% !important;
+        left: 0 !important;
+    }
+    #sidebar {
+        position: fixed !important;
+        left: -280px !important;
+        width: 260px !important;
+        height: 100dvh !important;
+        z-index: 2000 !important;
+        transition: left 0.25s ease !important;
+        box-shadow: 5px 0 25px rgba(0, 0, 0, 0.6);
+    }
+    #sidebar.mobile-open {
+        left: 0 !important;
+    }
+    #sidebar-overlay.active {
+        display: block !important;
+    }
+
+    /* 3. Minder dikke marges links/rechts zodat de grafiek breed is & niet scrollt */
+    #content main {
+        padding: 10px 10px 8px 10px !important;
+        height: calc(100dvh - 56px) !important;
+        overflow: hidden !important; /* Geen scrollbalk! */
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    #content main .head-title {
+        margin-bottom: 6px !important;
+    }
+    #content main .head-title .left h1 {
+        font-size: 20px !important;
+        margin-bottom: 2px !important;
+    }
+
+    /* 4. Verberg Gemiddelde & Min/Max op Vandaag, maak Huidige EPEX compact */
+    #content main:not([id^="view-"]) .box-info li:nth-child(2),
+    #content main:not([id^="view-"]) .box-info li:nth-child(3) {
+        display: none !important;
+    }
+
+    #content main .box-info {
+        grid-template-columns: 1fr !important;
+        gap: 6px !important;
+        margin-top: 4px !important;
+        margin-bottom: 8px !important;
+    }
+
+    #content main .box-info li {
+        padding: 10px 14px !important;
+    }
+
+    #content main .box-info li .text {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+
+    #content main .box-info li .text p {
+        margin: 0 !important;
+        font-size: 13px !important;
+    }
+
+    #content main .box-info li .text h3 {
+        font-size: 18px !important;
+        margin: 0 !important;
+    }
+
+    /* 5. Datum-pijltjes BOVEN, Legende netjes en korter DAARONDER */
+    .chart-controls {
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 8px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .date-nav {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    .chart-legend {
+        width: 100% !important;
+        justify-content: center !important;
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+    }
+
+    .legend-item {
+        font-size: 11px !important;
+        gap: 5px !important;
+    }
+
+    /* 6. Grafiek-container exact passend maken zodat onderkant nooit wegvalt */
+    #content main .table-data {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        margin-top: 0 !important;
+    }
+
+    #content main .table-data .order {
+        padding: 8px 6px 4px 2px !important;
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .chart-wrapper {
+        flex: 1 1 auto !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        position: relative !important;
+    }
+    canvas {
+        touch-action: none; /* Zorgt dat vinger-slepen soepel over de grafiek glijdt */
+        user-select: none;
+    }
+    
+}
+

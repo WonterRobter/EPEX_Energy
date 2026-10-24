@@ -23,10 +23,14 @@
     <!-- ZIJBALK -->
     <section id="sidebar">
         <div>
-            <a href="index.html" class="brand">
-                <i class='bx bxs-zap bx-sm' style="margin-left: 16px; margin-right: 10px; color: var(--blue);"></i>
-                <span class="text">EPEXenergy</span>
-            </a>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-right: 16px;">
+                <a href="index.html" class="brand">
+                    <i class='bx bxs-zap bx-sm' style="margin-left: 16px; margin-right: 10px; color: var(--blue);"></i>
+                    <span class="text">EPEXenergy</span>
+                </a>
+                <!-- Het sluit-kruisje (standaard verborgen op desktop) -->
+                <i class='bx bx-x bx-md' id="close-mobile-menu" style="color: var(--dark-grey); cursor: pointer; display: none;"></i>
+            </div>
 
             <ul class="side-menu top">
                 <li class="active"><a href="index.html"><i class='bx bxs-dashboard'></i><span class="text">Vandaag (Actueel)</span></a></li>

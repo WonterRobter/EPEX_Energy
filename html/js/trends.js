@@ -1,19 +1,43 @@
 // ==========================================
-// 1. ZIJBALK (MOBIEL OVERLAY), DROPDOWN & DARK MODE
+// 1. ZIJBALK (MOBIEL OVERLAY + KRUISJE), DROPDOWN & DARK MODE
 // ==========================================
 const sidebar = document.getElementById('sidebar');
 const menuBar = document.querySelector('#content nav .bx.bx-menu');
-const sidebarOverlay = document.getElementById('sidebar-overlay');
+const closeMobileMenuBtn = document.getElementById('close-mobile-menu');
+
+// Zorg dat de onzichtbare klik-laag naast het menu ALTIJD bestaat op elke pagina
+let sidebarOverlay = document.getElementById('sidebar-overlay');
+if (!sidebarOverlay) {
+    sidebarOverlay = document.createElement('div');
+    sidebarOverlay.id = 'sidebar-overlay';
+    document.body.appendChild(sidebarOverlay);
+}
+
+function openMobielMenu() {
+    sidebar.classList.add('mobile-open');
+    sidebarOverlay.classList.add('active');
+}
 
 function sluitMobielMenu() {
     sidebar.classList.remove('mobile-open');
+    sidebarOverlay.classList.remove('active');
 }
 
 if (menuBar) {
-    menuBar.addEventListener('click', () => {
-        sidebar.classList.toggle('mobile-open');
+    menuBar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (sidebar.classList.contains('mobile-open')) {
+            sluitMobielMenu();
+        } else {
+            openMobielMenu();
+        }
     });
 }
+
+// Sluit als je op het kruisje OF naast de sidebar (op de grafiek/overlay) tikt!
+if (closeMobileMenuBtn) closeMobileMenuBtn.addEventListener('click', sluitMobielMenu);
+sidebarOverlay.addEventListener('click', sluitMobielMenu);
+sidebarOverlay.addEventListener('touchstart', sluitMobielMenu, { passive: true });
 
 if (sidebarOverlay) {
     sidebarOverlay.addEventListener('click', sluitMobielMenu);
@@ -450,12 +474,13 @@ async function laadKwartierProfielData() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'], // DEZE REGEL FIXT HET VEGEN
                 animation: {
                     duration: 350,
                     easing: 'easeOutQuart'
                 },
                 interaction: {
-                    mode: 'kwartierSnapProfiel',
+                    mode: 'index',
                     intersect: false
                 },
                 scales: {
@@ -488,7 +513,7 @@ async function laadKwartierProfielData() {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        mode: 'kwartierSnapProfiel',
+                        mode: 'index',
                         intersect: false,
                         animation: {
                             duration: 200,
@@ -662,8 +687,17 @@ async function laadMaandOverzicht() {
                 ]
             },
             options: {
-                responsive: true, maintainAspectRatio: false, animation: { duration: 350, easing: 'easeOutQuart' },
-                interaction: { mode: 'index', intersect: false },
+                responsive: true,
+                maintainAspectRatio: false,
+                events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'], // DEZE REGEL FIXT HET VEGEN
+                animation: {
+                    duration: 350,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 scales: {
                     x: { grid: { display: false }, ticks: { color: '#8b9bb4' } },
                     y: {
@@ -833,8 +867,17 @@ async function laadJaarOverzicht() {
                 ]
             },
             options: {
-                responsive: true, maintainAspectRatio: false, animation: { duration: 350, easing: 'easeOutQuart' },
-                interaction: { mode: 'index', intersect: false },
+                responsive: true,
+                maintainAspectRatio: false,
+                events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'], // DEZE REGEL FIXT HET VEGEN
+                animation: {
+                    duration: 350,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 scales: {
                     x: { grid: { display: false }, ticks: { color: '#8b9bb4' } },
                     y: {
@@ -1010,8 +1053,15 @@ async function laadSeizoensProfiel() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: { duration: 350, easing: 'easeOutQuart' },
-                interaction: { mode: 'index', intersect: false },
+                events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'], // DEZE REGEL FIXT HET VEGEN
+                animation: {
+                    duration: 350,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 scales: {
                     x: {
                         grid: { display: false },

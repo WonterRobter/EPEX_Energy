@@ -10,25 +10,45 @@ if (!ingelogdeGebruiker) {
 */
 
 // ==========================================
-// 1. ZIJBALK (MOBIEL OVERLAY), DROPDOWN & DARK MODE
+// 1. ZIJBALK (MOBIEL OVERLAY + KRUISJE), DROPDOWN & DARK MODE
 // ==========================================
 const sidebar = document.getElementById('sidebar');
 const menuBar = document.querySelector('#content nav .bx.bx-menu');
-const sidebarOverlay = document.getElementById('sidebar-overlay');
+const closeMobileMenuBtn = document.getElementById('close-mobile-menu');
+
+// Zorg dat de onzichtbare klik-laag naast het menu ALTIJD bestaat op elke pagina
+let sidebarOverlay = document.getElementById('sidebar-overlay');
+if (!sidebarOverlay) {
+    sidebarOverlay = document.createElement('div');
+    sidebarOverlay.id = 'sidebar-overlay';
+    document.body.appendChild(sidebarOverlay);
+}
+
+function openMobielMenu() {
+    sidebar.classList.add('mobile-open');
+    sidebarOverlay.classList.add('active');
+}
 
 function sluitMobielMenu() {
     sidebar.classList.remove('mobile-open');
+    sidebarOverlay.classList.remove('active');
 }
 
 if (menuBar) {
-    menuBar.addEventListener('click', () => {
-        sidebar.classList.toggle('mobile-open');
+    menuBar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (sidebar.classList.contains('mobile-open')) {
+            sluitMobielMenu();
+        } else {
+            openMobielMenu();
+        }
     });
 }
 
-if (sidebarOverlay) {
-    sidebarOverlay.addEventListener('click', sluitMobielMenu);
-}
+// Sluit als je op het kruisje OF naast de sidebar (op de grafiek/overlay) tikt!
+if (closeMobileMenuBtn) closeMobileMenuBtn.addEventListener('click', sluitMobielMenu);
+sidebarOverlay.addEventListener('click', sluitMobielMenu);
+sidebarOverlay.addEventListener('touchstart', sluitMobielMenu, { passive: true });
 
 // Sluit het mobiele menu zodra je op een echte link klikt (behalve de Trends-uitklapknop zelf)
 const allSideMenu = document.querySelectorAll('#sidebar .side-menu a:not(.dropdown-btn)');
@@ -432,13 +452,13 @@ async function laadEpexData(datumString, metAnimatie = false) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                // Zet de algemene animaties ALTIJD aan, zodat je muis-hover en tooltip soepel zijn!
+                events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'], // DEZE REGEL FIXT HET VEGEN
                 animation: {
                     duration: 350,
                     easing: 'easeOutQuart'
                 },
                 interaction: {
-                    mode: 'kwartierSnap',
+                    mode: 'index',
                     intersect: false
                 },
                 scales: {
@@ -471,7 +491,7 @@ async function laadEpexData(datumString, metAnimatie = false) {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        mode: 'kwartierSnap',
+                        mode: 'index',
                         intersect: false,
                         animation: {
                             duration: 200, // Zorgt ervoor dat de tooltip zachtjes over het scherm glijdt

@@ -1,20 +1,13 @@
-// sw.js - Service Worker voor PWA en Push Notificaties
+// sw.js - Versie 2 (Forceert directe updates)
 self.addEventListener('install', (event) => {
-    console.log('EPEXenergy Service Worker geïnstalleerd');
-    self.skipWaiting(); // Zorgt dat updates direct actief worden
+    self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-    console.log('EPEXenergy Service Worker geactiveerd');
+    event.waitUntil(clients.claim());
 });
 
-// Hier bouwen we straks de luister-functie in voor de Node-RED notificaties!
-self.addEventListener('push', function(event) {
-    console.log('Push bericht ontvangen!');
-    // Code voor de notificatie komt hier...
-});
-
-// Chrome eist een 'fetch' event om de "Toevoegen aan startscherm" pop-up te tonen!
 self.addEventListener('fetch', (event) => {
-    // Voor nu doen we hier nog niets mee, we laten alles gewoon door.
+    // Haal altijd vers van de server (geen verouderde bestanden)
+    event.respondWith(fetch(event.request));
 });
