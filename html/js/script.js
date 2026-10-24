@@ -264,7 +264,7 @@ function bepaalPrijsKleur(prijs) {
 async function updateHuidigeLivePrijs() {
     try {
         const vandaagStr = formatteerApiDatum(new Date());
-        const url = `http://192.168.1.130:1880/api/prijzen?datum=${vandaagStr}&_t=${Date.now()}`;
+        const url = `/api/prijzen?datum=${vandaagStr}&_t=${Date.now()}`;
         const response = await fetch(url);
         const data = await response.json();
 
@@ -295,7 +295,7 @@ let epexGrafiek = null;
 
 async function laadEpexData(datumString, metAnimatie = false) {
     try {
-        const url = `http://192.168.1.130:1880/api/prijzen?datum=${datumString}&_t=${Date.now()}`;
+        const url = `/api/prijzen?datum=${datumString}&_t=${Date.now()}`;
         const response = await fetch(url);
         const data = await response.json();
 
@@ -455,14 +455,17 @@ async function laadEpexData(datumString, metAnimatie = false) {
                         }
                     },
                     y: {
-                        grid: { color: 'rgba(139, 155, 180, 0.08)' },
+                        beginAtZero: true,
+                        grid: { 
+                            color: function(context) {
+                                if (context.tick.value === 0) {
+                                    return 'rgba(255, 255, 255, 0.25)'; 
+                                }
+                                return 'rgba(139, 155, 180, 0.08)';
+                            }
+                        },
                         ticks: { color: '#8b9bb4' },
-                        title: {
-                            display: true,
-                            text: '€ / MWh',
-                            color: '#8b9bb4',
-                            font: { size: 11 }
-                        }
+                        title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } }
                     }
                 },
                 plugins: {
@@ -506,6 +509,15 @@ setInterval(() => {
         laadEpexData(formatteerApiDatum(actieveDatum), false); 
     }
 }, 60000);
+
+// Activeer de PWA Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('PWA Service Worker geregistreerd!', reg))
+            .catch(err => console.error('PWA registratie mislukt:', err));
+    });
+}
 
 updateHuidigeLivePrijs();
 veranderActieveDag(new Date());

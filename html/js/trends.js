@@ -297,7 +297,7 @@ async function laadKwartierProfielData() {
 
         const startStr = formatteerApiDatum(startDatum);
         const eindStr = formatteerApiDatum(eindDatum);
-        const url = `http://192.168.1.130:1880/api/kwartierprofiel?start=${startStr}&eind=${eindStr}&_t=${Date.now()}`;
+        const url = `/api/kwartierprofiel?start=${startStr}&eind=${eindStr}&_t=${Date.now()}`;
 
         const response = await fetch(url);
         const data = await response.json();
@@ -472,23 +472,17 @@ async function laadKwartierProfielData() {
                         }
                     },
                     y: {
-                        suggestedMin: 0, // Dwingt de as om altijd minimaal vanaf 0 te beginnen (of lager bij negatief)
+                        beginAtZero: true,
                         grid: { 
                             color: function(context) {
-                                // Maak de 0-lijn zelf een klein beetje lichter zodat hij opvalt
                                 if (context.tick.value === 0) {
-                                    return 'rgba(255, 255, 255, 0.15)'; 
+                                    return 'rgba(255, 255, 255, 0.25)'; 
                                 }
                                 return 'rgba(139, 155, 180, 0.08)';
                             }
                         },
                         ticks: { color: '#8b9bb4' },
-                        title: {
-                            display: true,
-                            text: '€ / MWh',
-                            color: '#8b9bb4',
-                            font: { size: 11 }
-                        }
+                        title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } }
                     }
                 },
                 plugins: {
@@ -600,7 +594,7 @@ async function laadMaandOverzicht() {
     document.getElementById('maand-titel').innerText = `Maandoverzicht (${maandNaamVol} ${jaar})`;
 
     try {
-        const url = `http://192.168.1.130:1880/api/maandoverzicht?jaar=${jaar}&maand=${maand}&_t=${Date.now()}`;
+        const url = `/api/maandoverzicht?jaar=${jaar}&maand=${maand}&_t=${Date.now()}`;
         const response = await fetch(url);
         const data = await response.json();
 
@@ -672,7 +666,19 @@ async function laadMaandOverzicht() {
                 interaction: { mode: 'index', intersect: false },
                 scales: {
                     x: { grid: { display: false }, ticks: { color: '#8b9bb4' } },
-                    y: { suggestedMin: 0, grid: { color: (ctx) => ctx.tick.value === 0 ? 'rgba(255, 255, 255, 0.15)' : 'rgba(139, 155, 180, 0.08)' }, ticks: { color: '#8b9bb4' }, title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } } }
+                    y: {
+                        beginAtZero: true,
+                        grid: { 
+                            color: function(context) {
+                                if (context.tick.value === 0) {
+                                    return 'rgba(255, 255, 255, 0.25)'; 
+                                }
+                                return 'rgba(139, 155, 180, 0.08)';
+                            }
+                        },
+                        ticks: { color: '#8b9bb4' },
+                        title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } }
+                    }
                 },
                 plugins: {
                     legend: { display: false },
@@ -758,7 +764,7 @@ async function laadJaarOverzicht() {
     document.getElementById('jaar-titel').innerText = `Jaaroverzicht (${actiefJaar})`;
 
     try {
-        const url = `http://192.168.1.130:1880/api/jaaroverzicht?jaar=${actiefJaar}&_t=${Date.now()}`;
+        const url = `/api/jaaroverzicht?jaar=${actiefJaar}&_t=${Date.now()}`;
         const response = await fetch(url);
         const data = await response.json();
 
@@ -831,7 +837,19 @@ async function laadJaarOverzicht() {
                 interaction: { mode: 'index', intersect: false },
                 scales: {
                     x: { grid: { display: false }, ticks: { color: '#8b9bb4' } },
-                    y: { suggestedMin: 0, grid: { color: (ctx) => ctx.tick.value === 0 ? 'rgba(255, 255, 255, 0.15)' : 'rgba(139, 155, 180, 0.08)' }, ticks: { color: '#8b9bb4' }, title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } } }
+                    y: {
+                        beginAtZero: true,
+                        grid: { 
+                            color: function(context) {
+                                if (context.tick.value === 0) {
+                                    return 'rgba(255, 255, 255, 0.25)'; 
+                                }
+                                return 'rgba(139, 155, 180, 0.08)';
+                            }
+                        },
+                        ticks: { color: '#8b9bb4' },
+                        title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } }
+                    }
                 },
                 plugins: {
                     legend: { display: false },
@@ -903,7 +921,7 @@ function initSeizoenJaarChecks() {
 async function laadSeizoensProfiel() {
     try {
         const jarenParam = geselecteerdeSeizoenJaren.join(',');
-        const url = `http://192.168.1.130:1880/api/seizoensprofiel?jaren=${jarenParam}&_t=${Date.now()}`;
+        const url = `/api/seizoensprofiel?jaren=${jarenParam}&_t=${Date.now()}`;
         const response = await fetch(url);
         const result = await response.json();
 
@@ -1008,9 +1026,14 @@ async function laadSeizoensProfiel() {
                         }
                     },
                     y: {
-                        suggestedMin: 0,
-                        grid: {
-                            color: (ctx) => ctx.tick.value === 0 ? 'rgba(255, 255, 255, 0.15)' : 'rgba(139, 155, 180, 0.08)'
+                        beginAtZero: true,
+                        grid: { 
+                            color: function(context) {
+                                if (context.tick.value === 0) {
+                                    return 'rgba(255, 255, 255, 0.25)'; 
+                                }
+                                return 'rgba(139, 155, 180, 0.08)';
+                            }
                         },
                         ticks: { color: '#8b9bb4' },
                         title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } }
@@ -1034,6 +1057,15 @@ async function laadSeizoensProfiel() {
     } catch (error) {
         console.error("Fout bij ophalen van seizoensprofiel:", error);
     }
+}
+
+// Activeer de PWA Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('PWA Service Worker geregistreerd!', reg))
+            .catch(err => console.error('PWA registratie mislukt:', err));
+    });
 }
 
 // Start kalender en laad direct de afgelopen 7 dagen
