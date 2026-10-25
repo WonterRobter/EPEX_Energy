@@ -1,22 +1,10 @@
 // ==========================================
-// 0. BEVEILIGING (Tijdelijk uitgeschakeld)
-// ==========================================
-/*
-const ingelogdeGebruiker = localStorage.getItem('loggedInUser') || sessionStorage.getItem('loggedInUser');
-if (!ingelogdeGebruiker) {
-    window.location.href = 'login.html';
-    throw new Error("Niet ingelogd, script gestopt.");
-}
-*/
-
-// ==========================================
 // 1. ZIJBALK (MOBIEL OVERLAY + KRUISJE), DROPDOWN & DARK MODE
 // ==========================================
 const sidebar = document.getElementById('sidebar');
 const menuBar = document.querySelector('#content nav .bx.bx-menu');
 const closeMobileMenuBtn = document.getElementById('close-mobile-menu');
 
-// Zorg dat de onzichtbare klik-laag naast het menu ALTIJD bestaat op elke pagina
 let sidebarOverlay = document.getElementById('sidebar-overlay');
 if (!sidebarOverlay) {
     sidebarOverlay = document.createElement('div');
@@ -45,12 +33,10 @@ if (menuBar) {
     });
 }
 
-// Sluit als je op het kruisje OF naast de sidebar (op de grafiek/overlay) tikt!
 if (closeMobileMenuBtn) closeMobileMenuBtn.addEventListener('click', sluitMobielMenu);
 sidebarOverlay.addEventListener('click', sluitMobielMenu);
 sidebarOverlay.addEventListener('touchstart', sluitMobielMenu, { passive: true });
 
-// Sluit het mobiele menu zodra je op een echte link klikt (behalve de Trends-uitklapknop zelf)
 const allSideMenu = document.querySelectorAll('#sidebar .side-menu a:not(.dropdown-btn)');
 allSideMenu.forEach(item => {
     item.addEventListener('click', function () {
@@ -58,7 +44,6 @@ allSideMenu.forEach(item => {
     });
 });
 
-// Dropdown functionaliteit voor Trends: ENKEL open/dicht klappen
 const allDropdowns = document.querySelectorAll('#sidebar .dropdown-btn');
 allDropdowns.forEach(btn => {
     btn.addEventListener('click', function(e) {
@@ -85,6 +70,7 @@ switchMode.addEventListener('change', function () {
         document.body.classList.remove('dark');
         localStorage.setItem('dark-mode', 'disabled');
     }
+    if (epexGrafiek) epexGrafiek.resize();
 });
 
 // ==========================================
@@ -156,7 +142,10 @@ function bouwKalender(datum) {
         const dagDiv = document.createElement('div');
         dagDiv.className = classes;
         dagDiv.innerText = d;
-        dagDiv.addEventListener('click', () => veranderActieveDag(celDatum));
+        dagDiv.addEventListener('click', () => {
+            veranderActieveDag(celDatum);
+            sluitMobielMenu();
+        });
         dagenContainer.appendChild(dagDiv);
     }
 }
@@ -206,7 +195,7 @@ document.querySelectorAll('#custom-legend .legend-item').forEach(item => {
 });
 
 // ==========================================
-// 4. CUSTOM PLUG-INS VOOR CHART.JS
+// 4. CUSTOM PLUG-INS VOOR CHART.JS (Muis én Touch Kwartier-Snap!)
 // ==========================================
 const huidigeTijdLijnPlugin = {
     id: 'huidigeTijdLijn',
@@ -236,13 +225,31 @@ const huidigeTijdLijnPlugin = {
     }
 };
 
+function berekenTouchOfMuisX(chart, e) {
+    if (typeof e.x === 'number' && !isNaN(e.x)) return e.x;
+    const rect = chart.canvas.getBoundingClientRect();
+    const native = e.native;
+    if (native) {
+        if (native.touches && native.touches.length > 0) {
+            return native.touches[0].clientX - rect.left;
+        }
+        if (native.changedTouches && native.changedTouches.length > 0) {
+            return native.changedTouches[0].clientX - rect.left;
+        }
+        if (typeof native.clientX === 'number') {
+            return native.clientX - rect.left;
+        }
+    }
+    return null;
+}
+
 Chart.Interaction.modes.kwartierSnap = function(chart, e) {
     const xAxis = chart.scales.x;
-    const rect = chart.canvas.getBoundingClientRect();
-    const xPixel = e.native ? (e.native.clientX - rect.left) : e.x;
+    const xPixel = berekenTouchOfMuisX(chart, e);
+    if (xPixel === null) return [];
 
     let rawIndex = xAxis.getValueForPixel(xPixel);
-    if (rawIndex === undefined || rawIndex === null) return [];
+    if (rawIndex === undefined || rawIndex === null || isNaN(rawIndex)) return [];
     
     rawIndex = Math.max(0, Math.min(chart.data.labels.length - 1, Math.round(rawIndex)));
 
@@ -268,14 +275,14 @@ Chart.Interaction.modes.kwartierSnap = function(chart, e) {
 Chart.register(huidigeTijdLijnPlugin);
 
 // ==========================================
-// 5. KLEURBEPALING PRIJZEN (Groen, Grijs, Rood)
+// 5. KLEURBEPALING PRIJZEN
 // ==========================================
 function bepaalPrijsKleur(prijs) {
-    if (prijs < 0) return '#10b981';      // Groen
-    if (prijs < 50) return '#84cc16';     // Lichtgroen
-    if (prijs < 100) return '#8b9bb4';    // Grijs (Neutrale kleur)
-    if (prijs < 175) return '#f87171';    // Lichtrood
-    return '#ef4444';                     // Rood
+    if (prijs < 0) return '#10b981';
+    if (prijs < 50) return '#84cc16';
+    if (prijs < 100) return '#8b9bb4';
+    if (prijs < 175) return '#f87171';
+    return '#ef4444';
 }
 
 // ==========================================
@@ -330,8 +337,6 @@ async function laadEpexData(datumString, metAnimatie = false) {
         if (!heeftData) {
             document.getElementById('stat-gem').innerText = "Geen data";
             document.getElementById('stat-minmax').innerText = "Geen data";
-            
-            // DE FIX: Zet de grafiek op null nadat je hem vernietigt!
             if (epexGrafiek) {
                 epexGrafiek.destroy();
                 epexGrafiek = null;
@@ -375,7 +380,6 @@ async function laadEpexData(datumString, metAnimatie = false) {
         document.getElementById('stat-gem').innerHTML = `<span style="color: ${kleurGem};">€ ${gemiddelde.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
         document.getElementById('stat-minmax').innerHTML = `<span style="color: #10b981;">${minPrijs.toFixed(2)}</span> <span class="unit-label">(${minTijd})</span> / <span style="color: #ef4444;">${maxPrijs.toFixed(2)}</span> <span class="unit-label">(${maxTijd})</span>`;
 
-        // Update bestaande grafiek soepel
         if (epexGrafiek) {
             epexGrafiek.data.labels = labelsTijd;
             epexGrafiek.data.datasets[0].data = dataEpex;
@@ -387,13 +391,10 @@ async function laadEpexData(datumString, metAnimatie = false) {
                 epexGrafiek.setDatasetVisibility(idx, zichtbaar);
             });
 
-            // Hier is de magie: Bij 1-minuut updates 'none' (zodat de lijn niet springt),
-            // Bij nieuwe dag 'default' (zodat de lijnen vloeiend overgaan naar de nieuwe dag)
             epexGrafiek.update(metAnimatie ? 'default' : 'none');
             return;
         }
 
-        // --- GRAFIEK VOOR HET EERST TEKENEN ---
         const ctx = document.getElementById('dagGrafiek').getContext('2d');
         epexGrafiek = new Chart(ctx, {
             type: 'line',
@@ -452,13 +453,13 @@ async function laadEpexData(datumString, metAnimatie = false) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'], // DEZE REGEL FIXT HET VEGEN
+                events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
                 animation: {
                     duration: 350,
                     easing: 'easeOutQuart'
                 },
                 interaction: {
-                    mode: 'index',
+                    mode: 'kwartierSnap',
                     intersect: false
                 },
                 scales: {
@@ -468,9 +469,17 @@ async function laadEpexData(datumString, metAnimatie = false) {
                             color: '#8b9bb4',
                             autoSkip: false,
                             maxRotation: 0,
-                            callback: function(val, index) {
+                            callback: function(val) {
                                 const label = this.getLabelForValue(val);
-                                return label && label.endsWith(':00') ? label : '';
+                                if (!label || !label.endsWith(':00')) return '';
+                                const uur = parseInt(label.split(':')[0], 10);
+                                if (window.innerWidth <= 768) {
+                                    return (uur % 3 === 0) ? label : '';
+                                }
+                                if (window.innerWidth <= 1150) {
+                                    return (uur % 2 === 0) ? label : '';
+                                }
+                                return label;
                             }
                         }
                     },
@@ -491,14 +500,14 @@ async function laadEpexData(datumString, metAnimatie = false) {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        mode: 'index',
+                        mode: 'kwartierSnap',
                         intersect: false,
                         animation: {
-                            duration: 200, // Zorgt ervoor dat de tooltip zachtjes over het scherm glijdt
+                            duration: 150,
                             easing: 'easeOutCubic'
                         },
                         filter: function(tooltipItem) {
-                            return tooltipItem.datasetIndex !== 3; // Verberg Drempel
+                            return tooltipItem.datasetIndex !== 3;
                         },
                         callbacks: {
                             label: function(context) {
@@ -519,18 +528,42 @@ async function laadEpexData(datumString, metAnimatie = false) {
 }
 
 // ==========================================
-// 8. OPSTARTEN & 1-MINUUT TIMERS
+// 8. UITKLAPBARE STATISTIEKEN OP MOBIEL
+// ==========================================
+function initUitklapbareStatistieken() {
+    document.querySelectorAll('.box-info').forEach(box => {
+        const firstLi = box.querySelector('li:first-child');
+        if (firstLi && !firstLi.querySelector('.toggle-stats-arrow')) {
+            const arrow = document.createElement('i');
+            arrow.className = 'bx bx-chevron-down toggle-stats-arrow';
+            firstLi.style.cursor = 'pointer';
+            firstLi.insertBefore(arrow, firstLi.firstChild);
+
+            firstLi.addEventListener('click', (e) => {
+                e.stopPropagation();
+                box.classList.toggle('expanded');
+            });
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.box-info')) {
+            document.querySelectorAll('.box-info').forEach(b => b.classList.remove('expanded'));
+        }
+    });
+}
+
+// ==========================================
+// 9. OPSTARTEN & 1-MINUUT TIMERS
 // ==========================================
 setInterval(() => {
     updateHuidigeLivePrijs();
-    
     const nu = new Date();
     if (isZelfdeDag(actieveDatum, nu)) {
         laadEpexData(formatteerApiDatum(actieveDatum), false); 
     }
 }, 60000);
 
-// Activeer de PWA Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
@@ -539,5 +572,6 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+initUitklapbareStatistieken();
 updateHuidigeLivePrijs();
 veranderActieveDag(new Date());
