@@ -409,9 +409,9 @@ async function laadKwartierProfielData() {
         document.getElementById('profiel-gem').innerHTML = 
             `<span style="color: ${kleurGem};">€ ${periodeGem.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
         document.getElementById('profiel-min').innerHTML = 
-            `<span style="color: #ffffff; font-size: 16px;">${goedkoopsteTijd}</span> <span style="color: ${kleurMin}; font-size: 13px;">(€${goedkoopsteGem.toFixed(2)})</span>`;
+            `<span style="color: var(--dark); font-size: 16px;">${goedkoopsteTijd}</span> <span style="color: ${kleurMin}; font-size: 13px;">(€${goedkoopsteGem.toFixed(2)})</span>`;
         document.getElementById('profiel-max').innerHTML = 
-            `<span style="color: #ffffff; font-size: 16px;">${duursteTijd}</span> <span style="color: ${kleurMax}; font-size: 13px;">(€${duursteGem.toFixed(2)})</span>`;
+            `<span style="color: var(--dark); font-size: 16px;">${duursteTijd}</span> <span style="color: ${kleurMax}; font-size: 13px;">(€${duursteGem.toFixed(2)})</span>`;
 
         if (profielGrafiek) {
             profielGrafiek.data.labels = labelsTijd;
@@ -439,8 +439,8 @@ async function laadKwartierProfielData() {
                     {
                         label: 'Gem. EPEX',
                         data: dataEpexGem,
-                        borderColor: '#22d3ee',
-                        backgroundColor: 'rgba(34, 211, 238, 0.12)',
+                        borderColor: '#438ce6',
+                        backgroundColor: 'rgba(67, 140, 230, 0.15)',
                         borderWidth: 2,
                         stepped: true,
                         fill: true,
@@ -709,9 +709,9 @@ async function laadMaandOverzicht() {
         const maandGem = aantalDagen > 0 ? (som / aantalDagen) : 0;
 
         document.getElementById('maand-stat-gem').innerHTML = `<span style="color: ${bepaalPrijsKleur(maandGem)};">€ ${maandGem.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
-        document.getElementById('maand-stat-min').innerHTML = `<span style="color: #ffffff; font-size: 16px;">${goedkoopsteDag} ${maandNaamVol}</span> <span style="color: ${bepaalPrijsKleur(goedkoopsteGem)}; font-size: 13px;">(€${goedkoopsteGem.toFixed(2)})</span>`;
-        document.getElementById('maand-stat-max').innerHTML = `<span style="color: #ffffff; font-size: 16px;">${duursteDag} ${maandNaamVol}</span> <span style="color: ${bepaalPrijsKleur(duursteGem)}; font-size: 13px;">(€${duursteGem.toFixed(2)})</span>`;
-
+        document.getElementById('maand-stat-min').innerHTML = `<span style="color: var(--dark); font-size: 16px;">${goedkoopsteDag} ${maandNaamVol}</span> <span style="color: ${bepaalPrijsKleur(goedkoopsteGem)}; font-size: 13px;">(€${goedkoopsteGem.toFixed(2)})</span>`;
+        document.getElementById('maand-stat-max').innerHTML = `<span style="color: var(--dark); font-size: 16px;">${duursteDag} ${maandNaamVol}</span> <span style="color: ${bepaalPrijsKleur(duursteGem)}; font-size: 13px;">(€${duursteGem.toFixed(2)})</span>`;
+        
         if (maandGrafiek) {
             maandGrafiek.data.labels = labelsDag;
             maandGrafiek.data.datasets[0].data = dataEpexGem;
@@ -731,7 +731,7 @@ async function laadMaandOverzicht() {
             data: {
                 labels: labelsDag,
                 datasets: [
-                    { type: 'bar', label: 'Gem. EPEX', data: dataEpexGem, backgroundColor: 'rgba(34, 211, 238, 0.65)', borderColor: '#22d3ee', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarMaand[0] },
+                    { type: 'bar', label: 'Gem. EPEX', data: dataEpexGem, backgroundColor: 'rgba(67, 140, 230, 0.75)', borderColor: '#438ce6', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarMaand[0] },
                     { type: 'bar', label: 'Gem. Onbalans (15m)', data: dataOnb15Gem, backgroundColor: 'rgba(249, 115, 22, 0.65)', borderColor: '#f97316', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarMaand[1] },
                     { type: 'bar', label: 'Gem. Onbalans (1m)', data: dataOnb1Gem, backgroundColor: 'rgba(168, 85, 247, 0.65)', borderColor: '#a855f7', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarMaand[2] },
                     { type: 'line', label: 'Min EPEX', data: dataEpexMin, borderColor: '#10b981', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 3, pointBackgroundColor: '#10b981', hidden: !datasetZichtbaarMaand[3] },
@@ -923,8 +923,8 @@ async function laadJaarOverzicht() {
         const jaarGem = aantalMaanden > 0 ? (som / aantalMaanden) : 0;
 
         document.getElementById('jaar-stat-gem').innerHTML = `<span style="color: ${bepaalPrijsKleur(jaarGem)};">€ ${jaarGem.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
-        document.getElementById('jaar-stat-min').innerHTML = `<span style="color: #ffffff; font-size: 16px;">${goedkoopsteMaandNaam}</span> <span style="color: ${bepaalPrijsKleur(goedkoopsteGem)}; font-size: 13px;">(€${goedkoopsteGem.toFixed(2)})</span>`;
-        document.getElementById('jaar-stat-max').innerHTML = `<span style="color: #ffffff; font-size: 16px;">${duursteMaandNaam}</span> <span style="color: ${bepaalPrijsKleur(duursteGem)}; font-size: 13px;">(€${duursteGem.toFixed(2)})</span>`;
+        document.getElementById('jaar-stat-min').innerHTML = `<span style="color: var(--dark); font-size: 16px;">${goedkoopsteMaandNaam}</span> <span style="color: ${bepaalPrijsKleur(goedkoopsteGem)}; font-size: 13px;">(€${goedkoopsteGem.toFixed(2)})</span>`;
+        document.getElementById('jaar-stat-max').innerHTML = `<span style="color: var(--dark); font-size: 16px;">${duursteMaandNaam}</span> <span style="color: ${bepaalPrijsKleur(duursteGem)}; font-size: 13px;">(€${duursteGem.toFixed(2)})</span>`;
 
         if (jaarGrafiek) {
             jaarGrafiek.data.labels = labelsMaand;
@@ -945,7 +945,7 @@ async function laadJaarOverzicht() {
             data: {
                 labels: labelsMaand,
                 datasets: [
-                    { type: 'bar', label: 'Gem. EPEX', data: dataEpexGem, backgroundColor: 'rgba(34, 211, 238, 0.65)', borderColor: '#22d3ee', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarJaar[0] },
+                    { type: 'bar', label: 'Gem. EPEX', data: dataEpexGem, backgroundColor: 'rgba(67, 140, 230, 0.75)', borderColor: '#438ce6', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarMaand[0] },
                     { type: 'bar', label: 'Gem. Onbalans (15m)', data: dataOnb15Gem, backgroundColor: 'rgba(249, 115, 22, 0.65)', borderColor: '#f97316', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarJaar[1] },
                     { type: 'bar', label: 'Gem. Onbalans (1m)', data: dataOnb1Gem, backgroundColor: 'rgba(168, 85, 247, 0.65)', borderColor: '#a855f7', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarJaar[2] },
                     { type: 'line', label: 'Min EPEX', data: dataEpexMin, borderColor: '#10b981', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 3, pointBackgroundColor: '#10b981', hidden: !datasetZichtbaarJaar[3] },

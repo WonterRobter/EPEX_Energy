@@ -12,24 +12,28 @@ li { list-style: none; }
 :root {
     --poppins: 'Poppins', sans-serif;
     --lato: 'Lato', sans-serif;
-    --light: #F9F9F9;
-    --blue: #3C91E6;
-    --cyan: #22d3ee;
-    --light-blue: #CFE8FF;
-    --grey: #eee;
-    --dark-grey: #8b9bb4;
-    --dark: #342E37;
+    
+    /* ZACHTE LICHTMODUS (Niet meer verblindend!) */
+    --light: #ffffff;       /* Pure witte kaarten voor de leesbaarheid */
+    --grey: #edf2f7;        /* Zachte grijsblauwe achtergrond (rustig voor de ogen!) */
+    --dark: #334155;        /* Zacht donkerblauw/grijs voor tekst ipv hard zwart */
+    --blue: #438ce6;        /* HET EXACTE BLAUW VAN JE LOGO! */
+    --dark-grey: #64748b;
+    
+    /* GRAFIEK KLEUREN */
+    --cyan: #438ce6;        /* Cyaan wordt nu ook vervangen door Logo Blauw */
+    --light-blue: #dbeafe;
     --red: #ef4444;
     --green: #10b981;
-    --yellow: #FFCE26;
-    --orange: #FD7238;
-    --app-height: 100%;
+    --yellow: #f59e0b;
+    --orange: #f97316;
 }
 
 body.dark {
-    --light: #0d1526;
-    --grey: #070b14;
-    --dark: #FBFBFB;
+    /* CHIQUE DARK MODUS (Diep marineblauw passend bij het logo, ipv saai pikzwart) */
+    --grey: #0a0f18;        
+    --light: #131d2e;       
+    --dark: #f8fafc;        
 }
 
 html, body {
@@ -595,7 +599,16 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
         display: flex !important;
         align-items: center !important;
         background: var(--light) !important;
-        box-shadow: 0 6px 15px rgba(0,0,0,0.45) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    /* VERWIJDER DE HARDE SCHADUW IN LIGHT MODE OP MOBIEL */
+    body:not(.dark) #content main .box-info li {
+        box-shadow: 0 4px 15px rgba(66, 139, 229, 0.15) !important; /* Een zachte blauwe schaduw passend bij het logo */
+        background: rgba(240, 244, 248, 0.85) !important; /* Zacht grijsblauw transparant */
+        border: 1px solid rgba(66, 139, 229, 0.25) !important; /* Subtiel blauw randje */
     }
 
     #content main .box-info li:nth-child(1) {
@@ -622,14 +635,15 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
         z-index: 1 !important;
     }
 
+    /* Kaart 2 & 3: Bij uitklappen schuiven ze NAADLOOS onder elkaar (geen gaten meer!) */
     #content main .box-info.expanded li:nth-child(2) {
-        top: 48px !important;
+        top: 44px !important; /* Was 48px, daardoor had je een kier! */
         opacity: 1 !important;
         pointer-events: auto !important;
         z-index: 4 !important;
     }
     #content main .box-info.expanded li:nth-child(3) {
-        top: 96px !important;
+        top: 88px !important; /* Was 96px, nu sluit het perfect aan op 2x44px */
         opacity: 1 !important;
         pointer-events: auto !important;
         z-index: 4 !important;

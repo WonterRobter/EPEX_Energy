@@ -408,10 +408,10 @@ async function laadEpexData(datumString, metAnimatie = false) {
                 labels: labelsTijd,
                 datasets: [
                     {
-                        label: 'EPEX Prijs',
+                        label: 'EPEX Prijs', // (Of 'Gem. EPEX' in trends.js)
                         data: dataEpex,
-                        borderColor: '#22d3ee',
-                        backgroundColor: 'rgba(34, 211, 238, 0.12)',
+                        borderColor: '#438ce6', /* <--- LOGO BLAUW */
+                        backgroundColor: 'rgba(67, 140, 230, 0.15)', /* <--- ZACHT BLAUWE VULLING */
                         borderWidth: 2,
                         stepped: true,
                         fill: true,
