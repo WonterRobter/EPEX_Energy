@@ -54,26 +54,29 @@ allDropdowns.forEach(btn => {
 });
 
 const switchMode = document.getElementById('switch-mode');
-if (localStorage.getItem('dark-mode') === 'disabled') {
-    document.body.classList.remove('dark');
-    switchMode.checked = false;
-} else {
-    document.body.classList.add('dark');
-    switchMode.checked = true;
+function syncThemaMetOpslag() {
+    const isDark = localStorage.getItem('dark-mode') !== 'disabled';
+    if (switchMode) switchMode.checked = isDark;
+    document.body.classList.toggle('dark', isDark);
+}
+syncThemaMetOpslag();
+
+if (switchMode) {
+    switchMode.addEventListener('change', function () {
+        if (this.checked) {
+            document.body.classList.add('dark');
+            localStorage.setItem('dark-mode', 'enabled');
+        } else {
+            document.body.classList.remove('dark');
+            localStorage.setItem('dark-mode', 'disabled');
+        }
+        herberekenGrafiekHoogte();
+    });
 }
 
-switchMode.addEventListener('change', function () {
-    if (this.checked) {
-        document.body.classList.add('dark');
-        localStorage.setItem('dark-mode', 'enabled');
-    } else {
-        document.body.classList.remove('dark');
-        localStorage.setItem('dark-mode', 'disabled');
-    }
-    if (profielGrafiek) profielGrafiek.resize();
-    if (maandGrafiek) maandGrafiek.resize();
-    if (jaarGrafiek) jaarGrafiek.resize();
-    if (seizoenGrafiek) seizoenGrafiek.resize();
+window.addEventListener('pageshow', () => {
+    syncThemaMetOpslag();
+    herberekenGrafiekHoogte();
 });
 
 // ==========================================
@@ -122,6 +125,7 @@ function openTab(tabNaam) {
         bouwZijbalkJaarKalender();
         laadJaarOverzicht();
     }
+    herberekenGrafiekHoogte();
 }
 
 subTabLinks.forEach(link => {
@@ -303,7 +307,6 @@ if (typeof Chart !== 'undefined') {
         
         rawIndex = Math.max(0, Math.min(chart.data.labels.length - 1, Math.round(rawIndex)));
 
-        // Als het de 1440-minuten grafiek is: snap op 15m tenzij 1m aan staat
         let targetIndex = rawIndex;
         if (chart.data.labels.length > 200) {
             const minuutActief = chart.isDatasetVisible(2);
@@ -423,6 +426,7 @@ async function laadKwartierProfielData() {
             });
 
             profielGrafiek.update();
+            herberekenGrafiekHoogte();
             return;
         }
 
@@ -499,9 +503,12 @@ async function laadKwartierProfielData() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: { top: 4, right: 6, bottom: 8, left: 0 }
+                },
                 events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
                 animation: {
-                    duration: 350,
+                    duration: 250,
                     easing: 'easeOutQuart'
                 },
                 interaction: {
@@ -515,6 +522,7 @@ async function laadKwartierProfielData() {
                             color: '#8b9bb4',
                             autoSkip: false,
                             maxRotation: 0,
+                            padding: 4,
                             callback: function(val) {
                                 const label = this.getLabelForValue(val);
                                 if (!label || !label.endsWith(':00')) return '';
@@ -565,6 +573,7 @@ async function laadKwartierProfielData() {
             }
         });
 
+        herberekenGrafiekHoogte();
     } catch (error) {
         console.error("Fout bij ophalen van kwartierprofiel:", error);
     }
@@ -712,6 +721,7 @@ async function laadMaandOverzicht() {
             maandGrafiek.data.datasets[4].data = dataEpexMax;
             datasetZichtbaarMaand.forEach((zichtbaar, idx) => { maandGrafiek.setDatasetVisibility(idx, zichtbaar); });
             maandGrafiek.update();
+            herberekenGrafiekHoogte();
             return;
         }
 
@@ -731,9 +741,12 @@ async function laadMaandOverzicht() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: { top: 4, right: 6, bottom: 8, left: 0 }
+                },
                 events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
                 animation: {
-                    duration: 350,
+                    duration: 250,
                     easing: 'easeOutQuart'
                 },
                 interaction: {
@@ -747,7 +760,8 @@ async function laadMaandOverzicht() {
                             color: '#8b9bb4',
                             autoSkip: true,
                             maxTicksLimit: window.innerWidth <= 768 ? 8 : 16,
-                            maxRotation: 0
+                            maxRotation: 0,
+                            padding: 4
                         }
                     },
                     y: {
@@ -780,6 +794,8 @@ async function laadMaandOverzicht() {
                 }
             }
         });
+
+        herberekenGrafiekHoogte();
     } catch (error) {
         console.error("Fout bij ophalen van maandoverzicht:", error);
     }
@@ -919,6 +935,7 @@ async function laadJaarOverzicht() {
             jaarGrafiek.data.datasets[4].data = dataEpexMax;
             datasetZichtbaarJaar.forEach((zichtbaar, idx) => { jaarGrafiek.setDatasetVisibility(idx, zichtbaar); });
             jaarGrafiek.update();
+            herberekenGrafiekHoogte();
             return;
         }
 
@@ -938,9 +955,12 @@ async function laadJaarOverzicht() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: { top: 4, right: 6, bottom: 8, left: 0 }
+                },
                 events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
                 animation: {
-                    duration: 350,
+                    duration: 250,
                     easing: 'easeOutQuart'
                 },
                 interaction: {
@@ -953,7 +973,8 @@ async function laadJaarOverzicht() {
                         ticks: {
                             color: '#8b9bb4',
                             autoSkip: false,
-                            maxRotation: 0
+                            maxRotation: 0,
+                            padding: 4
                         }
                     },
                     y: {
@@ -986,6 +1007,8 @@ async function laadJaarOverzicht() {
                 }
             }
         });
+
+        herberekenGrafiekHoogte();
     } catch (error) {
         console.error("Fout bij ophalen van jaaroverzicht:", error);
     }
@@ -1127,9 +1150,12 @@ async function laadSeizoensProfiel() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: { top: 4, right: 6, bottom: 8, left: 0 }
+                },
                 events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
                 animation: {
-                    duration: 350,
+                    duration: 250,
                     easing: 'easeOutQuart'
                 },
                 interaction: {
@@ -1143,6 +1169,7 @@ async function laadSeizoensProfiel() {
                             color: '#8b9bb4',
                             autoSkip: false,
                             maxRotation: 0,
+                            padding: 4,
                             callback: function(val) {
                                 const label = this.getLabelForValue(val);
                                 if (!label || !label.endsWith(':00')) return '';
@@ -1188,13 +1215,14 @@ async function laadSeizoensProfiel() {
             }
         });
 
+        herberekenGrafiekHoogte();
     } catch (error) {
         console.error("Fout bij ophalen van seizoensprofiel:", error);
     }
 }
 
 // ==========================================
-// 10. UITKLAPBARE STATISTIEKEN OP MOBIEL
+// 10. UITKLAPBARE STATISTIEKEN & RESIZE-FIX
 // ==========================================
 function initUitklapbareStatistieken() {
     document.querySelectorAll('.box-info').forEach(box => {
@@ -1218,6 +1246,20 @@ function initUitklapbareStatistieken() {
         }
     });
 }
+
+function herberekenGrafiekHoogte() {
+    [50, 200, 450].forEach(delay => {
+        setTimeout(() => {
+            if (typeof profielGrafiek !== 'undefined' && profielGrafiek) profielGrafiek.resize();
+            if (typeof maandGrafiek !== 'undefined' && maandGrafiek) maandGrafiek.resize();
+            if (typeof jaarGrafiek !== 'undefined' && jaarGrafiek) jaarGrafiek.resize();
+            if (typeof seizoenGrafiek !== 'undefined' && seizoenGrafiek) seizoenGrafiek.resize();
+        }, delay);
+    });
+}
+
+window.addEventListener('load', herberekenGrafiekHoogte);
+window.addEventListener('resize', herberekenGrafiekHoogte);
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

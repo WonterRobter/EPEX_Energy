@@ -54,23 +54,29 @@ allDropdowns.forEach(btn => {
 });
 
 const switchMode = document.getElementById('switch-mode');
-if (localStorage.getItem('dark-mode') === 'disabled') {
-    document.body.classList.remove('dark');
-    switchMode.checked = false;
-} else {
-    document.body.classList.add('dark');
-    switchMode.checked = true;
+function syncThemaMetOpslag() {
+    const isDark = localStorage.getItem('dark-mode') !== 'disabled';
+    if (switchMode) switchMode.checked = isDark;
+    document.body.classList.toggle('dark', isDark);
+}
+syncThemaMetOpslag();
+
+if (switchMode) {
+    switchMode.addEventListener('change', function () {
+        if (this.checked) {
+            document.body.classList.add('dark');
+            localStorage.setItem('dark-mode', 'enabled');
+        } else {
+            document.body.classList.remove('dark');
+            localStorage.setItem('dark-mode', 'disabled');
+        }
+        herberekenGrafiekHoogte();
+    });
 }
 
-switchMode.addEventListener('change', function () {
-    if (this.checked) {
-        document.body.classList.add('dark');
-        localStorage.setItem('dark-mode', 'enabled');
-    } else {
-        document.body.classList.remove('dark');
-        localStorage.setItem('dark-mode', 'disabled');
-    }
-    if (epexGrafiek) epexGrafiek.resize();
+window.addEventListener('pageshow', () => {
+    syncThemaMetOpslag();
+    herberekenGrafiekHoogte();
 });
 
 // ==========================================
@@ -195,7 +201,7 @@ document.querySelectorAll('#custom-legend .legend-item').forEach(item => {
 });
 
 // ==========================================
-// 4. CUSTOM PLUG-INS VOOR CHART.JS (Muis én Touch Kwartier-Snap!)
+// 4. CUSTOM PLUG-INS VOOR CHART.JS (Muis én Touch Kwartier-Snap)
 // ==========================================
 const huidigeTijdLijnPlugin = {
     id: 'huidigeTijdLijn',
@@ -309,7 +315,6 @@ async function updateHuidigeLivePrijs() {
         
         document.getElementById('stat-nu').innerHTML = `<span style="color: ${kleurNu};">€ ${prijsNu.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
         document.getElementById('label-stat-nu').innerText = 'Huidige EPEX (Live)';
-
     } catch (error) {
         console.error("Fout bij ophalen ALTIJD LIVE prijs:", error);
     }
@@ -392,6 +397,7 @@ async function laadEpexData(datumString, metAnimatie = false) {
             });
 
             epexGrafiek.update(metAnimatie ? 'default' : 'none');
+            herberekenGrafiekHoogte();
             return;
         }
 
@@ -453,9 +459,12 @@ async function laadEpexData(datumString, metAnimatie = false) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: { top: 4, right: 6, bottom: 8, left: 0 }
+                },
                 events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
                 animation: {
-                    duration: 350,
+                    duration: 250,
                     easing: 'easeOutQuart'
                 },
                 interaction: {
@@ -522,6 +531,7 @@ async function laadEpexData(datumString, metAnimatie = false) {
             }
         });
 
+        herberekenGrafiekHoogte();
     } catch (error) {
         console.error("Fout bij ophalen van API:", error);
     }
@@ -554,7 +564,26 @@ function initUitklapbareStatistieken() {
 }
 
 // ==========================================
-// 9. OPSTARTEN & 1-MINUUT TIMERS
+// 9. SCHERM- EN GRAFIEKHOOGTE VERGRENDELING
+// ==========================================
+function herberekenGrafiekHoogte() {
+    [0, 60, 200, 400].forEach(delay => {
+        setTimeout(() => {
+            const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            document.documentElement.style.setProperty('--app-height', `${h}px`);
+            if (epexGrafiek) epexGrafiek.resize();
+        }, delay);
+    });
+}
+
+window.addEventListener('load', herberekenGrafiekHoogte);
+window.addEventListener('resize', herberekenGrafiekHoogte);
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', herberekenGrafiekHoogte);
+}
+
+// ==========================================
+// 10. OPSTARTEN & 1-MINUUT TIMERS
 // ==========================================
 setInterval(() => {
     updateHuidigeLivePrijs();
@@ -566,7 +595,7 @@ setInterval(() => {
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
+        navigator.serviceWorker.register('sw.js?v=200')
             .then(reg => console.log('PWA Service Worker geregistreerd!', reg))
             .catch(err => console.error('PWA registratie mislukt:', err));
     });

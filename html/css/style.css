@@ -23,6 +23,7 @@ li { list-style: none; }
     --green: #10b981;
     --yellow: #FFCE26;
     --orange: #FD7238;
+    --app-height: 100%;
 }
 
 body.dark {
@@ -32,8 +33,8 @@ body.dark {
 }
 
 html, body {
-    height: 100dvh;
-    width: 100vw;
+    height: 100%;
+    width: 100%;
     overflow: hidden;
     background: var(--grey);
     color: var(--dark);
@@ -43,13 +44,15 @@ html, body {
 /* ================= SIDEBAR ================= */
 #sidebar {
     position: fixed;
-    top: 0; left: 0;
+    top: 0;
+    left: 0;
+    bottom: 0;
     width: 260px;
-    height: 100dvh;
+    height: 100%;
     background: var(--light);
     z-index: 2000;
     font-family: var(--lato);
-    transition: .3s ease;
+    transition: left 0.25s ease, width 0.3s ease;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -238,19 +241,24 @@ html, body {
 
 /* ================= CONTENT & NAVBAR ================= */
 #content {
-    position: relative;
-    width: calc(100% - 260px);
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
     left: 260px;
-    height: 100dvh;
+    width: calc(100% - 260px);
+    height: 100%;
     display: flex;
     flex-direction: column;
-    transition: .3s ease;
+    overflow: hidden;
 }
 
 #sidebar.hide ~ #content { width: calc(100% - 60px); left: 60px; }
 
 #content nav {
-    height: 46px; min-height: 46px;
+    flex: 0 0 46px;
+    height: 46px;
+    min-height: 46px;
     background: var(--light);
     padding: 0 24px;
     display: flex;
@@ -298,7 +306,9 @@ html, body {
 
 /* ================= MAIN & WIDGETS ================= */
 #content main {
-    flex: 1; width: 100%;
+    flex: 1 1 0%;
+    min-height: 0;
+    width: 100%;
     padding: 14px 24px;
     display: flex;
     flex-direction: column;
@@ -331,7 +341,6 @@ html, body {
 #content main .box-info li .text h3 { font-size: 16px; font-weight: 600; color: var(--dark); }
 .unit-label { font-size: 13px; font-weight: 400; color: var(--dark-grey); }
 
-/* Verberg het uitklap-pijltje op Desktop */
 .toggle-stats-arrow { display: none; }
 
 /* Controls & Legend */
@@ -358,16 +367,40 @@ html, body {
 .legend-line { width: 14px; height: 0; border-top: 2px dashed; display: inline-block; }
 
 /* Table / Chart area */
-#content main .table-data, #content main .table-data .order, .chart-wrapper {
-    flex: 1; display: flex; flex-direction: column; width: 100%; min-height: 0;
-}
+#content main .table-data,
 #content main .table-data .order {
-    border-radius: 8px; background: var(--light);
-    border: 1px solid rgba(56, 189, 248, 0.22); padding: 16px;
+    flex: 1 1 0%;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
 }
-.chart-wrapper { position: relative; }
 
-/* Maand/Jaar Kiezer & Modals */
+#content main .table-data .order {
+    border-radius: 8px;
+    background: var(--light);
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    padding: 16px;
+}
+
+.chart-wrapper {
+    flex: 1 1 0%;
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.chart-wrapper canvas {
+    touch-action: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+/* Maand/Jaar Kiezer */
 .mp-month-btn, .cal-item-btn {
     text-align: center; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.2s ease;
 }
@@ -393,12 +426,11 @@ body:not(.dark) .cal-day.today { border-color: var(--blue); color: var(--blue); 
 body:not(.dark) .cal-item-btn { background: #f1f5f9; color: #1e293b; }
 body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
 
-/* Donkere waas achter het menu als hij op gsm openstaat */
 #sidebar-overlay {
     display: none;
     position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100dvh;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.55);
     z-index: 1999;
     backdrop-filter: blur(2px);
@@ -408,6 +440,7 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
    SEIZOENSPROFIEL: VERGELIJK & RONDE LEGENDA
    ========================================== */
 .seizoen-vergelijk-balk {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     gap: 14px;
@@ -434,6 +467,7 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
 }
 
 .seizoen-legend-bar {
+    flex: 0 0 auto;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -471,7 +505,6 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
    MOBIELE APP LAYOUT (ENKEL GSM / PORTRET)
    ========================================== */
 @media (max-aspect-ratio: 1/1), (max-width: 768px) {
-    /* 1. Hamburger & Kruisje */
     #content nav .bx-menu {
         display: block !important;
         cursor: pointer;
@@ -480,17 +513,25 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
         display: block !important;
     }
 
-    /* 2. Zijbalk & Klikbare Overlay daarnaast */
+    /* Veranker #content keihard aan de 4 randen van het zichtbare scherm (GEEN 100dvh bug meer!) */
     #content {
-        width: 100% !important;
+        position: fixed !important;
+        top: 0 !important;
         left: 0 !important;
-        height: 100dvh !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        transition: none !important;
     }
+
     #sidebar {
         position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
         left: -280px !important;
         width: 260px !important;
-        height: 100dvh !important;
+        height: 100% !important;
         z-index: 2000 !important;
         transition: left 0.25s ease !important;
         box-shadow: 5px 0 25px rgba(0, 0, 0, 0.6);
@@ -502,12 +543,14 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
         display: block !important;
     }
 
-    /* 3. Exacte schermhoogte berekening zodat de onderkant NOOIT wegvalt! */
     #content main {
-        padding: 8px 8px 6px 8px !important;
-        height: calc(100dvh - 46px) !important;
-        max-height: calc(100dvh - 46px) !important;
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        height: auto !important;
+        max-height: none !important;
+        padding: 8px 8px 10px 8px !important;
         overflow: hidden !important;
+        display: flex !important;
         flex-direction: column !important;
     }
 
@@ -520,21 +563,24 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
         margin-bottom: 4px !important;
     }
     #content main .head-title .left h1 {
-        font-size: 17px !important;
+        font-size: 16px !important;
         margin-bottom: 0 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
     .live-status {
         margin-top: 2px !important;
         font-size: 11px !important;
     }
 
-    /* 4. UITKLAPBARE STATISTIEK-KAARTEN OVER DE GRAFIEK (VANDAAG & TRENDS) */
+    /* UITKLAPBARE STATISTIEK-KAARTEN OVER DE GRAFIEK */
     #content main .box-info {
         position: relative !important;
         z-index: 150 !important;
         display: block !important;
         flex: 0 0 44px !important;
-        height: 44px !important; /* Strakke vaste hoogte: geen leeg gat meer! */
+        height: 44px !important;
         margin-top: 2px !important;
         margin-bottom: 6px !important;
     }
@@ -568,7 +614,6 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
         transform: rotate(180deg) !important;
     }
 
-    /* Kaart 2 & 3: Standaard onzichtbaar achter Kaart 1 */
     #content main .box-info:not(.expanded) li:nth-child(2),
     #content main .box-info:not(.expanded) li:nth-child(3) {
         top: 0 !important;
@@ -577,7 +622,6 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
         z-index: 1 !important;
     }
 
-    /* Kaart 2 & 3: Bij uitklappen schuiven ze OVER de grafiek naar beneden */
     #content main .box-info.expanded li:nth-child(2) {
         top: 48px !important;
         opacity: 1 !important;
@@ -609,7 +653,7 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
         margin: 0 !important;
     }
 
-    /* 5. Datum-pijltjes BOVEN, Legende netjes en korter DAARONDER */
+    /* Datum-pijltjes BOVEN, Legende DAARONDER */
     .chart-controls {
         flex: 0 0 auto !important;
         flex-direction: column !important;
@@ -627,7 +671,7 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
         width: 100% !important;
         justify-content: center !important;
         flex-wrap: wrap !important;
-        gap: 8px 12px !important;
+        gap: 6px 12px !important;
     }
 
     .legend-item {
@@ -635,38 +679,31 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
         gap: 5px !important;
     }
 
-    /* 6. Grafiek-container vult exact de overgebleven hoogte zonder afsnijden */
+    /* Grafiek-container vult exact de overgebleven ruimte */
     #content main .table-data {
         flex: 1 1 0% !important;
         min-height: 0 !important;
         margin-top: 0 !important;
+        overflow: hidden !important;
     }
 
     #content main .table-data .order {
         flex: 1 1 0% !important;
         min-height: 0 !important;
-        padding: 6px 4px 6px 2px !important;
         height: 100% !important;
+        padding: 6px 4px 8px 2px !important;
         display: flex !important;
         flex-direction: column !important;
+        overflow: hidden !important;
     }
 
     .chart-wrapper {
         flex: 1 1 0% !important;
-        height: 100% !important;
+        display: block !important;
         min-height: 0 !important;
-        position: relative !important;
-        touch-action: none !important;
-    }
-    
-    .chart-wrapper canvas {
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
-        width: 100% !important;
         height: 100% !important;
-        touch-action: none !important;
-        user-select: none !important;
-        -webkit-user-select: none !important;
+        width: 100% !important;
+        position: relative !important;
+        overflow: hidden !important;
     }
 }
