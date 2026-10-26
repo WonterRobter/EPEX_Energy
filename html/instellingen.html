@@ -10,7 +10,7 @@
     <meta name="theme-color" content="#3c91e6">
     <title>Instellingen - EPEXenergy</title>
 </head>
-<body class="dark">
+<body class="dark instellingen-pagina">
     <section id="sidebar">
         <div>
             <div style="display: flex; justify-content: space-between; align-items: center; padding-right: 16px;">
@@ -60,14 +60,130 @@
             <a href="profiel.html" class="profile" id="profileIcon"><img src="https://ui-avatars.com/api/?name=Wouter+D&background=3C91E6&color=fff" alt="Profile"></a>
         </nav>
         <main>
-            <div class="head-title"><div class="left"><h1>Instellingen</h1></div></div>
-            <div class="table-data">
-                <div class="order">
-                    <p style="color: var(--dark-grey);">Dashboard configuratie, InfluxDB instellingen en API keys komen hier.</p>
+            <div class="head-title">
+                <div class="left">
+                    <h1>Instellingen</h1>
                 </div>
+            </div>
+
+            <div class="table-data" id="instellingen-container" style="flex-direction: column; gap: 16px; overflow-y: auto;">
+                
+                <!-- BLOK 1: Financiële Weergave & Contract Formule -->
+                <div class="order">
+                    <div class="head">
+                        <h3><i class='bx bx-euro'></i> Financiële Weergave & Contract</h3>
+                    </div>
+                    <div class="settings-form">
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Standaard Eenheid</strong>
+                                <p>Kies in welke eenheid de prijzen op het dashboard worden getoond.</p>
+                            </div>
+                            <div class="setting-control">
+                                <select id="setting-eenheid" class="custom-select">
+                                    <option value="MWh">€ / MWh</option>
+                                    <option value="kWh">€ / kWh</option>
+                                    <option value="ckWh">c€ / kWh</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- EPEX Formule -->
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>EPEX Contractformule</strong>
+                                <p>Vul de formule van je energieleverancier in.</p>
+                                <div style="font-size: 16px; font-weight: 700; color: var(--blue); margin: 8px 0; background: var(--grey); padding: 8px 12px; border-radius: 6px; display: inline-block;">
+                                    Prijs = A + (B × EPEX)
+                                </div>
+                                <p style="font-size: 12px; color: var(--dark-grey);">A = Vaste kost, B = Multiplier</p>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div class="input-with-unit">
+                                    <span class="prefix">A =</span>
+                                    <input type="number" id="setting-formule-a" step="0.0001" placeholder="0.0000">
+                                    <span class="suffix" style="margin-left: 4px;">c€</span>
+                                </div>
+                                <div class="input-with-unit">
+                                    <span class="prefix">B =</span>
+                                    <input type="number" id="setting-formule-b" step="0.0001" placeholder="1.0000">
+                                    <span class="suffix" style="margin-left: 4px; opacity: 0;">--</span> <!-- Onzichtbaar, puur voor uitlijning -->
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- BLOK 2: Voorkeuren & Weergave -->
+                <div class="order">
+                    <div class="head">
+                        <h3><i class='bx bx-paint'></i> App Voorkeuren</h3>
+                    </div>
+                    <div class="settings-form">
+                        
+                        <!-- STARTPAGINA KEUZE -->
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Startpagina</strong>
+                                <p>Kies welk tabblad opent wanneer je de app start.</p>
+                            </div>
+                            <div class="setting-control">
+                                <select id="setting-startpagina" class="custom-select">
+                                    <option value="index.html">Dagverloop (Vandaag)</option>
+                                    <option value="trends.html?tab=kwartier">Kwartierprofielen (Trends)</option>
+                                    <option value="trends.html?tab=maand">Maandoverzicht (Trends)</option>
+                                    <option value="trends.html?tab=seizoen">Seizoensprofiel (Trends)</option>
+                                    <option value="trends.html?tab=jaar">Jaaroverzicht (Trends)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- STANDAARD ZICHTBARE LIJNEN -->
+                        <div class="setting-item align-top">
+                            <div class="setting-info">
+                                <strong>Standaard actieve lijnen</strong>
+                                <p>Kies welke grafieklijnen standaard zichtbaar zijn wanneer je de app opent.</p>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; width: 170px;">
+                                    <span style="font-size: 13px; color: var(--dark); font-weight: 600;">EPEX Prijs</span>
+                                    <div class="toggle-switch">
+                                        <input type="checkbox" id="setting-lijn-epex" hidden>
+                                        <label for="setting-lijn-epex"></label>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; justify-content: space-between; width: 170px;">
+                                    <span style="font-size: 13px; color: var(--dark); font-weight: 600;">Onbalans (15m)</span>
+                                    <div class="toggle-switch">
+                                        <input type="checkbox" id="setting-lijn-onb15" hidden>
+                                        <label for="setting-lijn-onb15"></label>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; justify-content: space-between; width: 170px;">
+                                    <span style="font-size: 13px; color: var(--dark); font-weight: 600;">Onbalans (1m)</span>
+                                    <div class="toggle-switch">
+                                        <input type="checkbox" id="setting-lijn-onb1" hidden>
+                                        <label for="setting-lijn-onb1"></label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- OPSLAAN KNOP -->
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 24px;">
+                    <button id="btn-save-settings" class="btn-save"><i class='bx bx-save'></i> Instellingen Opslaan</button>
+                </div>
+
             </div>
         </main>
     </section>
-    <script src="js/trends.js"></script>
+    <script src="js/instellingen.js"></script>
 </body>
 </html>

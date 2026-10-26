@@ -721,3 +721,322 @@ body:not(.dark) .cal-item-btn:hover { background: #e2e8f0; color: var(--blue); }
         overflow: hidden !important;
     }
 }
+
+/* ==========================================
+   INSTELLINGEN SCHERM STYLING
+   ========================================== */
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: flex-start; /* FIX: Niet meer space-between! */
+    align-items: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(139, 155, 180, 0.15);
+    gap: 32px; /* Zorgt voor een vaste, mooie afstand tussen tekst en input */
+}
+.setting-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.setting-info {
+    flex: 0 0 400px; /* FIX: Vaste breedte voor de tekst op PC */
+}
+.setting-info strong {
+    font-size: 14px;
+    color: var(--dark);
+    display: block;
+    margin-bottom: 4px;
+}
+.setting-info p {
+    font-size: 12px;
+    color: var(--dark-grey);
+    line-height: 1.4;
+}
+
+/* Select & Inputs */
+.custom-select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--grey);
+    color: var(--dark);
+    border: 1px solid rgba(139, 155, 180, 0.2);
+    font-family: var(--poppins);
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+}
+
+.input-with-unit {
+    display: flex;
+    align-items: center;
+    background: var(--grey);
+    border: 1px solid rgba(139, 155, 180, 0.2);
+    border-radius: 8px;
+    padding: 0 12px;
+    height: 36px;
+}
+.input-with-unit .prefix, .input-with-unit .suffix {
+    color: var(--dark-grey);
+    font-size: 13px;
+    font-weight: 500;
+}
+.input-with-unit input {
+    background: transparent;
+    border: none;
+    color: var(--dark);
+    font-family: var(--poppins);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    width: 60px;
+    outline: none;
+    padding: 0 4px;
+}
+
+/* Save Button */
+.btn-save {
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-family: var(--poppins);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s ease;
+    box-shadow: 0 4px 10px rgba(67, 140, 230, 0.3);
+}
+.btn-save:hover {
+    background: #3174c6;
+    transform: translateY(-2px);
+}
+
+/* iOS Style Toggle Switch */
+.toggle-switch label {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    background: var(--dark-grey);
+    border-radius: 24px;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+.toggle-switch label::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.3s ease;
+}
+.toggle-switch input:checked + label {
+    background: var(--blue);
+}
+.toggle-switch input:checked + label::after {
+    transform: translateX(20px);
+}
+
+@media (max-width: 768px) {
+    .setting-item {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+    
+    .setting-info {
+        flex: none !important; /* Vergeet de 400px breedte van de PC! */
+        width: 100% !important;
+        padding-right: 0 !important;
+    }
+    
+    .setting-control {
+        width: 100% !important;
+    }
+    
+    .custom-select {
+        width: 100% !important; /* Maak dropdowns over de hele breedte op mobiel */
+    }
+}
+
+/* ==========================================
+   INPUT VELDEN (Zonder pijltjes!)
+   ========================================== */
+.align-top {
+    align-items: flex-start !important;
+}
+
+.input-with-unit {
+    display: flex;
+    align-items: center;
+    background: var(--grey);
+    border: 1px solid rgba(139, 155, 180, 0.2);
+    border-radius: 8px;
+    padding: 0 12px;
+    height: 36px;
+}
+
+.input-with-unit .prefix, .input-with-unit .suffix {
+    color: var(--dark-grey);
+    font-size: 13px;
+    font-weight: 500;
+    margin-right: 6px;
+}
+
+.input-with-unit input::placeholder {
+    color: rgba(139, 155, 180, 0.4); /* Zacht transparant grijs */
+    font-weight: 400;
+}
+
+.input-with-unit input {
+    background: transparent;
+    border: none;
+    color: var(--dark); /* Duidelijke, donkere letters als je typt */
+    font-family: var(--poppins);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: right;
+    width: 75px;
+    outline: none;
+    padding: 0;
+}
+
+/* Verwijder de omhoog/omlaag pijltjes (spinners) bij getal-velden */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield; /* Fix voor Firefox */
+}
+
+/* ==========================================
+   SCROLL FIX VOOR INSTELLINGEN
+   ========================================== */
+#instellingen-container {
+    overflow-y: auto !important;
+    padding-bottom: 120px !important; /* Zorgt voor genoeg ruimte onderaan, voorbij de opslaan knop! */
+}
+
+/* ==========================================
+   CUSTOM IN-APP DROPDOWN
+   ========================================== */
+.custom-dropdown-container {
+    position: relative;
+    width: 100%;
+    font-family: var(--poppins);
+    font-size: 13px;
+    user-select: none;
+}
+.custom-dropdown-selected {
+    background: var(--grey);
+    color: var(--dark);
+    border: 1px solid rgba(139, 155, 180, 0.2);
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: 0.2s ease;
+}
+.custom-dropdown-selected::after {
+    content: '\25BC'; /* Klein pijltje naar beneden */
+    font-size: 10px;
+    color: var(--dark-grey);
+}
+.custom-dropdown-options {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--light);
+    border: 1px solid rgba(139, 155, 180, 0.2);
+    border-radius: 8px;
+    z-index: 100;
+    display: none; /* Verborgen tot je klikt */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+}
+.custom-dropdown-options.show {
+    display: block;
+    animation: fadeInDown 0.2s ease-out;
+}
+.custom-dropdown-option {
+    padding: 12px 14px;
+    cursor: pointer;
+    color: var(--dark);
+    border-bottom: 1px solid rgba(139, 155, 180, 0.1);
+    transition: background 0.2s;
+}
+.custom-dropdown-option:last-child {
+    border-bottom: none;
+}
+.custom-dropdown-option:hover {
+    background: var(--grey);
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================
+   FIX VOOR AFGEKAPTE INSTELLINGEN BLOKKEN
+   ========================================== */
+#content main #instellingen-container .order {
+    flex: none !important;         
+    height: auto !important;       
+    min-height: min-content !important;
+    overflow: visible !important;  
+    display: block !important;     /* Breek de flexbox van de grafieken! */
+}
+
+/* ==========================================
+   ULTIEME VLOEIENDE SCROLL (INSTELLINGEN)
+   ========================================== */
+/* 1. Zet de achtergrond en de basis muurvast */
+body.instellingen-pagina, 
+body.instellingen-pagina #content {
+    overflow: hidden !important;
+    height: 100dvh !important;
+}
+
+/* 2. Laat ENKEL het hoofdgedeelte (main) vloeiend scrollen */
+body.instellingen-pagina #content main {
+    height: calc(100dvh - 56px) !important; /* Ruimte overlaten voor de navbar */
+    overflow-y: auto !important;
+    
+    /* Deze twee regels zorgen voor dat boterzachte doorglijden op je gsm! */
+    -webkit-overflow-scrolling: touch !important; 
+    overscroll-behavior-y: contain !important;
+    
+    /* Forceer touch-scroll (overrulet eventuele blokkades van de grafieken) */
+    touch-action: pan-y !important; 
+}
+
+/* 3. Zorg dat de inhoud vrij kan meegroeien */
+body.instellingen-pagina #instellingen-container {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding-bottom: 80px !important; 
+}
