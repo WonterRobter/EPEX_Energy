@@ -4,13 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="css/style.css??v=101">
+    <link rel="stylesheet" href="css/style.css?v=101">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" sizes="192x192" href="pics/icon-192.png">
     <meta name="theme-color" content="#3c91e6">
     <title>Info - EPEXenergy</title>
+    
+    <style>
+        /* Specifieke styling voor de Info pagina om het mooi uit te lijnen */
+        .info-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .info-card p {
+            color: var(--dark-grey);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        .info-card ul {
+            padding-left: 20px;
+            color: var(--dark);
+            font-size: 14px;
+            line-height: 1.8;
+            margin-bottom: 8px;
+        }
+        .info-card ul li::marker {
+            color: var(--blue);
+        }
+        .info-card strong {
+            color: var(--dark);
+        }
+        .info-card a.api-link {
+            color: var(--blue);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .info-card a.api-link:hover {
+            text-decoration: underline;
+        }
+        .github-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #24292e;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 12px;
+            transition: 0.2s ease;
+        }
+        .github-btn:hover {
+            background: #000;
+            transform: translateY(-2px);
+        }
+        body.dark .github-btn {
+            background: var(--light);
+            color: var(--dark);
+        }
+        body.dark .github-btn:hover {
+            background: #fff;
+        }
+    </style>
 </head>
-<body class="dark">
+<body class="dark instellingen-pagina"> <!-- We gebruiken instellingen-pagina class zodat deze pagina ook soepel kan scrollen! -->
+    
+    <!-- ZIJBALK -->
     <section id="sidebar">
         <div>
             <div style="display: flex; justify-content: space-between; align-items: center; padding-right: 16px;">
@@ -18,11 +83,10 @@
                     <i class='bx bxs-zap bx-sm' style="margin-left: 16px; margin-right: 10px; color: var(--blue);"></i>
                     <span class="text">EPEXenergy</span>
                 </a>
-                <!-- Het sluit-kruisje (standaard verborgen op desktop) -->
                 <i class='bx bx-x bx-md' id="close-mobile-menu" style="color: var(--dark-grey); cursor: pointer; display: none;"></i>
             </div>
             <ul class="side-menu top">
-                <li><a href="index.html"><i class='bx bxs-dashboard'></i><span class="text">Vandaag (Actueel)</span></a></li>
+                <li><a href="index.html?nav=1"><i class='bx bxs-dashboard'></i><span class="text">Vandaag (Actueel)</span></a></li>
                 <li class="dropdown">
                     <a href="#" class="dropdown-btn">
                         <div style="display: flex; align-items: center;">
@@ -50,6 +114,7 @@
     </section>
     <div id="sidebar-overlay"></div>
 
+    <!-- INHOUD RECHTS -->
     <section id="content">
         <nav>
             <i class='bx bx-menu bx-sm'></i>
@@ -58,15 +123,74 @@
             <label class="swith-lm" for="switch-mode"><i class="bx bxs-moon"></i><i class="bx bx-sun"></i><div class="ball"></div></label>
             <a href="profiel.html" class="profile" id="profileIcon"><img src="https://ui-avatars.com/api/?name=Wouter+D&background=3C91E6&color=fff" alt="Profile"></a>
         </nav>
+        
         <main>
-            <div class="head-title"><div class="left"><h1>Over EPEXenergy</h1></div></div>
-            <div class="table-data">
-                <div class="order">
-                    <p style="color: var(--dark-grey);">Informatie over het energie-dashboard, de databronnen (EPEX Spot & Elia Imbalance) en systeemstatus.</p>
+            <div class="head-title">
+                <div class="left">
+                    <h1>Over EPEXenergy</h1>
                 </div>
+            </div>
+
+            <!-- CONTAINER VOOR DE INFO BLOKKEN -->
+            <div class="table-data" id="instellingen-container" style="flex-direction: column; gap: 24px; overflow-y: auto;">
+                
+                <!-- BLOK 1: De Maker & GitHub -->
+                <div class="order">
+                    <div class="head">
+                        <h3><i class='bx bx-code-alt' style="color: var(--green);"></i> Project & Ontwikkelaar</h3>
+                    </div>
+                    <div class="info-card">
+                        <p><strong>EPEXenergy</strong> is een geavanceerd, open-source energiedashboard. Het is ontworpen om de complexe en zeer volatiele Europese energiemarkten inzichtelijk te maken via realtime data en dynamische wiskundige modellen.</p>
+                        
+                        <div style="background: var(--grey); padding: 16px; border-radius: 12px; margin-top: 8px;">
+                            <p style="margin-bottom: 4px;">Ontwikkeld en ontworpen door:</p>
+                            <h3 style="color: var(--dark); font-size: 20px; font-weight: 700; margin-bottom: 12px;">Wonter</h3>
+                            <a href="https://github.com/WonterRobter/EPEX_Energy" target="_blank" class="github-btn">
+                                <i class='bx bxl-github bx-sm'></i> Bekijk de code op GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BLOK 2: Energy-Charts API -->
+                <div class="order">
+                    <div class="head">
+                        <h3><i class='bx bx-bar-chart-alt-2' style="color: var(--blue);"></i> EPEX Spot (Energy-Charts API)</h3>
+                    </div>
+                    <div class="info-card">
+                        <p>De day-ahead marktprijzen (EPEX) worden berekend en gepubliceerd via de API van het <strong>Fraunhofer ISE (Energy-Charts)</strong>. Deze databron levert de fundamentele uurprijzen voor elektriciteit in heel Europa.</p>
+                        <ul>
+                            <li><strong>Hoe het werkt:</strong> Elke dag rond 13:00 uur CET sluit de "Day-Ahead" veilig op de Europese beurs. Vraag en aanbod worden gematcht, wat resulteert in een vaste uurprijs voor de dag erna.</li>
+                            <li><strong>In de app:</strong> De backend van deze applicatie haalt deze data automatisch binnen en de rekentool past hier realtime jouw leveranciersformule, netkosten en BTW op toe.</li>
+                        </ul>
+                        <a href="https://api.energy-charts.info/" target="_blank" class="api-link">
+                            <i class='bx bx-link-external'></i> api.energy-charts.info
+                        </a>
+                    </div>
+                </div>
+
+                <!-- BLOK 3: Elia Onbalans API -->
+                <div class="order">
+                    <div class="head">
+                        <h3><i class='bx bxs-zap' style="color: var(--orange);"></i> Onbalansprijzen (Elia API)</h3>
+                    </div>
+                    <div class="info-card">
+                        <p>De real-time kwartier- en minuutonbalans wordt rechtstreeks gevoed door de <strong>Open Data API van Elia</strong>, de transmissienetbeheerder van België.</p>
+                        <ul>
+                            <li><strong>Hoe het werkt:</strong> Wanneer het stroomnet uit balans raakt (door bijvoorbeeld onverwacht veel zon of het uitvallen van een centrale), moet Elia reservecapaciteit inzetten. De kosten of opbrengsten hiervan vormen de onbalansprijs.</li>
+                            <li><strong>Dynamiek:</strong> Deze prijzen zijn extreem volatiel en kunnen van minuut tot minuut drastisch wijzigen, soms zelfs naar zeer negatieve waarden. Dit maakt het de ultieme graadmeter voor slimme batterij-sturing.</li>
+                        </ul>
+                        <a href="https://opendata.elia.be/" target="_blank" class="api-link">
+                            <i class='bx bx-link-external'></i> opendata.elia.be
+                        </a>
+                    </div>
+                </div>
+
             </div>
         </main>
     </section>
-    <script src="js/trends.js?v=10"></script>
+    
+    <!-- We laden script.js in voor het menu en dark mode -->
+    <script src="js/script.js?v=11"></script>
 </body>
 </html>

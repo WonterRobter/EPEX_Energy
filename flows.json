@@ -21,17 +21,7 @@
         "org": "epex_org",
         "bucket": "energie_db",
         "x": 1530,
-        "y": 440,
-        "wires": []
-    },
-    {
-        "id": "comment_epex_header",
-        "type": "comment",
-        "z": "44ae34a704e13388",
-        "name": "1. EPEX Day-Ahead Prijzen (Energy-Charts API - Kwartier)",
-        "info": "",
-        "x": 550,
-        "y": 320,
+        "y": 480,
         "wires": []
     },
     {
@@ -52,7 +42,7 @@
         "payload": "",
         "payloadType": "date",
         "x": 460,
-        "y": 360,
+        "y": 440,
         "wires": [
             [
                 "func_epex_build_url"
@@ -72,7 +62,7 @@
         "finalize": "",
         "libs": [],
         "x": 710,
-        "y": 360,
+        "y": 440,
         "wires": [
             [
                 "http_epex_request"
@@ -96,7 +86,7 @@
         "senderr": false,
         "headers": [],
         "x": 970,
-        "y": 360,
+        "y": 440,
         "wires": [
             [
                 "func_epex_to_influx"
@@ -115,23 +105,13 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1210,
-        "y": 360,
+        "x": 1250,
+        "y": 440,
         "wires": [
             [
                 "98965db8d1aa2365"
             ]
         ]
-    },
-    {
-        "id": "comment_onb_kwartier_header",
-        "type": "comment",
-        "z": "44ae34a704e13388",
-        "name": "2. Elia Onbalans Prijzen - Kwartier (ods162)",
-        "info": "",
-        "x": 510,
-        "y": 400,
-        "wires": []
     },
     {
         "id": "inj_onb_kwartier",
@@ -151,7 +131,7 @@
         "payload": "",
         "payloadType": "date",
         "x": 440,
-        "y": 440,
+        "y": 480,
         "wires": [
             [
                 "http_elia_kwartier"
@@ -174,8 +154,8 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 700,
-        "y": 440,
+        "x": 1000,
+        "y": 480,
         "wires": [
             [
                 "func_onb_kwartier_to_influx"
@@ -194,23 +174,13 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1220,
-        "y": 440,
+        "x": 1260,
+        "y": 480,
         "wires": [
             [
                 "98965db8d1aa2365"
             ]
         ]
-    },
-    {
-        "id": "comment_onb_minuut_header",
-        "type": "comment",
-        "z": "44ae34a704e13388",
-        "name": "3. Elia Onbalans Prijzen - Minuut (ods161)",
-        "info": "",
-        "x": 500,
-        "y": 480,
-        "wires": []
     },
     {
         "id": "inj_onb_minuut",
@@ -253,7 +223,7 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 690,
+        "x": 990,
         "y": 520,
         "wires": [
             [
@@ -273,7 +243,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1220,
+        "x": 1260,
         "y": 520,
         "wires": [
             [
@@ -282,20 +252,10 @@
         ]
     },
     {
-        "id": "f7f13e4707bc93ae",
-        "type": "comment",
-        "z": "44ae34a704e13388",
-        "name": "1. DAGELIJKS EPEX OVERZICHT VOOR MORGEN (Leest uit InfluxDB 2.7)",
-        "info": "",
-        "x": 610,
-        "y": 620,
-        "wires": []
-    },
-    {
         "id": "58b717313ca89c9b",
         "type": "inject",
         "z": "44ae34a704e13388",
-        "name": "Check 13u05 - 16u50",
+        "name": "Check 13u00 - 17u00",
         "props": [
             {
                 "p": "payload"
@@ -309,7 +269,7 @@
         "payload": "",
         "payloadType": "date",
         "x": 460,
-        "y": 660,
+        "y": 580,
         "wires": [
             [
                 "fd5b2bf4feab34a5"
@@ -328,35 +288,11 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 690,
-        "y": 660,
+        "x": 710,
+        "y": 580,
         "wires": [
             [
                 "46eef2a86e6abe65"
-            ]
-        ]
-    },
-    {
-        "id": "46eef2a86e6abe65",
-        "type": "http request",
-        "z": "44ae34a704e13388",
-        "name": "InfluxDB 2.7",
-        "method": "GET",
-        "ret": "obj",
-        "paytoqs": "ignore",
-        "url": "",
-        "tls": "",
-        "persist": false,
-        "proxy": "",
-        "insecureHTTPParser": false,
-        "authType": "",
-        "senderr": false,
-        "headers": [],
-        "x": 910,
-        "y": 660,
-        "wires": [
-            [
-                "2324340e06a283b2"
             ]
         ]
     },
@@ -372,23 +308,13 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1130,
-        "y": 660,
+        "x": 1170,
+        "y": 580,
         "wires": [
             [
                 "2b1513e002075e8f"
             ]
         ]
-    },
-    {
-        "id": "f17e87c3624766a5",
-        "type": "comment",
-        "z": "44ae34a704e13388",
-        "name": "2. PRIJS WEKKER: Waarschuw 15 minuten voordat de prijs onder € 25 duikt",
-        "info": "",
-        "x": 610,
-        "y": 700,
-        "wires": []
     },
     {
         "id": "0ca14bfbf36e4f99",
@@ -408,7 +334,7 @@
         "payload": "",
         "payloadType": "date",
         "x": 450,
-        "y": 740,
+        "y": 620,
         "wires": [
             [
                 "a26763a853a4e77c"
@@ -420,37 +346,18 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Vraag Nu & Straks (+15m)",
-        "func": "let nu = new Date();\nlet kwartier = Math.floor(nu.getMinutes() / 15) * 15;\n\nlet startTijd = new Date(nu);\nstartTijd.setMinutes(kwartier, 0, 0);\nlet eindTijd = new Date(startTijd.getTime() + 15 * 60000);\n\nlet q = `SELECT \"prijs\" FROM \"epex_kwartier\" WHERE time = ${startTijd.getTime()}ms OR time = ${eindTijd.getTime()}ms ORDER BY time ASC`;\nmsg.url = \"http://epex_influxdb:8086/query?db=energie_db&epoch=ms&q=\" + encodeURIComponent(q);\nmsg.headers = { \"Authorization\": \"Token epex_super_secret_token_2026\" };\nreturn msg;",
+        "func": "let nu = new Date();\nlet kwartier = Math.floor(nu.getMinutes() / 15) * 15;\n\nlet startTijd = new Date(nu);\nstartTijd.setMinutes(kwartier, 0, 0);\nlet eindTijd = new Date(startTijd.getTime() + 15 * 60000);\n\n// FIX: We zoeken in een venster van +- 5 sec om ms-afrondingen te negeren!\nlet sTime = startTijd.getTime() - 5000;\nlet eTime = eindTijd.getTime() + 5000;\n\nlet q = `SELECT \"prijs\" FROM \"epex_kwartier\" WHERE time >= ${sTime}ms AND time <= ${eTime}ms ORDER BY time ASC`;\nmsg.url = \"http://epex_influxdb:8086/query?db=energie_db&epoch=ms&q=\" + encodeURIComponent(q);\nmsg.headers = { \"Authorization\": \"Token epex_super_secret_token_2026\" };\nreturn msg;",
         "outputs": 1,
-        "x": 700,
-        "y": 740,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 720,
+        "y": 620,
         "wires": [
             [
-                "8caf27e919c22c9b"
-            ]
-        ]
-    },
-    {
-        "id": "8caf27e919c22c9b",
-        "type": "http request",
-        "z": "44ae34a704e13388",
-        "name": "InfluxDB 2.7",
-        "method": "GET",
-        "ret": "obj",
-        "paytoqs": "ignore",
-        "url": "",
-        "tls": "",
-        "persist": false,
-        "proxy": "",
-        "insecureHTTPParser": false,
-        "authType": "",
-        "senderr": false,
-        "headers": [],
-        "x": 910,
-        "y": 740,
-        "wires": [
-            [
-                "7d169d3a37a550b6"
+                "46eef2a86e6abe65"
             ]
         ]
     },
@@ -459,25 +366,20 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Check Drempel (€ 25)",
-        "func": "let res = msg.payload.results;\nif (!res || !res[0] || !res[0].series) return null;\n\nlet waarden = res[0].series[0].values;\nif (waarden.length < 2) return null;\n\nlet prijsNu = waarden[0][1];\nlet prijsStraks = waarden[1][1];\nlet tijdStraksMs = waarden[1][0];\nlet drempel = 25;\n\nlet d = new Date(tijdStraksMs);\nlet weergaveTijd = d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n\nnode.status({ fill: \"blue\", shape: \"ring\", text: `Nu: €${prijsNu} -> ${weergaveTijd}: €${prijsStraks}` });\n\nif (prijsNu > drempel && prijsStraks <= drempel) {\n    let bericht = `🔔 <b>PRIJS ALARM!</b>\\n\\nOver 15 minuten (om <b>${weergaveTijd}</b>) zakt de prijs onder de € ${drempel}!\\n\\n💰 Prijs: € ${prijsStraks.toFixed(2)} / MWh\\n⚡ <i>Tijd om de grote verbruikers aan te zetten!</i>`;\n\n    let idsRaw = env.get(\"TELEGRAM_CHAT_ID\") || \"\";\n    let chatIds = idsRaw.split(\",\").map(id => id.trim()).filter(id => id.length > 0);\n\n    chatIds.forEach(id => {\n        node.send({\n            payload: {\n                chatId: id,\n                type: \"message\",\n                content: bericht,\n                options: { parse_mode: \"HTML\" }\n            }\n        });\n    });\n}\nreturn null;",
+        "func": "let res = msg.payload.results;\nif (!res || !res[0] || !res[0].series) return null;\n\nlet waarden = res[0].series[0].values;\nif (waarden.length < 2) return null;\n\n// FIX: Pak altijd de laatste 2 resultaten uit het tijdvenster\nlet prijsNu = waarden[waarden.length - 2][1];\nlet prijsStraks = waarden[waarden.length - 1][1];\nlet tijdStraksMs = waarden[waarden.length - 1][0];\n\nlet drempel = 25;\nlet d = new Date(tijdStraksMs);\nlet weergaveTijd = d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n\nnode.status({ fill: \"blue\", shape: \"ring\", text: `Nu: €${prijsNu.toFixed(2)} -> ${weergaveTijd}: €${prijsStraks.toFixed(2)}` });\n\n// Stuur de wekker ALS de prijs op dit exacte moment ONDER de 25 zakt!\nif (prijsNu > drempel && prijsStraks <= drempel) {\n    let bericht = `🔔 <b>PRIJS ALARM!</b>\\n\\nOver 15 minuten (om <b>${weergaveTijd}</b>) zakt de prijs onder de € ${drempel}!\\n\\n💰 Prijs: € ${prijsStraks.toFixed(2)} / MWh\\n⚡ <i>Tijd om de grote verbruikers aan te zetten!</i>`;\n\n    let idsRaw = env.get(\"TELEGRAM_CHAT_ID\") || \"\";\n    let chatIds = idsRaw.split(\",\").map(id => id.trim()).filter(id => id.length > 0);\n\n    chatIds.forEach(id => {\n        node.send({\n            payload: { chatId: id, type: \"message\", content: bericht, options: { parse_mode: \"HTML\" } }\n        });\n    });\n}\nreturn null;",
         "outputs": 1,
-        "x": 1120,
-        "y": 740,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1160,
+        "y": 620,
         "wires": [
             [
                 "2b1513e002075e8f"
             ]
         ]
-    },
-    {
-        "id": "d6b6dccfdaeaf88d",
-        "type": "comment",
-        "z": "44ae34a704e13388",
-        "name": "3. WATCHDOG: Controleer elke nacht om 01:00 uur op ontbrekende data & API-status",
-        "info": "",
-        "x": 640,
-        "y": 780,
-        "wires": []
     },
     {
         "id": "b09c7a1b6d17db83",
@@ -497,7 +399,7 @@
         "payload": "",
         "payloadType": "date",
         "x": 450,
-        "y": 820,
+        "y": 660,
         "wires": [
             [
                 "9d34e86c39fe6e8c"
@@ -509,37 +411,18 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Multi-Query Gisteren",
-        "func": "let nu = new Date();\nlet vandaag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate());\nlet gisteren = new Date(vandaag.getTime() - 24 * 60 * 60 * 1000);\n\nlet startStr = gisteren.toISOString();\nlet eindStr = vandaag.toISOString();\n\nlet qMin = `SELECT \"prijs\" FROM \"onbalans_minuut\" WHERE time >= '${startStr}' AND time < '${eindStr}' ORDER BY time ASC`;\nlet qQOnb = `SELECT \"prijs\" FROM \"onbalans_kwartier\" WHERE time >= '${startStr}' AND time < '${eindStr}' ORDER BY time ASC`;\nlet qQEpex = `SELECT \"prijs\" FROM \"epex_kwartier\" WHERE time >= '${startStr}' AND time < '${eindStr}' ORDER BY time ASC`;\n\nmsg.url = \"http://epex_influxdb:8086/query?db=energie_db&epoch=ms&q=\" + encodeURIComponent(`${qMin};${qQOnb};${qQEpex}`);\nmsg.headers = { \"Authorization\": \"Token epex_super_secret_token_2026\" };\nmsg.startMs = gisteren.getTime();\nmsg.datumWeergave = gisteren.toLocaleDateString('nl-BE');\nreturn msg;",
+        "func": "let nu = new Date();\nlet vandaag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate());\nlet gisteren = new Date(vandaag.getTime() - 24 * 60 * 60 * 1000);\n\nlet startStr = gisteren.toISOString();\nlet eindStr = vandaag.toISOString();\n\nlet qMin = `SELECT \"prijs\" FROM \"onbalans_minuut\" WHERE time >= '${startStr}' AND time < '${eindStr}' ORDER BY time ASC`;\nlet qQOnb = `SELECT \"prijs\" FROM \"onbalans_kwartier\" WHERE time >= '${startStr}' AND time < '${eindStr}' ORDER BY time ASC`;\nlet qQEpex = `SELECT \"prijs\" FROM \"epex_kwartier\" WHERE time >= '${startStr}' AND time < '${eindStr}' ORDER BY time ASC`;\n\nmsg.url = \"http://epex_influxdb:8086/query?db=energie_db&epoch=ms&q=\" + encodeURIComponent(`${qMin};${qQOnb};${qQEpex}`);\nmsg.headers = { \"Authorization\": \"Token epex_super_secret_token_2026\" };\nmsg.startMs = gisteren.getTime();\nmsg.datumWeergave = gisteren.toLocaleDateString('nl-BE');\n// Als deze via de Rescue Delay komt, bewaar dan de status!\nif (msg.isRescueCheck !== undefined) {\n    msg.isRescueCheck = msg.isRescueCheck;\n}\nreturn msg;",
         "outputs": 1,
-        "x": 680,
-        "y": 820,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 660,
         "wires": [
             [
-                "2fe888a5ff8b4af8"
-            ]
-        ]
-    },
-    {
-        "id": "2fe888a5ff8b4af8",
-        "type": "http request",
-        "z": "44ae34a704e13388",
-        "name": "InfluxDB 2.7",
-        "method": "GET",
-        "ret": "obj",
-        "paytoqs": "ignore",
-        "url": "",
-        "tls": "",
-        "persist": false,
-        "proxy": "",
-        "insecureHTTPParser": false,
-        "authType": "",
-        "senderr": false,
-        "headers": [],
-        "x": 910,
-        "y": 820,
-        "wires": [
-            [
-                "5946c0dbadecec06"
+                "46eef2a86e6abe65"
             ]
         ]
     },
@@ -548,18 +431,21 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Analyseer Gaten & API",
-        "func": "let results = msg.payload.results;\nif (!results || results.length < 3) return null;\n\nlet startMs = msg.startMs;\nlet datum = msg.datumWeergave;\n\nlet actualMin = new Set();\nlet actualQOnb = new Set();\nlet actualQEpex = new Set();\n\nif (results[0] && results[0].series) results[0].series[0].values.forEach(v => actualMin.add(v[0]));\nif (results[1] && results[1].series) results[1].series[0].values.forEach(v => actualQOnb.add(v[0]));\nif (results[2] && results[2].series) results[2].series[0].values.forEach(v => actualQEpex.add(v[0]));\n\nlet missingMin = [];\nlet missingQOnb = [];\nlet missingQEpex = [];\n\nfunction formatTijd(tms) {\n    let d = new Date(tms);\n    return d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n}\n\nfor (let i = 0; i < 1440; i++) {\n    let t = startMs + i * 60 * 1000;\n    if (!actualMin.has(t)) missingMin.push(formatTijd(t));\n}\n\nfor (let i = 0; i < 96; i++) {\n    let t = startMs + i * 15 * 60 * 1000;\n    let tStr = formatTijd(t);\n    if (!actualQOnb.has(t)) missingQOnb.push(tStr);\n    if (!actualQEpex.has(t)) missingQEpex.push(tStr);\n}\n\nlet isDeprecated = global.get(\"epex_api_deprecated\") === true;\n\nif (missingMin.length > 0 || missingQOnb.length > 0 || missingQEpex.length > 0 || isDeprecated) {\n    let bericht = `⚠️ <b>WATCHDOG RAPPORT (${datum})</b>\\n\\n`;\n    \n    if (isDeprecated) {\n        bericht += `🚨 <b>LET OP:</b> Energy-Charts API heeft gemeld dat deze versie binnenkort stopt (deprecated)!\\n\\n`;\n    }\n    if (missingQEpex.length > 0) {\n        bericht += `❌ <b>EPEX Kwartier (${96 - missingQEpex.length}/96):</b>\\n└ Gemist: ${missingQEpex.slice(0, 12).join(', ')}${missingQEpex.length > 12 ? '...' : ''}\\n\\n`;\n    }\n    if (missingQOnb.length > 0) {\n        bericht += `❌ <b>Onbalans Kwartier (${96 - missingQOnb.length}/96):</b>\\n└ Gemist: ${missingQOnb.slice(0, 12).join(', ')}${missingQOnb.length > 12 ? '...' : ''}\\n\\n`;\n    }\n    if (missingMin.length > 0) {\n        bericht += `❌ <b>Onbalans Minuut (${1440 - missingMin.length}/1440):</b>\\n`;\n        bericht += missingMin.length > 15 ? `└ Totaal ${missingMin.length} min gemist (o.a. ${missingMin.slice(0, 8).join(', ')}...)\\n` : `└ Gemist: ${missingMin.join(', ')}\\n`;\n    }\n\n    node.status({ fill: \"red\", shape: \"dot\", text: `Gaten gevonden op ${datum}` });\n    let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n    msg.payload = {\n        chatId: targetChat,\n        type: \"message\",\n        content: bericht,\n        options: { parse_mode: \"HTML\" }\n    };\n    return msg;\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${datum}: 100% compleet!` });\nreturn null;",
-        "outputs": 1,
+        "func": "let results = msg.payload.results;\nif (!results || results.length < 3) return [null, null];\n\nlet startMs = msg.startMs;\nlet datum = msg.datumWeergave;\nlet isRescueCheck = msg.isRescueCheck === true;\n\nlet actualMin = new Set();\nlet actualQOnb = new Set();\nlet actualQEpex = new Set();\n\nif (results[0] && results[0].series) results[0].series[0].values.forEach(v => actualMin.add(v[0]));\nif (results[1] && results[1].series) results[1].series[0].values.forEach(v => actualQOnb.add(v[0]));\nif (results[2] && results[2].series) results[2].series[0].values.forEach(v => actualQEpex.add(v[0]));\n\nlet missingMin = [];\nlet missingQOnb = [];\nlet missingQEpex = [];\n\nfunction formatTijd(tms) {\n    let d = new Date(tms);\n    return d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n}\n\nfor (let i = 0; i < 1440; i++) {\n    let t = startMs + i * 60 * 1000;\n    if (!actualMin.has(t)) missingMin.push(formatTijd(t));\n}\nfor (let i = 0; i < 96; i++) {\n    let t = startMs + i * 15 * 60 * 1000;\n    let tStr = formatTijd(t);\n    if (!actualQOnb.has(t)) missingQOnb.push(tStr);\n    if (!actualQEpex.has(t)) missingQEpex.push(tStr);\n}\n\nlet isDeprecated = global.get(\"epex_api_deprecated\") === true;\n\nif (missingMin.length > 0 || missingQOnb.length > 0 || missingQEpex.length > 0 || isDeprecated) {\n    if (!isRescueCheck && !isDeprecated) {\n        // EERSTE KEER: Gaten ontdekt! Stuur naar Output 2 (Rescue)\n        node.status({ fill: \"yellow\", shape: \"ring\", text: \"Gaten ontdekt! Rescue gestart...\" });\n        msg.datumWeergave = datum;\n        return [null, msg]; // Output 2\n    } else {\n        // TWEEDE KEER of API kapot: Pech! Bericht naar Admin via Output 1\n        let bericht = `⚠️ <b>WATCHDOG RAPPORT (${datum})</b>\\n\\n`;\n        if (isRescueCheck) bericht = `🚨 <b>RESCUE MISLUKT (${datum})</b>\\nNiet alle gaten konden worden hersteld. Pech...\\n\\n`;\n        if (isDeprecated) bericht += `🚨 <b>LET OP:</b> Energy-Charts API stopt binnenkort!\\n\\n`;\n        \n        if (missingQEpex.length > 0) bericht += `❌ <b>EPEX Kwartier (${96 - missingQEpex.length}/96)</b>\\n\\n`;\n        if (missingQOnb.length > 0) bericht += `❌ <b>Onbalans Kwartier (${96 - missingQOnb.length}/96)</b>\\n\\n`;\n        if (missingMin.length > 0) bericht += `❌ <b>Onbalans Minuut (${1440 - missingMin.length}/1440)</b>\\n`;\n\n        node.status({ fill: \"red\", shape: \"dot\", text: \"Pech: gaten overgebleven.\" });\n        let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n        msg.payload = { chatId: targetChat, type: \"message\", content: bericht, options: { parse_mode: \"HTML\" } };\n        return [msg, null]; // Output 1\n    }\n}\n\nif (isRescueCheck) {\n    // TWEEDE KEER: Geen gaten meer! Rescue was succesvol!\n    node.status({ fill: \"green\", shape: \"dot\", text: \"Rescue succesvol!\" });\n    let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n    msg.payload = { chatId: targetChat, type: \"message\", content: `✅ <b>RESCUE GESLAAGD (${datum})</b>\\nAlle gaten zijn gedicht! 🛠️`, options: { parse_mode: \"HTML\" } };\n    return [msg, null]; // Output 1\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${datum}: 100% compleet!` });\nreturn [null, null];",
+        "outputs": 2,
         "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1120,
-        "y": 820,
+        "x": 1160,
+        "y": 660,
         "wires": [
             [
                 "8616788a903aaa57"
+            ],
+            [
+                "9bdb5e6f4c18b9d4"
             ]
         ]
     },
@@ -571,8 +457,8 @@
         "bot": "7fdca0379777c9a8",
         "haserroroutput": false,
         "outputs": 1,
-        "x": 1470,
-        "y": 720,
+        "x": 1430,
+        "y": 600,
         "wires": [
             []
         ]
@@ -585,8 +471,8 @@
         "bot": "5801c82befe61e4e",
         "haserroroutput": false,
         "outputs": 1,
-        "x": 1500,
-        "y": 760,
+        "x": 1400,
+        "y": 640,
         "wires": [
             []
         ]
@@ -602,7 +488,7 @@
         "skipBodyParsing": false,
         "swaggerDoc": "",
         "x": 420,
-        "y": 960,
+        "y": 800,
         "wires": [
             [
                 "query_bouw"
@@ -622,7 +508,7 @@
         "finalize": "",
         "libs": [],
         "x": 660,
-        "y": 960,
+        "y": 800,
         "wires": [
             [
                 "db_login"
@@ -636,10 +522,11 @@
         "mydb": "0d836172df78c3f2",
         "name": "MariaDB",
         "x": 880,
-        "y": 960,
+        "y": 820,
         "wires": [
             [
-                "login_check"
+                "login_check",
+                "register_check"
             ]
         ]
     },
@@ -656,7 +543,7 @@
         "finalize": "",
         "libs": [],
         "x": 1090,
-        "y": 960,
+        "y": 800,
         "wires": [
             [
                 "register_out"
@@ -673,7 +560,7 @@
         "upload": false,
         "swaggerDoc": "",
         "x": 430,
-        "y": 1020,
+        "y": 840,
         "wires": [
             [
                 "query_register"
@@ -693,24 +580,10 @@
         "finalize": "",
         "libs": [],
         "x": 660,
-        "y": 1020,
+        "y": 840,
         "wires": [
             [
-                "db_register"
-            ]
-        ]
-    },
-    {
-        "id": "db_register",
-        "type": "mysql",
-        "z": "44ae34a704e13388",
-        "mydb": "0d836172df78c3f2",
-        "name": "MariaDB",
-        "x": 880,
-        "y": 1020,
-        "wires": [
-            [
-                "register_check"
+                "db_login"
             ]
         ]
     },
@@ -727,7 +600,7 @@
         "finalize": "",
         "libs": [],
         "x": 1090,
-        "y": 1020,
+        "y": 840,
         "wires": [
             [
                 "register_out"
@@ -741,8 +614,8 @@
         "name": "",
         "statusCode": "",
         "headers": {},
-        "x": 1390,
-        "y": 1140,
+        "x": 1450,
+        "y": 840,
         "wires": []
     },
     {
@@ -754,8 +627,8 @@
             "db_register"
         ],
         "uncaught": false,
-        "x": 790,
-        "y": 920,
+        "x": 810,
+        "y": 760,
         "wires": [
             [
                 "register_error"
@@ -774,8 +647,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1000,
-        "y": 920,
+        "x": 1020,
+        "y": 760,
         "wires": [
             [
                 "register_out"
@@ -793,7 +666,7 @@
         "skipBodyParsing": false,
         "swaggerDoc": "",
         "x": 420,
-        "y": 1080,
+        "y": 900,
         "wires": [
             [
                 "build_flux"
@@ -813,7 +686,7 @@
         "finalize": "",
         "libs": [],
         "x": 670,
-        "y": 1080,
+        "y": 900,
         "wires": [
             [
                 "query_influx"
@@ -832,10 +705,14 @@
         "retentionPolicy": "",
         "org": "epex_org",
         "x": 890,
-        "y": 1080,
+        "y": 1020,
         "wires": [
             [
-                "format_chart"
+                "format_chart",
+                "format_chart_profiel",
+                "calc_maand_turbo",
+                "29f380309365c195",
+                "calc_seizoen_turbo"
             ]
         ]
     },
@@ -852,7 +729,7 @@
         "finalize": "",
         "libs": [],
         "x": 1100,
-        "y": 1080,
+        "y": 900,
         "wires": [
             [
                 "register_out"
@@ -869,7 +746,7 @@
         "upload": false,
         "swaggerDoc": "",
         "x": 440,
-        "y": 1140,
+        "y": 960,
         "wires": [
             [
                 "build_flux_profiel"
@@ -889,10 +766,10 @@
         "finalize": "",
         "libs": [],
         "x": 680,
-        "y": 1140,
+        "y": 960,
         "wires": [
             [
-                "query_influx_profiel"
+                "query_influx"
             ]
         ]
     },
@@ -909,7 +786,7 @@
         "finalize": "",
         "libs": [],
         "x": 1110,
-        "y": 1140,
+        "y": 960,
         "wires": [
             [
                 "register_out"
@@ -926,7 +803,7 @@
         "upload": false,
         "swaggerDoc": "",
         "x": 450,
-        "y": 1200,
+        "y": 1020,
         "wires": [
             [
                 "build_flux_maand"
@@ -946,10 +823,10 @@
         "finalize": "",
         "libs": [],
         "x": 670,
-        "y": 1200,
+        "y": 1020,
         "wires": [
             [
-                "query_influx_maand"
+                "query_influx"
             ]
         ]
     },
@@ -966,7 +843,7 @@
         "finalize": "",
         "libs": [],
         "x": 1110,
-        "y": 1200,
+        "y": 1020,
         "wires": [
             [
                 "register_out"
@@ -983,7 +860,7 @@
         "upload": false,
         "swaggerDoc": "",
         "x": 440,
-        "y": 1260,
+        "y": 1080,
         "wires": [
             [
                 "69bc24122c408407"
@@ -1003,10 +880,10 @@
         "finalize": "",
         "libs": [],
         "x": 670,
-        "y": 1260,
+        "y": 1080,
         "wires": [
             [
-                "8dd9139ae9a2bbd4"
+                "query_influx"
             ]
         ]
     },
@@ -1023,67 +900,10 @@
         "finalize": "",
         "libs": [],
         "x": 1120,
-        "y": 1260,
+        "y": 1080,
         "wires": [
             [
                 "register_out"
-            ]
-        ]
-    },
-    {
-        "id": "query_influx_profiel",
-        "type": "influxdb in",
-        "z": "44ae34a704e13388",
-        "influxdb": "c37561ff29513d8a",
-        "name": "InfluxDB 2.7",
-        "query": "",
-        "rawOutput": false,
-        "precision": "",
-        "retentionPolicy": "",
-        "org": "epex_org",
-        "x": 890,
-        "y": 1140,
-        "wires": [
-            [
-                "format_chart_profiel"
-            ]
-        ]
-    },
-    {
-        "id": "query_influx_maand",
-        "type": "influxdb in",
-        "z": "44ae34a704e13388",
-        "influxdb": "c37561ff29513d8a",
-        "name": "InfluxDB 2.7",
-        "query": "",
-        "rawOutput": false,
-        "precision": "",
-        "retentionPolicy": "",
-        "org": "epex_org",
-        "x": 890,
-        "y": 1200,
-        "wires": [
-            [
-                "calc_maand_turbo"
-            ]
-        ]
-    },
-    {
-        "id": "8dd9139ae9a2bbd4",
-        "type": "influxdb in",
-        "z": "44ae34a704e13388",
-        "influxdb": "c37561ff29513d8a",
-        "name": "InfluxDB 2.7",
-        "query": "",
-        "rawOutput": false,
-        "precision": "",
-        "retentionPolicy": "",
-        "org": "epex_org",
-        "x": 890,
-        "y": 1260,
-        "wires": [
-            [
-                "29f380309365c195"
             ]
         ]
     },
@@ -1097,7 +917,7 @@
         "upload": false,
         "swaggerDoc": "",
         "x": 450,
-        "y": 1320,
+        "y": 1140,
         "wires": [
             [
                 "build_flux_seizoen"
@@ -1117,29 +937,10 @@
         "finalize": "",
         "libs": [],
         "x": 680,
-        "y": 1320,
+        "y": 1140,
         "wires": [
             [
-                "query_influx_seizoen"
-            ]
-        ]
-    },
-    {
-        "id": "query_influx_seizoen",
-        "type": "influxdb in",
-        "z": "44ae34a704e13388",
-        "influxdb": "c37561ff29513d8a",
-        "name": "InfluxDB 2.7",
-        "query": "",
-        "rawOutput": false,
-        "precision": "",
-        "retentionPolicy": "",
-        "org": "epex_org",
-        "x": 890,
-        "y": 1320,
-        "wires": [
-            [
-                "calc_seizoen_turbo"
+                "query_influx"
             ]
         ]
     },
@@ -1156,12 +957,208 @@
         "finalize": "",
         "libs": [],
         "x": 1120,
-        "y": 1320,
+        "y": 1140,
         "wires": [
             [
                 "register_out"
             ]
         ]
+    },
+    {
+        "id": "9bdb5e6f4c18b9d4",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Bouw Rescue URLs",
+        "func": "let nu = new Date();\nlet vandaag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate());\nlet gisteren = new Date(vandaag.getTime() - 24 * 60 * 60 * 1000);\n\nlet startStr = gisteren.getFullYear() + \"-\" + String(gisteren.getMonth()+1).padStart(2,'0') + \"-\" + String(gisteren.getDate()).padStart(2,'0');\nlet endStr = vandaag.getFullYear() + \"-\" + String(vandaag.getMonth()+1).padStart(2,'0') + \"-\" + String(vandaag.getDate()).padStart(2,'0');\n\nlet msgEpex = { url: `https://api.energy-charts.info/price?bzn=BE&start=${startStr}&end=${endStr}` };\nlet msgEliaKw = { url: \"https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods162/records?select=datetime%2C%20imbalanceprice&order_by=datetime%20desc&limit=100\" };\nlet msgEliaMin = { url: \"https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods161/records?select=datetime%2C%20imbalanceprice&order_by=datetime%20desc&limit=1440\" };\nlet msgDelay = { isRescueCheck: true, datumWeergave: msg.datumWeergave };\n\nnode.status({ fill: \"blue\", shape: \"dot\", text: \"Rescue data ophalen...\" });\nreturn [msgEpex, msgEliaKw, msgEliaMin, msgDelay];",
+        "outputs": 4,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1400,
+        "y": 700,
+        "wires": [
+            [
+                "91d8b0fe1b4c6ddc"
+            ],
+            [
+                "2a934532d991f448"
+            ],
+            [
+                "e799b3c63445fd30"
+            ],
+            [
+                "5749be8816f6661a"
+            ]
+        ]
+    },
+    {
+        "id": "5749be8816f6661a",
+        "type": "delay",
+        "z": "44ae34a704e13388",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "15",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1600,
+        "y": 740,
+        "wires": [
+            [
+                "125307c567eea786"
+            ]
+        ]
+    },
+    {
+        "id": "46eef2a86e6abe65",
+        "type": "http request",
+        "z": "44ae34a704e13388",
+        "name": "InfluxDB 2.7",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 950,
+        "y": 620,
+        "wires": [
+            [
+                "2324340e06a283b2",
+                "7d169d3a37a550b6",
+                "5946c0dbadecec06"
+            ]
+        ]
+    },
+    {
+        "id": "125307c567eea786",
+        "type": "link out",
+        "z": "44ae34a704e13388",
+        "name": "link out 1",
+        "mode": "link",
+        "links": [
+            "0f0d98b0e61a6fdd"
+        ],
+        "x": 1695,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "0f0d98b0e61a6fdd",
+        "type": "link in",
+        "z": "44ae34a704e13388",
+        "name": "link in 1",
+        "links": [
+            "125307c567eea786"
+        ],
+        "x": 565,
+        "y": 700,
+        "wires": [
+            [
+                "9d34e86c39fe6e8c"
+            ]
+        ]
+    },
+    {
+        "id": "9844164402b7f4d2",
+        "type": "link in",
+        "z": "44ae34a704e13388",
+        "name": "link in 2",
+        "links": [
+            "e799b3c63445fd30"
+        ],
+        "x": 835,
+        "y": 520,
+        "wires": [
+            [
+                "http_elia_minuut"
+            ]
+        ]
+    },
+    {
+        "id": "1962aae79cb52da9",
+        "type": "link in",
+        "z": "44ae34a704e13388",
+        "name": "link in 3",
+        "links": [
+            "2a934532d991f448"
+        ],
+        "x": 835,
+        "y": 480,
+        "wires": [
+            [
+                "http_elia_kwartier"
+            ]
+        ]
+    },
+    {
+        "id": "b594486145382314",
+        "type": "link in",
+        "z": "44ae34a704e13388",
+        "name": "link in 4",
+        "links": [
+            "91d8b0fe1b4c6ddc"
+        ],
+        "x": 825,
+        "y": 400,
+        "wires": [
+            [
+                "http_epex_request"
+            ]
+        ]
+    },
+    {
+        "id": "91d8b0fe1b4c6ddc",
+        "type": "link out",
+        "z": "44ae34a704e13388",
+        "name": "link out 2",
+        "mode": "link",
+        "links": [
+            "b594486145382314"
+        ],
+        "x": 1555,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "2a934532d991f448",
+        "type": "link out",
+        "z": "44ae34a704e13388",
+        "name": "link out 3",
+        "mode": "link",
+        "links": [
+            "1962aae79cb52da9"
+        ],
+        "x": 1595,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "e799b3c63445fd30",
+        "type": "link out",
+        "z": "44ae34a704e13388",
+        "name": "link out 4",
+        "mode": "link",
+        "links": [
+            "9844164402b7f4d2"
+        ],
+        "x": 1645,
+        "y": 700,
+        "wires": []
     },
     {
         "id": "c37561ff29513d8a",
@@ -1243,7 +1240,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "8626d8072cb498bb",
+        "id": "df3b97044c4f87f3",
         "type": "global-config",
         "env": [],
         "modules": {
