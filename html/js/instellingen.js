@@ -4,6 +4,8 @@
 const sidebar = document.getElementById('sidebar');
 const menuBar = document.querySelector('#content nav .bx.bx-menu');
 const closeMobileMenuBtn = document.getElementById('close-mobile-menu');
+const elExtraKosten = document.getElementById('setting-extra-kosten');
+const elBtw = document.getElementById('setting-btw');
 
 let sidebarOverlay = document.getElementById('sidebar-overlay');
 if (!sidebarOverlay) {
@@ -63,6 +65,7 @@ const elLijnEpex = document.getElementById('setting-lijn-epex');
 const elLijnOnb15 = document.getElementById('setting-lijn-onb15');
 const elLijnOnb1 = document.getElementById('setting-lijn-onb1');
 const btnSave = document.getElementById('btn-save-settings');
+const elToggleExtra = document.getElementById('setting-toggle-extra');
 
 function laadHuidigeInstellingen() {
     elEenheid.value = localStorage.getItem('pref_eenheid') || 'MWh';
@@ -73,6 +76,9 @@ function laadHuidigeInstellingen() {
     elLijnEpex.checked = localStorage.getItem('pref_lijn_epex') !== 'false';
     elLijnOnb15.checked = localStorage.getItem('pref_lijn_onb15') !== 'false';
     elLijnOnb1.checked = localStorage.getItem('pref_lijn_onb1') === 'true';
+    if (elToggleExtra) elToggleExtra.checked = localStorage.getItem('pref_toggle_extra') === 'true';
+    if (elExtraKosten) elExtraKosten.value = localStorage.getItem('pref_extra_kosten') || '';
+    if (elBtw) elBtw.value = localStorage.getItem('pref_btw') || '0'; // Standaard 0!
 }
 
 btnSave.addEventListener('click', () => {
@@ -87,11 +93,24 @@ btnSave.addEventListener('click', () => {
     const origineleTekst = btnSave.innerHTML;
     btnSave.innerHTML = `<i class='bx bx-check'></i> Opgeslagen!`;
     btnSave.style.background = 'var(--green)';
+
+    if (elToggleExtra) {
+        localStorage.setItem('pref_toggle_extra', elToggleExtra.checked ? 'true' : 'false');
+    }
+    if (elExtraKosten) {
+        const valExtra = elExtraKosten.value.replace(',', '.');
+        localStorage.setItem('pref_extra_kosten', valExtra !== '' ? valExtra : '');
+    }
+    if (elBtw) {
+        const valBtw = elBtw.value.replace(',', '.');
+        localStorage.setItem('pref_btw', valBtw !== '' ? valBtw : '');
+    }
     
     setTimeout(() => {
         btnSave.innerHTML = origineleTekst;
         btnSave.style.background = 'var(--blue)';
     }, 2000);
+
 });
 
 laadHuidigeInstellingen();

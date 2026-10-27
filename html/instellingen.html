@@ -113,7 +113,32 @@
                                 </div>
                             </div>
                         </div>
-
+                        <!-- Extra Kosten, Formule & BTW Toggle -->
+                        <div class="setting-item">
+                            <div class="setting-info" style="display: flex; justify-content: space-between; width: 100%; align-items: flex-start;">
+                                <div>
+                                    <strong>Berekeningen Toepassen</strong>
+                                    <p>Zet aan om je contractformule, netkosten en BTW door te rekenen. Zet uit voor de ruwe beursprijzen.</p>
+                                </div>
+                                <div class="toggle-switch" style="margin-left: 16px;">
+                                    <input type="checkbox" id="setting-toggle-extra" hidden>
+                                    <label for="setting-toggle-extra"></label>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                                <div class="input-with-unit">
+                                    <span class="prefix" style="width: 55px;">Extra =</span>
+                                    <input type="number" id="setting-extra-kosten" step="0.0001" placeholder="12.1690">
+                                    <span class="suffix" style="margin-left: 4px;">c€</span>
+                                </div>
+                                <div class="input-with-unit">
+                                    <span class="prefix" style="width: 55px;">BTW =</span>
+                                    <input type="number" id="setting-btw" step="1" placeholder="0">
+                                    <span class="suffix" style="margin-left: 4px;">%</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

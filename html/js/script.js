@@ -170,11 +170,9 @@ document.getElementById('btn-prev-day').addEventListener('click', () => {
     gisteren.setDate(gisteren.getDate() - 1);
     veranderActieveDag(gisteren);
 });
-
 document.getElementById('btn-today').addEventListener('click', () => {
     veranderActieveDag(new Date());
 });
-
 document.getElementById('btn-next-day').addEventListener('click', () => {
     const morgen = new Date(actieveDatum);
     morgen.setDate(morgen.getDate() + 1);
@@ -182,17 +180,15 @@ document.getElementById('btn-next-day').addEventListener('click', () => {
 });
 
 // ==========================================
-// 3. LEGENDA KNOPPEN & INSTELLINGEN (Dagverloop)
+// 3. LEGENDA KNOPPEN & INSTELLINGEN
 // ==========================================
 const prefEpex = localStorage.getItem('pref_lijn_epex') !== 'false';
 const prefOnb15 = localStorage.getItem('pref_lijn_onb15') !== 'false';
 const prefOnb1 = localStorage.getItem('pref_lijn_onb1') === 'true';
 
-// Pas toe: [EPEX, Onb15, Onb1, Drempelwaarde]
 let datasetZichtbaar = [prefEpex, prefOnb15, prefOnb1, prefEpex];
 
 window.addEventListener('DOMContentLoaded', () => {
-    // Verberg de knoppen visueel bij het inladen
     document.querySelectorAll('#custom-legend .legend-item').forEach(item => {
         const index = parseInt(item.getAttribute('data-dataset'));
         if (!isNaN(index) && datasetZichtbaar[index] === false) {
@@ -214,7 +210,7 @@ document.querySelectorAll('#custom-legend .legend-item').forEach(item => {
 });
 
 // ==========================================
-// 4. CUSTOM PLUG-INS VOOR CHART.JS (Muis én Touch Kwartier-Snap)
+// 4. CUSTOM PLUG-INS VOOR CHART.JS
 // ==========================================
 const huidigeTijdLijnPlugin = {
     id: 'huidigeTijdLijn',
@@ -249,63 +245,121 @@ function berekenTouchOfMuisX(chart, e) {
     const rect = chart.canvas.getBoundingClientRect();
     const native = e.native;
     if (native) {
-        if (native.touches && native.touches.length > 0) {
-            return native.touches[0].clientX - rect.left;
-        }
-        if (native.changedTouches && native.changedTouches.length > 0) {
-            return native.changedTouches[0].clientX - rect.left;
-        }
-        if (typeof native.clientX === 'number') {
-            return native.clientX - rect.left;
-        }
+        if (native.touches && native.touches.length > 0) return native.touches[0].clientX - rect.left;
+        if (native.changedTouches && native.changedTouches.length > 0) return native.changedTouches[0].clientX - rect.left;
+        if (typeof native.clientX === 'number') return native.clientX - rect.left;
     }
     return null;
 }
 
-Chart.Interaction.modes.kwartierSnap = function(chart, e) {
-    const xAxis = chart.scales.x;
-    const xPixel = berekenTouchOfMuisX(chart, e);
-    if (xPixel === null) return [];
+if (typeof Chart !== 'undefined') {
+    Chart.Interaction.modes.kwartierSnap = function(chart, e) {
+        const xAxis = chart.scales.x;
+        const xPixel = berekenTouchOfMuisX(chart, e);
+        if (xPixel === null) return [];
 
-    let rawIndex = xAxis.getValueForPixel(xPixel);
-    if (rawIndex === undefined || rawIndex === null || isNaN(rawIndex)) return [];
+        let rawIndex = xAxis.getValueForPixel(xPixel);
+        if (rawIndex === undefined || rawIndex === null || isNaN(rawIndex)) return [];
+        
+        rawIndex = Math.max(0, Math.min(chart.data.labels.length - 1, Math.round(rawIndex)));
+
+        const minuutActief = chart.isDatasetVisible(2);
+        let targetIndex = minuutActief ? rawIndex : Math.round(rawIndex / 15) * 15;
+        targetIndex = Math.min(chart.data.labels.length - 1, targetIndex);
+
+        const items = [];
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+            if (!chart.isDatasetVisible(datasetIndex) || datasetIndex === 3) return;
+
+            const meta = chart.getDatasetMeta(datasetIndex);
+            const element = meta.data[targetIndex];
+            const waarde = dataset.data[targetIndex];
+
+            if (element && waarde !== null && waarde !== undefined) {
+                items.push({ element, datasetIndex, index: targetIndex });
+            }
+        });
+        return items;
+    };
+    Chart.register(huidigeTijdLijnPlugin);
+}
+
+// ==========================================
+// 5. REKENMACHINE & EENHEDEN FUNCTIES
+// ==========================================
+function berekenPrijs(waardeMWh, isMeldingLijn = false) {
+    if (waardeMWh === null || waardeMWh === undefined) return null;
     
-    rawIndex = Math.max(0, Math.min(chart.data.labels.length - 1, Math.round(rawIndex)));
+    const eenheid = localStorage.getItem('pref_eenheid') || 'MWh';
+    
+    // Uitzondering: Als dit de vaste Melding-lijn is, reken dan GEEN kosten, pas enkel de eenheid aan!
+    if (isMeldingLijn) {
+        if (eenheid === 'ckWh') return waardeMWh / 10;
+        if (eenheid === 'kWh') return waardeMWh / 1000;
+        return waardeMWh;
+    }
 
-    const minuutActief = chart.isDatasetVisible(2);
-    let targetIndex = minuutActief ? rawIndex : Math.round(rawIndex / 15) * 15;
-    targetIndex = Math.min(chart.data.labels.length - 1, targetIndex);
-
-    const items = [];
-    chart.data.datasets.forEach((dataset, datasetIndex) => {
-        if (!chart.isDatasetVisible(datasetIndex) || datasetIndex === 3) return;
-
-        const meta = chart.getDatasetMeta(datasetIndex);
-        const element = meta.data[targetIndex];
-        const waarde = dataset.data[targetIndex];
-
-        if (element && waarde !== null && waarde !== undefined) {
-            items.push({ element, datasetIndex, index: targetIndex });
+    let prijsCents = waardeMWh / 10; 
+    
+    const extraAan = localStorage.getItem('pref_toggle_extra') === 'true';
+    
+    if (extraAan) {
+        let aStr = localStorage.getItem('pref_formule_a');
+        let bStr = localStorage.getItem('pref_formule_b');
+        if (aStr && bStr) {
+            aStr = aStr.replace(',', '.');
+            bStr = bStr.replace(',', '.');
+            const a = parseFloat(aStr);
+            const b = parseFloat(bStr);
+            if (!isNaN(a) && !isNaN(b)) {
+                prijsCents = a + (b * waardeMWh); 
+            }
         }
-    });
-    return items;
-};
+        
+        let extraStr = localStorage.getItem('pref_extra_kosten');
+        if (extraStr) {
+            const extra = parseFloat(extraStr.replace(',', '.'));
+            if (!isNaN(extra)) prijsCents += extra;
+        }
+        
+        let btwStr = localStorage.getItem('pref_btw');
+        if (btwStr) {
+            const btw = parseFloat(btwStr.replace(',', '.'));
+            if (!isNaN(btw)) prijsCents = prijsCents * (1 + (btw / 100));
+        }
+    }
 
-Chart.register(huidigeTijdLijnPlugin);
+    if (eenheid === 'ckWh') return prijsCents;
+    if (eenheid === 'kWh') return prijsCents / 100;
+    
+    return prijsCents * 10; // MWh = centen * 10
+}
+
+function getEenheidLabel() {
+    const eenheid = localStorage.getItem('pref_eenheid') || 'MWh';
+    if (eenheid === 'ckWh') return 'c€/kWh';
+    if (eenheid === 'kWh') return '€/kWh';
+    return '€/MWh';
+}
+
+function formatGetal(waarde, maxDec) {
+    if (waarde === null || waarde === undefined) return null;
+    return parseFloat(waarde.toFixed(maxDec));
+}
 
 // ==========================================
-// 5. KLEURBEPALING PRIJZEN
+// 6. KLEURBEPALING PRIJZEN (Op basis van ruwe waarde)
 // ==========================================
-function bepaalPrijsKleur(prijs) {
-    if (prijs < 0) return '#10b981';
-    if (prijs < 50) return '#84cc16';
-    if (prijs < 100) return '#8b9bb4';
-    if (prijs < 175) return '#f87171';
+function bepaalPrijsKleur(prijsMWh) {
+    if (prijsMWh < 0) return '#10b981';
+    if (prijsMWh < 75) return '#84cc16';
+    if (prijsMWh < 125) return '#8b9bb4';
+    if (prijsMWh < 200) return '#f87171';
     return '#ef4444';
 }
 
 // ==========================================
-// 6. ALTIJD LIVE PRIJS OPHALEN
+// 7. ALTIJD LIVE PRIJS OPHALEN
 // ==========================================
 async function updateHuidigeLivePrijs() {
     try {
@@ -326,7 +380,13 @@ async function updateHuidigeLivePrijs() {
 
         const kleurNu = bepaalPrijsKleur(prijsNu);
         
-        document.getElementById('stat-nu').innerHTML = `<span style="color: ${kleurNu};">€ ${prijsNu.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
+        const berekendePrijsNu = berekenPrijs(prijsNu, true);
+        const eenheidL = getEenheidLabel();
+        const dec = eenheidL === '€/MWh' ? 2 : 4;
+        const weerPrijs = formatGetal(berekendePrijsNu, dec);
+        const isCent = eenheidL.includes('c€');
+        
+        document.getElementById('stat-nu').innerHTML = `<span style="color: ${kleurNu};">${isCent ? '' : '€ '}${weerPrijs}</span> <span class="unit-label">${eenheidL}</span>`;
         document.getElementById('label-stat-nu').innerText = 'Huidige EPEX (Live)';
     } catch (error) {
         console.error("Fout bij ophalen ALTIJD LIVE prijs:", error);
@@ -334,7 +394,7 @@ async function updateHuidigeLivePrijs() {
 }
 
 // ==========================================
-// 7. DATA OPHALEN & GRAFIEK TEKENEN
+// 8. DATA OPHALEN & GRAFIEK TEKENEN
 // ==========================================
 let epexGrafiek = null;
 
@@ -355,48 +415,47 @@ async function laadEpexData(datumString, metAnimatie = false) {
         if (!heeftData) {
             document.getElementById('stat-gem').innerText = "Geen data";
             document.getElementById('stat-minmax').innerText = "Geen data";
-            if (epexGrafiek) {
-                epexGrafiek.destroy();
-                epexGrafiek = null;
-            }
+            if (epexGrafiek) { epexGrafiek.destroy(); epexGrafiek = null; }
             return;
         }
 
-        let som = 0;
-        let aantalEpex = 0;
-        let minPrijs = Infinity, minTijd = "--:--";
-        let maxPrijs = -Infinity, maxTijd = "--:--";
-
-        let labelsTijd = [];
-        let dataEpex = [];
-        let dataOnbalans15m = [];
-        let dataOnbalans1m = [];
-        let dataDrempel = [];
+        let som = 0, aantalEpex = 0;
+        let minPrijsRu = Infinity, minTijd = "--:--";
+        let maxPrijsRu = -Infinity, maxTijd = "--:--";
+        let labelsTijd = [], dataEpex = [], dataOnbalans15m = [], dataOnbalans1m = [], dataDrempel = [];
 
         data.forEach(item => {
             const tijdKort = item.tijdstip.split(' ')[1] || item.tijdstip;
             labelsTijd.push(tijdKort);
 
-            const prijs = item.prijs !== null && item.prijs !== undefined ? Number(item.prijs) : null;
-            dataEpex.push(prijs);
-            dataOnbalans15m.push(item.onbalans_kwartier ?? null);
-            dataOnbalans1m.push(item.onbalans_minuut ?? null);
-            dataDrempel.push(25);
+            const ruweEpex = item.prijs !== null && item.prijs !== undefined ? Number(item.prijs) : null;
+            
+            dataEpex.push(berekenPrijs(ruweEpex));
+            dataOnbalans15m.push(berekenPrijs(item.onbalans_kwartier ?? null));
+            dataOnbalans1m.push(berekenPrijs(item.onbalans_minuut ?? null));
+            dataDrempel.push(berekenPrijs(25, true));
 
             const isKwartier = (tijdKort.endsWith(':00') || tijdKort.endsWith(':15') || tijdKort.endsWith(':30') || tijdKort.endsWith(':45'));
-            if (isKwartier && prijs !== null && !isNaN(prijs)) {
-                som += prijs;
+            if (isKwartier && ruweEpex !== null && !isNaN(ruweEpex)) {
+                som += ruweEpex; 
                 aantalEpex++;
-                if (prijs < minPrijs) { minPrijs = prijs; minTijd = tijdKort; }
-                if (prijs > maxPrijs) { maxPrijs = prijs; maxTijd = tijdKort; }
+                if (ruweEpex < minPrijsRu) { minPrijsRu = ruweEpex; minTijd = tijdKort; }
+                if (ruweEpex > maxPrijsRu) { maxPrijsRu = ruweEpex; maxTijd = tijdKort; }
             }
         });
 
-        const gemiddelde = aantalEpex > 0 ? (som / aantalEpex) : 0;
-        const kleurGem = bepaalPrijsKleur(gemiddelde);
+        const gemiddeldeRuw = aantalEpex > 0 ? (som / aantalEpex) : 0;
+        const kleurGem = bepaalPrijsKleur(gemiddeldeRuw);
+        const eenheidL = getEenheidLabel();
+        const decStat = eenheidL === '€/MWh' ? 2 : 4;
+        const isCent = eenheidL.includes('c€');
 
-        document.getElementById('stat-gem').innerHTML = `<span style="color: ${kleurGem};">€ ${gemiddelde.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
-        document.getElementById('stat-minmax').innerHTML = `<span style="color: #10b981;">${minPrijs.toFixed(2)}</span> <span class="unit-label">(${minTijd})</span> / <span style="color: #ef4444;">${maxPrijs.toFixed(2)}</span> <span class="unit-label">(${maxTijd})</span>`;
+        const gemBer = formatGetal(berekenPrijs(gemiddeldeRuw, true), decStat);
+        const minBer = formatGetal(berekenPrijs(minPrijsRu, true), decStat);
+        const maxBer = formatGetal(berekenPrijs(maxPrijsRu, true), decStat);
+
+        document.getElementById('stat-gem').innerHTML = `<span style="color: ${kleurGem};">${isCent ? '' : '€ '}${gemBer}</span> <span class="unit-label">${eenheidL}</span>`;
+        document.getElementById('stat-minmax').innerHTML = `<span style="color: #10b981;">${minBer}</span> <span class="unit-label">(${minTijd})</span> / <span style="color: #ef4444;">${maxBer}</span> <span class="unit-label">(${maxTijd})</span>`;
 
         if (epexGrafiek) {
             epexGrafiek.data.labels = labelsTijd;
@@ -404,11 +463,8 @@ async function laadEpexData(datumString, metAnimatie = false) {
             epexGrafiek.data.datasets[1].data = dataOnbalans15m;
             epexGrafiek.data.datasets[2].data = dataOnbalans1m;
             epexGrafiek.data.datasets[3].data = dataDrempel;
-
-            datasetZichtbaar.forEach((zichtbaar, idx) => {
-                epexGrafiek.setDatasetVisibility(idx, zichtbaar);
-            });
-
+            datasetZichtbaar.forEach((zichtbaar, idx) => epexGrafiek.setDatasetVisibility(idx, zichtbaar));
+            epexGrafiek.options.scales.y.title.text = eenheidL;
             epexGrafiek.update(metAnimatie ? 'default' : 'none');
             herberekenGrafiekHoogte();
             return;
@@ -420,103 +476,39 @@ async function laadEpexData(datumString, metAnimatie = false) {
             data: {
                 labels: labelsTijd,
                 datasets: [
-                    {
-                        label: 'EPEX Prijs', // (Of 'Gem. EPEX' in trends.js)
-                        data: dataEpex,
-                        borderColor: '#438ce6', /* <--- LOGO BLAUW */
-                        backgroundColor: 'rgba(67, 140, 230, 0.15)', /* <--- ZACHT BLAUWE VULLING */
-                        borderWidth: 2,
-                        stepped: true,
-                        fill: true,
-                        pointRadius: 0,
-                        pointHoverRadius: 5,
-                        hidden: !datasetZichtbaar[0]
-                    },
-                    {
-                        label: 'Onbalans (15m)',
-                        data: dataOnbalans15m,
-                        borderColor: '#f97316',
-                        backgroundColor: 'transparent',
-                        borderWidth: 2,
-                        stepped: true,
-                        fill: false,
-                        pointRadius: 0,
-                        pointHoverRadius: 5,
-                        hidden: !datasetZichtbaar[1]
-                    },
-                    {
-                        label: 'Onbalans (1m)',
-                        data: dataOnbalans1m,
-                        borderColor: '#a855f7',
-                        backgroundColor: 'transparent',
-                        borderWidth: 1.5,
-                        stepped: true,
-                        fill: false,
-                        pointRadius: 0,
-                        pointHoverRadius: 4,
-                        hidden: !datasetZichtbaar[2]
-                    },
-                    {
-                        label: 'Drempel €25',
-                        data: dataDrempel,
-                        borderColor: '#ef4444',
-                        borderWidth: 1.5,
-                        borderDash: [5, 5],
-                        pointRadius: 0,
-                        pointHoverRadius: 0,
-                        fill: false,
-                        hidden: !datasetZichtbaar[3]
-                    }
+                    { label: 'EPEX Prijs', data: dataEpex, borderColor: '#438ce6', backgroundColor: 'rgba(67, 140, 230, 0.15)', borderWidth: 2, stepped: true, fill: true, pointRadius: 0, pointHoverRadius: 5, hidden: !datasetZichtbaar[0] },
+                    { label: 'Onbalans (15m)', data: dataOnbalans15m, borderColor: '#f97316', backgroundColor: 'transparent', borderWidth: 2, stepped: true, fill: false, pointRadius: 0, pointHoverRadius: 5, hidden: !datasetZichtbaar[1] },
+                    { label: 'Onbalans (1m)', data: dataOnbalans1m, borderColor: '#a855f7', backgroundColor: 'transparent', borderWidth: 1.5, stepped: true, fill: false, pointRadius: 0, pointHoverRadius: 4, hidden: !datasetZichtbaar[2] },
+                    { label: 'Melding', data: dataDrempel, borderColor: '#ef4444', borderWidth: 1.5, borderDash: [5, 5], pointRadius: 0, pointHoverRadius: 0, fill: false, hidden: !datasetZichtbaar[3] }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: {
-                    padding: { top: 4, right: 6, bottom: 8, left: 0 }
-                },
+                layout: { padding: { top: 4, right: 6, bottom: 8, left: 0 } },
                 events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
-                animation: {
-                    duration: 250,
-                    easing: 'easeOutQuart'
-                },
-                interaction: {
-                    mode: 'kwartierSnap',
-                    intersect: false
-                },
+                animation: { duration: 250, easing: 'easeOutQuart' },
+                interaction: { mode: 'kwartierSnap', intersect: false },
                 scales: {
                     x: {
                         grid: { display: false },
                         ticks: {
-                            color: '#8b9bb4',
-                            autoSkip: false,
-                            maxRotation: 0,
+                            color: '#8b9bb4', autoSkip: false, maxRotation: 0,
                             callback: function(val) {
                                 const label = this.getLabelForValue(val);
                                 if (!label || !label.endsWith(':00')) return '';
                                 const uur = parseInt(label.split(':')[0], 10);
-                                if (window.innerWidth <= 768) {
-                                    return (uur % 3 === 0) ? label : '';
-                                }
-                                if (window.innerWidth <= 1150) {
-                                    return (uur % 2 === 0) ? label : '';
-                                }
+                                if (window.innerWidth <= 768) return (uur % 3 === 0) ? label : '';
+                                if (window.innerWidth <= 1150) return (uur % 2 === 0) ? label : '';
                                 return label;
                             }
                         }
                     },
                     y: {
                         beginAtZero: true,
-                        grid: { 
-                            color: function(context) {
-                                if (context.tick.value === 0) {
-                                    return 'rgba(255, 255, 255, 0.25)'; 
-                                }
-                                return 'rgba(139, 155, 180, 0.08)';
-                            }
-                        },
+                        grid: { color: function(ctx) { return ctx.tick.value === 0 ? 'rgba(255, 255, 255, 0.25)' : 'rgba(139, 155, 180, 0.08)'; } },
                         ticks: { color: '#8b9bb4' },
-                        title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } }
+                        title: { display: true, text: eenheidL, color: '#8b9bb4', font: { size: 11 } }
                     }
                 },
                 plugins: {
@@ -524,26 +516,24 @@ async function laadEpexData(datumString, metAnimatie = false) {
                     tooltip: {
                         mode: 'kwartierSnap',
                         intersect: false,
-                        animation: {
-                            duration: 150,
-                            easing: 'easeOutCubic'
-                        },
-                        filter: function(tooltipItem) {
-                            return tooltipItem.datasetIndex !== 3;
-                        },
                         callbacks: {
                             label: function(context) {
                                 const naam = context.dataset.label || '';
                                 const waarde = context.parsed.y;
                                 if (waarde === null || waarde === undefined) return null;
-                                return ` ${naam}: € ${Math.round(waarde)} /MWh`;
+                                
+                                const eenh = getEenheidLabel();
+                                const isCent = eenh.includes('c€');
+                                const decT = eenh === '€/kWh' ? 3 : 2; 
+                                const weerg = formatGetal(waarde, decT);
+                                
+                                return ` ${naam}: ${isCent ? '' : '€ '}${weerg} ${eenh.replace('c€/kWh', 'c€').replace('€/kWh', '').replace('€/MWh', '')}`;
                             }
                         }
                     }
                 }
             }
         });
-
         herberekenGrafiekHoogte();
     } catch (error) {
         console.error("Fout bij ophalen van API:", error);
@@ -551,7 +541,7 @@ async function laadEpexData(datumString, metAnimatie = false) {
 }
 
 // ==========================================
-// 8. UITKLAPBARE STATISTIEKEN OP MOBIEL
+// 9. UITKLAPBARE STATISTIEKEN OP MOBIEL
 // ==========================================
 function initUitklapbareStatistieken() {
     document.querySelectorAll('.box-info').forEach(box => {
@@ -568,7 +558,6 @@ function initUitklapbareStatistieken() {
             });
         }
     });
-
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.box-info')) {
             document.querySelectorAll('.box-info').forEach(b => b.classList.remove('expanded'));
@@ -577,7 +566,7 @@ function initUitklapbareStatistieken() {
 }
 
 // ==========================================
-// 9. SCHERM- EN GRAFIEKHOOGTE VERGRENDELING
+// 10. SCHERM- EN GRAFIEKHOOGTE VERGRENDELING
 // ==========================================
 function herberekenGrafiekHoogte() {
     [0, 60, 200, 400].forEach(delay => {
@@ -596,7 +585,7 @@ if (window.visualViewport) {
 }
 
 // ==========================================
-// 10. OPSTARTEN & 1-MINUUT TIMERS
+// 11. OPSTARTEN & 1-MINUUT TIMERS
 // ==========================================
 setInterval(() => {
     updateHuidigeLivePrijs();

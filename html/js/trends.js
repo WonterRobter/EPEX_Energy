@@ -345,10 +345,73 @@ if (typeof Chart !== 'undefined') {
 
 function bepaalPrijsKleur(prijs) {
     if (prijs < 0) return '#10b981';
-    if (prijs < 50) return '#84cc16';
-    if (prijs < 100) return '#8b9bb4';
-    if (prijs < 175) return '#f87171';
+    if (prijs < 75) return '#84cc16';
+    if (prijs < 125) return '#8b9bb4';
+    if (prijs < 200) return '#f87171';
     return '#ef4444';
+}
+
+// ==========================================
+// EXTRA: REKENMACHINE & EENHEDEN FUNCTIES (Trends)
+// ==========================================
+function berekenPrijs(waardeMWh, isMeldingLijn = false) {
+    if (waardeMWh === null || waardeMWh === undefined) return null;
+    
+    const eenheid = localStorage.getItem('pref_eenheid') || 'MWh';
+    
+    // Uitzondering: Als dit de vaste Melding-lijn is, reken dan GEEN kosten, pas enkel de eenheid aan!
+    if (isMeldingLijn) {
+        if (eenheid === 'ckWh') return waardeMWh / 10;
+        if (eenheid === 'kWh') return waardeMWh / 1000;
+        return waardeMWh;
+    }
+
+    let prijsCents = waardeMWh / 10; 
+    
+    const extraAan = localStorage.getItem('pref_toggle_extra') === 'true';
+    
+    if (extraAan) {
+        let aStr = localStorage.getItem('pref_formule_a');
+        let bStr = localStorage.getItem('pref_formule_b');
+        if (aStr && bStr) {
+            aStr = aStr.replace(',', '.');
+            bStr = bStr.replace(',', '.');
+            const a = parseFloat(aStr);
+            const b = parseFloat(bStr);
+            if (!isNaN(a) && !isNaN(b)) {
+                prijsCents = a + (b * waardeMWh); 
+            }
+        }
+        
+        let extraStr = localStorage.getItem('pref_extra_kosten');
+        if (extraStr) {
+            const extra = parseFloat(extraStr.replace(',', '.'));
+            if (!isNaN(extra)) prijsCents += extra;
+        }
+        
+        let btwStr = localStorage.getItem('pref_btw');
+        if (btwStr) {
+            const btw = parseFloat(btwStr.replace(',', '.'));
+            if (!isNaN(btw)) prijsCents = prijsCents * (1 + (btw / 100));
+        }
+    }
+
+    if (eenheid === 'ckWh') return prijsCents;
+    if (eenheid === 'kWh') return prijsCents / 100;
+    
+    return prijsCents * 10; // MWh = centen * 10
+}
+
+function getEenheidLabel() {
+    const eenheid = localStorage.getItem('pref_eenheid') || 'MWh';
+    if (eenheid === 'ckWh') return 'c€/kWh';
+    if (eenheid === 'kWh') return '€/kWh';
+    return '€/MWh';
+}
+
+function formatGetal(waarde, maxDec) {
+    if (waarde === null || waarde === undefined) return null;
+    return parseFloat(waarde.toFixed(maxDec));
 }
 
 // ==========================================
@@ -384,47 +447,51 @@ async function laadKwartierProfielData() {
 
         let som = 0;
         let aantalKwartieren = 0;
-        let goedkoopsteGem = Infinity, goedkoopsteTijd = "--:--";
-        let duursteGem = -Infinity, duursteTijd = "--:--";
+        let goedkoopsteGemRu = Infinity, goedkoopsteTijd = "--:--";
+        let duursteGemRu = -Infinity, duursteTijd = "--:--";
 
         let labelsTijd = [];
-        let dataEpexGem = [];
-        let dataOnb15Gem = [];
-        let dataOnb1Gem = [];
-        let dataEpexMin = [];
-        let dataEpexMax = [];
+        let dataEpexGem = [], dataOnb15Gem = [], dataOnb1Gem = [], dataEpexMin = [], dataEpexMax = [];
 
         data.forEach(item => {
             const t = item.tijdstip;
             labelsTijd.push(t);
 
-            dataEpexGem.push(item.epex_gem);
-            dataOnb15Gem.push(item.onb15_gem);
-            dataOnb1Gem.push(item.onb1_gem);
-            dataEpexMin.push(item.epex_min);
-            dataEpexMax.push(item.epex_max);
+            dataEpexGem.push(berekenPrijs(item.epex_gem));
+            dataOnb15Gem.push(berekenPrijs(item.onb15_gem));
+            dataOnb1Gem.push(berekenPrijs(item.onb1_gem));
+            dataEpexMin.push(berekenPrijs(item.epex_min));
+            dataEpexMax.push(berekenPrijs(item.epex_max));
 
             const isKwartier = (t.endsWith(':00') || t.endsWith(':15') || t.endsWith(':30') || t.endsWith(':45'));
             if (isKwartier && item.epex_gem !== null && !isNaN(item.epex_gem)) {
-                const val = Number(item.epex_gem);
-                som += val;
+                const valRu = Number(item.epex_gem);
+                som += valRu;
                 aantalKwartieren++;
-                if (val < goedkoopsteGem) { goedkoopsteGem = val; goedkoopsteTijd = t; }
-                if (val > duursteGem) { duursteGem = val; duursteTijd = t; }
+                if (valRu < goedkoopsteGemRu) { goedkoopsteGemRu = valRu; goedkoopsteTijd = t; }
+                if (valRu > duursteGemRu) { duursteGemRu = valRu; duursteTijd = t; }
             }
         });
 
-        const periodeGem = aantalKwartieren > 0 ? (som / aantalKwartieren) : 0;
-        const kleurGem = bepaalPrijsKleur(periodeGem);
-        const kleurMin = bepaalPrijsKleur(goedkoopsteGem);
-        const kleurMax = bepaalPrijsKleur(duursteGem);
+        const periodeGemRu = aantalKwartieren > 0 ? (som / aantalKwartieren) : 0;
+        const kleurGem = bepaalPrijsKleur(periodeGemRu);
+        const kleurMin = bepaalPrijsKleur(goedkoopsteGemRu);
+        const kleurMax = bepaalPrijsKleur(duursteGemRu);
+
+        const eenheidL = getEenheidLabel();
+        const decStat = eenheidL === '€/MWh' ? 2 : 4;
+        const isCent = eenheidL.includes('c€');
+
+        const gemBer = formatGetal(berekenPrijs(periodeGemRu), decStat);
+        const minBer = formatGetal(berekenPrijs(goedkoopsteGemRu), decStat);
+        const maxBer = formatGetal(berekenPrijs(duursteGemRu), decStat);
 
         document.getElementById('profiel-gem').innerHTML = 
-            `<span style="color: ${kleurGem};">€ ${periodeGem.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
+            `<span style="color: ${kleurGem};">${isCent ? '' : '€ '}${gemBer}</span> <span class="unit-label">${eenheidL}</span>`;
         document.getElementById('profiel-min').innerHTML = 
-            `<span style="color: var(--dark); font-size: 16px;">${goedkoopsteTijd}</span> <span style="color: ${kleurMin}; font-size: 13px;">(€${goedkoopsteGem.toFixed(2)})</span>`;
+            `<span style="color: var(--dark); font-size: 16px;">${goedkoopsteTijd}</span> <span style="color: ${kleurMin}; font-size: 13px;">(${isCent ? '' : '€'}${minBer})</span>`;
         document.getElementById('profiel-max').innerHTML = 
-            `<span style="color: var(--dark); font-size: 16px;">${duursteTijd}</span> <span style="color: ${kleurMax}; font-size: 13px;">(€${duursteGem.toFixed(2)})</span>`;
+            `<span style="color: var(--dark); font-size: 16px;">${duursteTijd}</span> <span style="color: ${kleurMax}; font-size: 13px;">(${isCent ? '' : '€'}${maxBer})</span>`;
 
         if (profielGrafiek) {
             profielGrafiek.data.labels = labelsTijd;
@@ -438,6 +505,7 @@ async function laadKwartierProfielData() {
                 profielGrafiek.setDatasetVisibility(idx, zichtbaar);
             });
 
+            profielGrafiek.options.scales.y.title.text = eenheidL;
             profielGrafiek.update();
             herberekenGrafiekHoogte();
             return;
@@ -449,119 +517,40 @@ async function laadKwartierProfielData() {
             data: {
                 labels: labelsTijd,
                 datasets: [
-                    {
-                        label: 'Gem. EPEX',
-                        data: dataEpexGem,
-                        borderColor: '#438ce6',
-                        backgroundColor: 'rgba(67, 140, 230, 0.15)',
-                        borderWidth: 2,
-                        stepped: true,
-                        fill: true,
-                        pointRadius: 0,
-                        pointHoverRadius: 5,
-                        hidden: !datasetZichtbaar[0]
-                    },
-                    {
-                        label: 'Gem. Onbalans (15m)',
-                        data: dataOnb15Gem,
-                        borderColor: '#f97316',
-                        backgroundColor: 'transparent',
-                        borderWidth: 2,
-                        stepped: true,
-                        fill: false,
-                        pointRadius: 0,
-                        pointHoverRadius: 5,
-                        hidden: !datasetZichtbaar[1]
-                    },
-                    {
-                        label: 'Gem. Onbalans (1m)',
-                        data: dataOnb1Gem,
-                        borderColor: '#a855f7',
-                        backgroundColor: 'transparent',
-                        borderWidth: 1.5,
-                        stepped: true,
-                        fill: false,
-                        pointRadius: 0,
-                        pointHoverRadius: 4,
-                        hidden: !datasetZichtbaar[2]
-                    },
-                    {
-                        label: 'Min EPEX',
-                        data: dataEpexMin,
-                        borderColor: '#10b981',
-                        backgroundColor: 'transparent',
-                        borderWidth: 1.5,
-                        borderDash: [4, 4],
-                        stepped: true,
-                        fill: false,
-                        pointRadius: 0,
-                        pointHoverRadius: 4,
-                        hidden: !datasetZichtbaar[3]
-                    },
-                    {
-                        label: 'Max EPEX',
-                        data: dataEpexMax,
-                        borderColor: '#ef4444',
-                        backgroundColor: 'transparent',
-                        borderWidth: 1.5,
-                        borderDash: [4, 4],
-                        stepped: true,
-                        fill: false,
-                        pointRadius: 0,
-                        pointHoverRadius: 4,
-                        hidden: !datasetZichtbaar[4]
-                    }
+                    { label: 'Gem. EPEX', data: dataEpexGem, borderColor: '#438ce6', backgroundColor: 'rgba(67, 140, 230, 0.15)', borderWidth: 2, stepped: true, fill: true, pointRadius: 0, pointHoverRadius: 5, hidden: !datasetZichtbaar[0] },
+                    { label: 'Gem. Onbalans (15m)', data: dataOnb15Gem, borderColor: '#f97316', backgroundColor: 'transparent', borderWidth: 2, stepped: true, fill: false, pointRadius: 0, pointHoverRadius: 5, hidden: !datasetZichtbaar[1] },
+                    { label: 'Gem. Onbalans (1m)', data: dataOnb1Gem, borderColor: '#a855f7', backgroundColor: 'transparent', borderWidth: 1.5, stepped: true, fill: false, pointRadius: 0, pointHoverRadius: 4, hidden: !datasetZichtbaar[2] },
+                    { label: 'Min EPEX', data: dataEpexMin, borderColor: '#10b981', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [4, 4], stepped: true, fill: false, pointRadius: 0, pointHoverRadius: 4, hidden: !datasetZichtbaar[3] },
+                    { label: 'Max EPEX', data: dataEpexMax, borderColor: '#ef4444', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [4, 4], stepped: true, fill: false, pointRadius: 0, pointHoverRadius: 4, hidden: !datasetZichtbaar[4] }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: {
-                    padding: { top: 4, right: 6, bottom: 8, left: 0 }
-                },
+                layout: { padding: { top: 4, right: 6, bottom: 8, left: 0 } },
                 events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
-                animation: {
-                    duration: 250,
-                    easing: 'easeOutQuart'
-                },
-                interaction: {
-                    mode: 'kwartierSnapProfiel',
-                    intersect: false
-                },
+                animation: { duration: 250, easing: 'easeOutQuart' },
+                interaction: { mode: 'kwartierSnapProfiel', intersect: false },
                 scales: {
                     x: {
                         grid: { display: false },
                         ticks: {
-                            color: '#8b9bb4',
-                            autoSkip: false,
-                            maxRotation: 0,
-                            padding: 4,
+                            color: '#8b9bb4', autoSkip: false, maxRotation: 0, padding: 4,
                             callback: function(val) {
                                 const label = this.getLabelForValue(val);
                                 if (!label || !label.endsWith(':00')) return '';
                                 const uur = parseInt(label.split(':')[0], 10);
-                                if (window.innerWidth <= 768) {
-                                    return (uur % 3 === 0) ? label : '';
-                                }
-                                if (window.innerWidth <= 1150) {
-                                    return (uur % 2 === 0) ? label : '';
-                                }
+                                if (window.innerWidth <= 768) return (uur % 3 === 0) ? label : '';
+                                if (window.innerWidth <= 1150) return (uur % 2 === 0) ? label : '';
                                 return label;
                             }
                         }
                     },
                     y: {
                         beginAtZero: true,
-                        grid: { 
-                            color: function(context) {
-                                if (context.tick.value === 0) {
-                                    return 'rgba(255, 255, 255, 0.25)'; 
-                                }
-                                return 'rgba(139, 155, 180, 0.08)';
-                            }
-                        },
+                        grid: { color: function(ctx) { return ctx.tick.value === 0 ? 'rgba(255, 255, 255, 0.25)' : 'rgba(139, 155, 180, 0.08)'; } },
                         ticks: { color: '#8b9bb4' },
-                        title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } }
+                        title: { display: true, text: eenheidL, color: '#8b9bb4', font: { size: 11 } }
                     }
                 },
                 plugins: {
@@ -569,16 +558,15 @@ async function laadKwartierProfielData() {
                     tooltip: {
                         mode: 'kwartierSnapProfiel',
                         intersect: false,
-                        animation: {
-                            duration: 150,
-                            easing: 'easeOutCubic'
-                        },
+                        animation: { duration: 150, easing: 'easeOutCubic' },
                         callbacks: {
-                            label: function(context) {
-                                const naam = context.dataset.label || '';
-                                const waarde = context.parsed.y;
-                                if (waarde === null || waarde === undefined) return null;
-                                return ` ${naam}: € ${Math.round(waarde)} /MWh`;
+                            label: function(ctx) {
+                                const val = ctx.parsed.y;
+                                if (val === null || val === undefined) return null;
+                                const eenheid = getEenheidLabel();
+                                const isCent = eenheid.includes('c€');
+                                const decT = eenheid === '€/kWh' ? 3 : 2;
+                                return ` ${ctx.dataset.label}: ${isCent ? '' : '€ '}${formatGetal(val, decT)} ${eenheid.replace('c€/kWh', 'c€').replace('€/kWh', '').replace('€/MWh', '')}`;
                             }
                         }
                     }
@@ -707,32 +695,39 @@ async function laadMaandOverzicht() {
         }
 
         let som = 0, aantalDagen = 0;
-        let goedkoopsteGem = Infinity, goedkoopsteDag = "--";
-        let duursteGem = -Infinity, duursteDag = "--";
+        let goedkoopsteGemRu = Infinity, goedkoopsteDag = "--";
+        let duursteGemRu = -Infinity, duursteDag = "--";
 
         let labelsDag = [], dataEpexGem = [], dataOnb15Gem = [], dataOnb1Gem = [], dataEpexMin = [], dataEpexMax = [];
 
         data.forEach(item => {
             labelsDag.push(`${item.dag} ${maandNaamVol.substring(0, 3)}`);
-            dataEpexGem.push(item.epex_gem);
-            dataOnb15Gem.push(item.onb15_gem);
-            dataOnb1Gem.push(item.onb1_gem);
-            dataEpexMin.push(item.epex_min);
-            dataEpexMax.push(item.epex_max);
+            dataEpexGem.push(berekenPrijs(item.epex_gem));
+            dataOnb15Gem.push(berekenPrijs(item.onb15_gem));
+            dataOnb1Gem.push(berekenPrijs(item.onb1_gem));
+            dataEpexMin.push(berekenPrijs(item.epex_min));
+            dataEpexMax.push(berekenPrijs(item.epex_max));
 
             if (item.epex_gem !== null && !isNaN(item.epex_gem)) {
                 som += item.epex_gem;
                 aantalDagen++;
-                if (item.epex_gem < goedkoopsteGem) { goedkoopsteGem = item.epex_gem; goedkoopsteDag = item.dag; }
-                if (item.epex_gem > duursteGem) { duursteGem = item.epex_gem; duursteDag = item.dag; }
+                if (item.epex_gem < goedkoopsteGemRu) { goedkoopsteGemRu = item.epex_gem; goedkoopsteDag = item.dag; }
+                if (item.epex_gem > duursteGemRu) { duursteGemRu = item.epex_gem; duursteDag = item.dag; }
             }
         });
 
-        const maandGem = aantalDagen > 0 ? (som / aantalDagen) : 0;
+        const maandGemRu = aantalDagen > 0 ? (som / aantalDagen) : 0;
+        const eenheidL = getEenheidLabel();
+        const decStat = eenheidL === '€/MWh' ? 2 : 4;
+        const isCent = eenheidL.includes('c€');
 
-        document.getElementById('maand-stat-gem').innerHTML = `<span style="color: ${bepaalPrijsKleur(maandGem)};">€ ${maandGem.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
-        document.getElementById('maand-stat-min').innerHTML = `<span style="color: var(--dark); font-size: 16px;">${goedkoopsteDag} ${maandNaamVol}</span> <span style="color: ${bepaalPrijsKleur(goedkoopsteGem)}; font-size: 13px;">(€${goedkoopsteGem.toFixed(2)})</span>`;
-        document.getElementById('maand-stat-max').innerHTML = `<span style="color: var(--dark); font-size: 16px;">${duursteDag} ${maandNaamVol}</span> <span style="color: ${bepaalPrijsKleur(duursteGem)}; font-size: 13px;">(€${duursteGem.toFixed(2)})</span>`;
+        const gemBer = formatGetal(berekenPrijs(maandGemRu), decStat);
+        const minBer = formatGetal(berekenPrijs(goedkoopsteGemRu), decStat);
+        const maxBer = formatGetal(berekenPrijs(duursteGemRu), decStat);
+
+        document.getElementById('maand-stat-gem').innerHTML = `<span style="color: ${bepaalPrijsKleur(maandGemRu)};">${isCent ? '' : '€ '}${gemBer}</span> <span class="unit-label">${eenheidL}</span>`;
+        document.getElementById('maand-stat-min').innerHTML = `<span style="color: var(--dark); font-size: 16px;">${goedkoopsteDag} ${maandNaamVol}</span> <span style="color: ${bepaalPrijsKleur(goedkoopsteGemRu)}; font-size: 13px;">(${isCent ? '' : '€'}${minBer})</span>`;
+        document.getElementById('maand-stat-max').innerHTML = `<span style="color: var(--dark); font-size: 16px;">${duursteDag} ${maandNaamVol}</span> <span style="color: ${bepaalPrijsKleur(duursteGemRu)}; font-size: 13px;">(${isCent ? '' : '€'}${maxBer})</span>`;
         
         if (maandGrafiek) {
             maandGrafiek.data.labels = labelsDag;
@@ -742,6 +737,7 @@ async function laadMaandOverzicht() {
             maandGrafiek.data.datasets[3].data = dataEpexMin;
             maandGrafiek.data.datasets[4].data = dataEpexMax;
             datasetZichtbaarMaand.forEach((zichtbaar, idx) => { maandGrafiek.setDatasetVisibility(idx, zichtbaar); });
+            maandGrafiek.options.scales.y.title.text = eenheidL;
             maandGrafiek.update();
             herberekenGrafiekHoogte();
             return;
@@ -763,41 +759,20 @@ async function laadMaandOverzicht() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: {
-                    padding: { top: 4, right: 6, bottom: 8, left: 0 }
-                },
+                layout: { padding: { top: 4, right: 6, bottom: 8, left: 0 } },
                 events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
-                animation: {
-                    duration: 250,
-                    easing: 'easeOutQuart'
-                },
-                interaction: {
-                    mode: 'kwartierSnapProfiel',
-                    intersect: false
-                },
+                animation: { duration: 250, easing: 'easeOutQuart' },
+                interaction: { mode: 'kwartierSnapProfiel', intersect: false },
                 scales: {
                     x: {
                         grid: { display: false },
-                        ticks: {
-                            color: '#8b9bb4',
-                            autoSkip: true,
-                            maxTicksLimit: window.innerWidth <= 768 ? 8 : 16,
-                            maxRotation: 0,
-                            padding: 4
-                        }
+                        ticks: { color: '#8b9bb4', autoSkip: true, maxTicksLimit: window.innerWidth <= 768 ? 8 : 16, maxRotation: 0, padding: 4 }
                     },
                     y: {
                         beginAtZero: true,
-                        grid: { 
-                            color: function(context) {
-                                if (context.tick.value === 0) {
-                                    return 'rgba(255, 255, 255, 0.25)'; 
-                                }
-                                return 'rgba(139, 155, 180, 0.08)';
-                            }
-                        },
+                        grid: { color: function(ctx) { return ctx.tick.value === 0 ? 'rgba(255, 255, 255, 0.25)' : 'rgba(139, 155, 180, 0.08)'; } },
                         ticks: { color: '#8b9bb4' },
-                        title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } }
+                        title: { display: true, text: eenheidL, color: '#8b9bb4', font: { size: 11 } }
                     }
                 },
                 plugins: {
@@ -809,7 +784,10 @@ async function laadMaandOverzicht() {
                             label: function(ctx) {
                                 const val = ctx.parsed.y;
                                 if (val === null || val === undefined) return null;
-                                return ` ${ctx.dataset.label}: € ${Math.round(val)} /MWh`;
+                                const eenh = getEenheidLabel();
+                                const isC = eenh.includes('c€');
+                                const decT = eenh === '€/kWh' ? 3 : 2;
+                                return ` ${ctx.dataset.label}: ${isC ? '' : '€ '}${formatGetal(val, decT)} ${eenh.replace('c€/kWh', 'c€').replace('€/kWh', '').replace('€/MWh', '')}`;
                             }
                         }
                     }
@@ -929,33 +907,40 @@ async function laadJaarOverzicht() {
         }
 
         let som = 0, aantalMaanden = 0;
-        let goedkoopsteGem = Infinity, goedkoopsteMaandNaam = "--";
-        let duursteGem = -Infinity, duursteMaandNaam = "--";
+        let goedkoopsteGemRu = Infinity, goedkoopsteMaandNaam = "--";
+        let duursteGemRu = -Infinity, duursteMaandNaam = "--";
 
         let labelsMaand = [], dataEpexGem = [], dataOnb15Gem = [], dataOnb1Gem = [], dataEpexMin = [], dataEpexMax = [];
 
         data.forEach(item => {
             const mIndex = item.maand - 1;
             labelsMaand.push(window.innerWidth <= 768 ? maandNamenKort[mIndex] : maandNamenVol[mIndex]);
-            dataEpexGem.push(item.epex_gem);
-            dataOnb15Gem.push(item.onb15_gem);
-            dataOnb1Gem.push(item.onb1_gem);
-            dataEpexMin.push(item.epex_min);
-            dataEpexMax.push(item.epex_max);
+            dataEpexGem.push(berekenPrijs(item.epex_gem));
+            dataOnb15Gem.push(berekenPrijs(item.onb15_gem));
+            dataOnb1Gem.push(berekenPrijs(item.onb1_gem));
+            dataEpexMin.push(berekenPrijs(item.epex_min));
+            dataEpexMax.push(berekenPrijs(item.epex_max));
 
             if (item.epex_gem !== null && !isNaN(item.epex_gem)) {
                 som += item.epex_gem;
                 aantalMaanden++;
-                if (item.epex_gem < goedkoopsteGem) { goedkoopsteGem = item.epex_gem; goedkoopsteMaandNaam = maandNamenVol[mIndex]; }
-                if (item.epex_gem > duursteGem) { duursteGem = item.epex_gem; duursteMaandNaam = maandNamenVol[mIndex]; }
+                if (item.epex_gem < goedkoopsteGemRu) { goedkoopsteGemRu = item.epex_gem; goedkoopsteMaandNaam = maandNamenVol[mIndex]; }
+                if (item.epex_gem > duursteGemRu) { duursteGemRu = item.epex_gem; duursteMaandNaam = maandNamenVol[mIndex]; }
             }
         });
 
-        const jaarGem = aantalMaanden > 0 ? (som / aantalMaanden) : 0;
+        const jaarGemRu = aantalMaanden > 0 ? (som / aantalMaanden) : 0;
+        const eenheidL = getEenheidLabel();
+        const decStat = eenheidL === '€/MWh' ? 2 : 4;
+        const isCent = eenheidL.includes('c€');
 
-        document.getElementById('jaar-stat-gem').innerHTML = `<span style="color: ${bepaalPrijsKleur(jaarGem)};">€ ${jaarGem.toFixed(2)}</span> <span class="unit-label">€/MWh</span>`;
-        document.getElementById('jaar-stat-min').innerHTML = `<span style="color: var(--dark); font-size: 16px;">${goedkoopsteMaandNaam}</span> <span style="color: ${bepaalPrijsKleur(goedkoopsteGem)}; font-size: 13px;">(€${goedkoopsteGem.toFixed(2)})</span>`;
-        document.getElementById('jaar-stat-max').innerHTML = `<span style="color: var(--dark); font-size: 16px;">${duursteMaandNaam}</span> <span style="color: ${bepaalPrijsKleur(duursteGem)}; font-size: 13px;">(€${duursteGem.toFixed(2)})</span>`;
+        const gemBer = formatGetal(berekenPrijs(jaarGemRu), decStat);
+        const minBer = formatGetal(berekenPrijs(goedkoopsteGemRu), decStat);
+        const maxBer = formatGetal(berekenPrijs(duursteGemRu), decStat);
+
+        document.getElementById('jaar-stat-gem').innerHTML = `<span style="color: ${bepaalPrijsKleur(jaarGemRu)};">${isCent ? '' : '€ '}${gemBer}</span> <span class="unit-label">${eenheidL}</span>`;
+        document.getElementById('jaar-stat-min').innerHTML = `<span style="color: var(--dark); font-size: 16px;">${goedkoopsteMaandNaam}</span> <span style="color: ${bepaalPrijsKleur(goedkoopsteGemRu)}; font-size: 13px;">(${isCent ? '' : '€'}${minBer})</span>`;
+        document.getElementById('jaar-stat-max').innerHTML = `<span style="color: var(--dark); font-size: 16px;">${duursteMaandNaam}</span> <span style="color: ${bepaalPrijsKleur(duursteGemRu)}; font-size: 13px;">(${isCent ? '' : '€'}${maxBer})</span>`;
 
         if (jaarGrafiek) {
             jaarGrafiek.data.labels = labelsMaand;
@@ -965,6 +950,7 @@ async function laadJaarOverzicht() {
             jaarGrafiek.data.datasets[3].data = dataEpexMin;
             jaarGrafiek.data.datasets[4].data = dataEpexMax;
             datasetZichtbaarJaar.forEach((zichtbaar, idx) => { jaarGrafiek.setDatasetVisibility(idx, zichtbaar); });
+            jaarGrafiek.options.scales.y.title.text = eenheidL;
             jaarGrafiek.update();
             herberekenGrafiekHoogte();
             return;
@@ -986,40 +972,20 @@ async function laadJaarOverzicht() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: {
-                    padding: { top: 4, right: 6, bottom: 8, left: 0 }
-                },
+                layout: { padding: { top: 4, right: 6, bottom: 8, left: 0 } },
                 events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
-                animation: {
-                    duration: 250,
-                    easing: 'easeOutQuart'
-                },
-                interaction: {
-                    mode: 'kwartierSnapProfiel',
-                    intersect: false
-                },
+                animation: { duration: 250, easing: 'easeOutQuart' },
+                interaction: { mode: 'kwartierSnapProfiel', intersect: false },
                 scales: {
                     x: {
                         grid: { display: false },
-                        ticks: {
-                            color: '#8b9bb4',
-                            autoSkip: false,
-                            maxRotation: 0,
-                            padding: 4
-                        }
+                        ticks: { color: '#8b9bb4', autoSkip: false, maxRotation: 0, padding: 4 }
                     },
                     y: {
                         beginAtZero: true,
-                        grid: { 
-                            color: function(context) {
-                                if (context.tick.value === 0) {
-                                    return 'rgba(255, 255, 255, 0.25)'; 
-                                }
-                                return 'rgba(139, 155, 180, 0.08)';
-                            }
-                        },
+                        grid: { color: function(ctx) { return ctx.tick.value === 0 ? 'rgba(255, 255, 255, 0.25)' : 'rgba(139, 155, 180, 0.08)'; } },
                         ticks: { color: '#8b9bb4' },
-                        title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } }
+                        title: { display: true, text: eenheidL, color: '#8b9bb4', font: { size: 11 } }
                     }
                 },
                 plugins: {
@@ -1031,7 +997,10 @@ async function laadJaarOverzicht() {
                             label: function(ctx) {
                                 const val = ctx.parsed.y;
                                 if (val === null || val === undefined) return null;
-                                return ` ${ctx.dataset.label}: € ${Math.round(val)} /MWh`;
+                                const eenh = getEenheidLabel();
+                                const isC = eenh.includes('c€');
+                                const decT = eenh === '€/kWh' ? 3 : 2;
+                                return ` ${ctx.dataset.label}: ${isC ? '' : '€ '}${formatGetal(val, decT)} ${eenh.replace('c€/kWh', 'c€').replace('€/kWh', '').replace('€/MWh', '')}`;
                             }
                         }
                     }
@@ -1108,6 +1077,7 @@ async function laadSeizoensProfiel() {
         const labelsTijd = result.labels || [];
         const seizoenenVolgorde = ["Lente", "Zomer", "Herfst", "Winter"];
         const maxJaar = Math.max(...geselecteerdeSeizoenJaren);
+        const eenheidL = getEenheidLabel();
 
         let datasets = [];
         const legendContainer = document.getElementById('seizoen-legend');
@@ -1122,12 +1092,14 @@ async function laadSeizoensProfiel() {
             const lijnDikte = jarenVerschil === 0 ? 2.2 : 1.5;
 
             seizoenenVolgorde.forEach(seizoen => {
-                const reeks = jaarData[seizoen] || [];
-                const heeftData = reeks.some(v => v !== null && v !== undefined);
+                const reeksRuw = jaarData[seizoen] || [];
+                const heeftData = reeksRuw.some(v => v !== null && v !== undefined);
 
                 if (!heeftData && geselecteerdeSeizoenJaren.length > 1 && jaar !== geselecteerdeSeizoenJaren[0]) {
                     return;
                 }
+                
+                const reeksBer = reeksRuw.map(v => berekenPrijs(v));
 
                 const [r, g, b] = SEIZOEN_KLEUREN_RGB[seizoen];
                 const kleurRgba = `rgba(${r}, ${g}, ${b}, ${alpha})`;
@@ -1137,7 +1109,7 @@ async function laadSeizoensProfiel() {
 
                 datasets.push({
                     label: labelNaam,
-                    data: reeks,
+                    data: reeksBer,
                     borderColor: kleurRgba,
                     backgroundColor: 'transparent',
                     borderWidth: lijnDikte,
@@ -1181,52 +1153,30 @@ async function laadSeizoensProfiel() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: {
-                    padding: { top: 4, right: 6, bottom: 8, left: 0 }
-                },
+                layout: { padding: { top: 4, right: 6, bottom: 8, left: 0 } },
                 events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
-                animation: {
-                    duration: 250,
-                    easing: 'easeOutQuart'
-                },
-                interaction: {
-                    mode: 'kwartierSnapProfiel',
-                    intersect: false
-                },
+                animation: { duration: 250, easing: 'easeOutQuart' },
+                interaction: { mode: 'kwartierSnapProfiel', intersect: false },
                 scales: {
                     x: {
                         grid: { display: false },
                         ticks: {
-                            color: '#8b9bb4',
-                            autoSkip: false,
-                            maxRotation: 0,
-                            padding: 4,
+                            color: '#8b9bb4', autoSkip: false, maxRotation: 0, padding: 4,
                             callback: function(val) {
                                 const label = this.getLabelForValue(val);
                                 if (!label || !label.endsWith(':00')) return '';
                                 const uur = parseInt(label.split(':')[0], 10);
-                                if (window.innerWidth <= 768) {
-                                    return (uur % 3 === 0) ? label : '';
-                                }
-                                if (window.innerWidth <= 1150) {
-                                    return (uur % 2 === 0) ? label : '';
-                                }
+                                if (window.innerWidth <= 768) return (uur % 3 === 0) ? label : '';
+                                if (window.innerWidth <= 1150) return (uur % 2 === 0) ? label : '';
                                 return label;
                             }
                         }
                     },
                     y: {
                         beginAtZero: true,
-                        grid: { 
-                            color: function(context) {
-                                if (context.tick.value === 0) {
-                                    return 'rgba(255, 255, 255, 0.25)'; 
-                                }
-                                return 'rgba(139, 155, 180, 0.08)';
-                            }
-                        },
+                        grid: { color: function(ctx) { return ctx.tick.value === 0 ? 'rgba(255, 255, 255, 0.25)' : 'rgba(139, 155, 180, 0.08)'; } },
                         ticks: { color: '#8b9bb4' },
-                        title: { display: true, text: '€ / MWh', color: '#8b9bb4', font: { size: 11 } }
+                        title: { display: true, text: eenheidL, color: '#8b9bb4', font: { size: 11 } }
                     }
                 },
                 plugins: {
@@ -1238,7 +1188,10 @@ async function laadSeizoensProfiel() {
                             label: function(ctx) {
                                 const val = ctx.parsed.y;
                                 if (val === null || val === undefined) return null;
-                                return ` ${ctx.dataset.label}: € ${val.toFixed(2)} /MWh`;
+                                const eenh = getEenheidLabel();
+                                const isC = eenh.includes('c€');
+                                const decT = eenh === '€/kWh' ? 3 : 2;
+                                return ` ${ctx.dataset.label}: ${isC ? '' : '€ '}${formatGetal(val, decT)} ${eenh.replace('c€/kWh', 'c€').replace('€/kWh', '').replace('€/MWh', '')}`;
                             }
                         }
                     }
