@@ -182,17 +182,30 @@ document.getElementById('btn-next-day').addEventListener('click', () => {
 });
 
 // ==========================================
-// 3. LEGENDA KNOPPEN (Onbalans 1m standaard UIT)
+// 3. LEGENDA KNOPPEN & INSTELLINGEN (Dagverloop)
 // ==========================================
-let datasetZichtbaar = [true, true, false, true];
+const prefEpex = localStorage.getItem('pref_lijn_epex') !== 'false';
+const prefOnb15 = localStorage.getItem('pref_lijn_onb15') !== 'false';
+const prefOnb1 = localStorage.getItem('pref_lijn_onb1') === 'true';
+
+// Pas toe: [EPEX, Onb15, Onb1, Drempelwaarde]
+let datasetZichtbaar = [prefEpex, prefOnb15, prefOnb1, prefEpex];
+
+window.addEventListener('DOMContentLoaded', () => {
+    // Verberg de knoppen visueel bij het inladen
+    document.querySelectorAll('#custom-legend .legend-item').forEach(item => {
+        const index = parseInt(item.getAttribute('data-dataset'));
+        if (!isNaN(index) && datasetZichtbaar[index] === false) {
+            item.classList.add('hidden-dataset');
+        }
+    });
+});
 
 document.querySelectorAll('#custom-legend .legend-item').forEach(item => {
     item.addEventListener('click', function () {
         const index = parseInt(this.getAttribute('data-dataset'));
         datasetZichtbaar[index] = !datasetZichtbaar[index];
-
         this.classList.toggle('hidden-dataset', !datasetZichtbaar[index]);
-
         if (epexGrafiek) {
             epexGrafiek.setDatasetVisibility(index, datasetZichtbaar[index]);
             epexGrafiek.update();

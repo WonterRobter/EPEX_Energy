@@ -57,7 +57,6 @@ if (switchMode) {
 // ==========================================
 
 const elEenheid = document.getElementById('setting-eenheid');
-const elStartpagina = document.getElementById('setting-startpagina');
 const elFormuleA = document.getElementById('setting-formule-a');
 const elFormuleB = document.getElementById('setting-formule-b');
 const elLijnEpex = document.getElementById('setting-lijn-epex');
@@ -65,24 +64,19 @@ const elLijnOnb15 = document.getElementById('setting-lijn-onb15');
 const elLijnOnb1 = document.getElementById('setting-lijn-onb1');
 const btnSave = document.getElementById('btn-save-settings');
 
-// A. Laad de huidige opgeslagen instellingen in de invulvelden
 function laadHuidigeInstellingen() {
     elEenheid.value = localStorage.getItem('pref_eenheid') || 'MWh';
-    elStartpagina.value = localStorage.getItem('pref_startpagina') || 'index.html';
-    
     elFormuleA.value = localStorage.getItem('pref_formule_a') || ''; 
     elFormuleB.value = localStorage.getItem('pref_formule_b') || ''; 
     
+    // Lees schakelaars (standaard: EPEX = aan, Onb15 = aan, Onb1 = uit)
     elLijnEpex.checked = localStorage.getItem('pref_lijn_epex') !== 'false';
     elLijnOnb15.checked = localStorage.getItem('pref_lijn_onb15') !== 'false';
     elLijnOnb1.checked = localStorage.getItem('pref_lijn_onb1') === 'true';
 }
 
-// B. Sla alles op bij een klik op de knop!
 btnSave.addEventListener('click', () => {
     localStorage.setItem('pref_eenheid', elEenheid.value);
-    localStorage.setItem('pref_startpagina', elStartpagina.value);
-    
     localStorage.setItem('pref_formule_a', elFormuleA.value !== '' ? elFormuleA.value : '');
     localStorage.setItem('pref_formule_b', elFormuleB.value !== '' ? elFormuleB.value : '');
     
@@ -90,7 +84,6 @@ btnSave.addEventListener('click', () => {
     localStorage.setItem('pref_lijn_onb15', elLijnOnb15.checked ? 'true' : 'false');
     localStorage.setItem('pref_lijn_onb1', elLijnOnb1.checked ? 'true' : 'false');
 
-    // Visuele feedback op de knop
     const origineleTekst = btnSave.innerHTML;
     btnSave.innerHTML = `<i class='bx bx-check'></i> Opgeslagen!`;
     btnSave.style.background = 'var(--green)';
@@ -101,5 +94,4 @@ btnSave.addEventListener('click', () => {
     }, 2000);
 });
 
-// Starten!
 laadHuidigeInstellingen();

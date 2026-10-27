@@ -259,9 +259,22 @@ if (kalNext) {
 }
 
 // ==========================================
-// 4. LEGENDA KNOPPEN (Onbalans 1m standaard UIT op index 2)
+// 4. LEGENDA KNOPPEN & INSTELLINGEN (Kwartier)
 // ==========================================
-let datasetZichtbaar = [true, true, false, true, true];
+const prefEpex = localStorage.getItem('pref_lijn_epex') !== 'false';
+const prefOnb15 = localStorage.getItem('pref_lijn_onb15') !== 'false';
+const prefOnb1 = localStorage.getItem('pref_lijn_onb1') === 'true';
+
+let datasetZichtbaar = [prefEpex, prefOnb15, prefOnb1, prefEpex, prefEpex];
+
+window.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('#profiel-legend .legend-item').forEach(item => {
+        const index = parseInt(item.getAttribute('data-dataset'));
+        if (!isNaN(index) && datasetZichtbaar[index] === false) {
+            item.classList.add('hidden-dataset');
+        }
+    });
+});
 
 document.querySelectorAll('#profiel-legend .legend-item').forEach(item => {
     item.addEventListener('click', function () {
@@ -585,7 +598,28 @@ async function laadKwartierProfielData() {
 let actieveMaandDatum = new Date();
 let maandKalenderJaar = actieveMaandDatum.getFullYear();
 let maandGrafiek = null;
-let datasetZichtbaarMaand = [true, true, false, true, true];
+let datasetZichtbaarMaand = [prefEpex, prefOnb15, prefOnb1, prefEpex, prefEpex];
+
+window.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('#maand-legend .legend-item').forEach(item => {
+        const index = parseInt(item.getAttribute('data-dataset'));
+        if (!isNaN(index) && datasetZichtbaarMaand[index] === false) {
+            item.classList.add('hidden-dataset');
+        }
+    });
+});
+
+document.querySelectorAll('#maand-legend .legend-item').forEach(item => {
+    item.addEventListener('click', function () {
+        const index = parseInt(this.getAttribute('data-dataset'));
+        datasetZichtbaarMaand[index] = !datasetZichtbaarMaand[index];
+        this.classList.toggle('hidden-dataset', !datasetZichtbaarMaand[index]);
+        if (maandGrafiek) {
+            maandGrafiek.setDatasetVisibility(index, datasetZichtbaarMaand[index]);
+            maandGrafiek.update();
+        }
+    });
+});
 
 const maandNamenKort = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 const maandNamenVol = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
@@ -649,18 +683,6 @@ if (btnMaandSel) {
         laadMaandOverzicht();
     });
 }
-
-document.querySelectorAll('#maand-legend .legend-item').forEach(item => {
-    item.addEventListener('click', function () {
-        const index = parseInt(this.getAttribute('data-dataset'));
-        datasetZichtbaarMaand[index] = !datasetZichtbaarMaand[index];
-        this.classList.toggle('hidden-dataset', !datasetZichtbaarMaand[index]);
-        if (maandGrafiek) {
-            maandGrafiek.setDatasetVisibility(index, datasetZichtbaarMaand[index]);
-            maandGrafiek.update();
-        }
-    });
-});
 
 async function laadMaandOverzicht() {
     const jaar = actieveMaandDatum.getFullYear();
@@ -807,7 +829,28 @@ async function laadMaandOverzicht() {
 let actiefJaar = new Date().getFullYear();
 let jaarGridStart = actiefJaar - 5;
 let jaarGrafiek = null;
-let datasetZichtbaarJaar = [true, true, false, true, true];
+let datasetZichtbaarJaar = [prefEpex, prefOnb15, prefOnb1, prefEpex, prefEpex];
+
+window.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('#jaar-legend .legend-item').forEach(item => {
+        const index = parseInt(item.getAttribute('data-dataset'));
+        if (!isNaN(index) && datasetZichtbaarJaar[index] === false) {
+            item.classList.add('hidden-dataset');
+        }
+    });
+});
+
+document.querySelectorAll('#jaar-legend .legend-item').forEach(item => {
+    item.addEventListener('click', function () {
+        const index = parseInt(this.getAttribute('data-dataset'));
+        datasetZichtbaarJaar[index] = !datasetZichtbaarJaar[index];
+        this.classList.toggle('hidden-dataset', !datasetZichtbaarJaar[index]);
+        if (jaarGrafiek) {
+            jaarGrafiek.setDatasetVisibility(index, datasetZichtbaarJaar[index]);
+            jaarGrafiek.update();
+        }
+    });
+});
 
 function bouwZijbalkJaarKalender() {
     const eindJaar = jaarGridStart + 11;
@@ -866,18 +909,6 @@ if (btnJaarSel) {
         laadJaarOverzicht();
     });
 }
-
-document.querySelectorAll('#jaar-legend .legend-item').forEach(item => {
-    item.addEventListener('click', function () {
-        const index = parseInt(this.getAttribute('data-dataset'));
-        datasetZichtbaarJaar[index] = !datasetZichtbaarJaar[index];
-        this.classList.toggle('hidden-dataset', !datasetZichtbaarJaar[index]);
-        if (jaarGrafiek) {
-            jaarGrafiek.setDatasetVisibility(index, datasetZichtbaarJaar[index]);
-            jaarGrafiek.update();
-        }
-    });
-});
 
 async function laadJaarOverzicht() {
     document.getElementById('jaar-titel').innerText = `Jaaroverzicht (${actiefJaar})`;
