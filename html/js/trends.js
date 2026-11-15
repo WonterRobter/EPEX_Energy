@@ -343,12 +343,24 @@ if (typeof Chart !== 'undefined') {
     };
 }
 
-function bepaalPrijsKleur(prijs) {
-    if (prijs < 0) return '#10b981';
-    if (prijs < 75) return '#84cc16';
-    if (prijs < 125) return '#8b9bb4';
-    if (prijs < 200) return '#f87171';
-    return '#ef4444';
+function bepaalPrijsKleur(ruwePrijsMWh) {
+    if (ruwePrijsMWh === null || ruwePrijsMWh === undefined) return '#8b9bb4';
+    
+    // 1. Bereken eerst de echte prijs inclusief al jouw formules, extra kosten en BTW
+    let berekendePrijs = berekenPrijs(ruwePrijsMWh);
+    const eenheid = localStorage.getItem('pref_eenheid') || 'MWh';
+    
+    // 2. Zet het resultaat tijdelijk om naar c€/kWh zodat we overal met dezelfde consumentendrempels kunnen werken
+    let prijsCent = berekendePrijs;
+    if (eenheid === 'MWh') prijsCent = berekendePrijs / 10;
+    if (eenheid === 'kWh') prijsCent = berekendePrijs * 100;
+
+    // 3. Toets af aan de échte all-in Belgische consumentenprijzen (in c€/kWh)
+    if (prijsCent < 0) return '#10b981';   // Groen (Negatief: je krijgt geld toe!)
+    if (prijsCent < 15) return '#84cc16';  // Lichtgroen (Goedkoop: < 15 c€/kWh)
+    if (prijsCent < 25) return '#8b9bb4';  // Grijs (Normaal daggemiddelde: 15 - 25 c€/kWh)
+    if (prijsCent < 35) return '#f87171';  // Lichtrood (Duur: 25 - 35 c€/kWh)
+    return '#ef4444';                      // Vuurrood (Extreem: > 35 c€/kWh)
 }
 
 // ==========================================

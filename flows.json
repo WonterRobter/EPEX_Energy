@@ -20,8 +20,8 @@
         "retentionPolicyV18Flux": "",
         "org": "epex_org",
         "bucket": "energie_db",
-        "x": 1530,
-        "y": 480,
+        "x": 1310,
+        "y": 180,
         "wires": []
     },
     {
@@ -41,8 +41,8 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 460,
-        "y": 440,
+        "x": 220,
+        "y": 160,
         "wires": [
             [
                 "func_epex_build_url"
@@ -61,8 +61,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 710,
-        "y": 440,
+        "x": 470,
+        "y": 160,
         "wires": [
             [
                 "http_epex_request"
@@ -85,8 +85,8 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 970,
-        "y": 440,
+        "x": 730,
+        "y": 160,
         "wires": [
             [
                 "func_epex_to_influx"
@@ -105,8 +105,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1250,
-        "y": 440,
+        "x": 1010,
+        "y": 160,
         "wires": [
             [
                 "98965db8d1aa2365"
@@ -130,8 +130,8 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 440,
-        "y": 480,
+        "x": 200,
+        "y": 200,
         "wires": [
             [
                 "http_elia_kwartier"
@@ -154,8 +154,8 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 1000,
-        "y": 480,
+        "x": 760,
+        "y": 200,
         "wires": [
             [
                 "func_onb_kwartier_to_influx"
@@ -174,8 +174,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1260,
-        "y": 480,
+        "x": 1020,
+        "y": 200,
         "wires": [
             [
                 "98965db8d1aa2365"
@@ -199,8 +199,8 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 450,
-        "y": 520,
+        "x": 210,
+        "y": 240,
         "wires": [
             [
                 "http_elia_minuut"
@@ -223,8 +223,8 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 990,
-        "y": 520,
+        "x": 750,
+        "y": 240,
         "wires": [
             [
                 "func_onb_minuut_to_influx"
@@ -243,8 +243,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1260,
-        "y": 520,
+        "x": 1020,
+        "y": 240,
         "wires": [
             [
                 "98965db8d1aa2365"
@@ -268,8 +268,8 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 460,
-        "y": 580,
+        "x": 220,
+        "y": 300,
         "wires": [
             [
                 "fd5b2bf4feab34a5"
@@ -288,8 +288,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 710,
-        "y": 580,
+        "x": 470,
+        "y": 300,
         "wires": [
             [
                 "46eef2a86e6abe65"
@@ -308,8 +308,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1170,
-        "y": 580,
+        "x": 890,
+        "y": 300,
         "wires": [
             [
                 "2b1513e002075e8f"
@@ -333,8 +333,8 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 450,
-        "y": 620,
+        "x": 210,
+        "y": 340,
         "wires": [
             [
                 "a26763a853a4e77c"
@@ -353,11 +353,11 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 720,
-        "y": 620,
+        "x": 480,
+        "y": 340,
         "wires": [
             [
-                "46eef2a86e6abe65"
+                "95d420bc0c9db51a"
             ]
         ]
     },
@@ -373,11 +373,12 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1160,
-        "y": 620,
+        "x": 880,
+        "y": 340,
         "wires": [
             [
-                "2b1513e002075e8f"
+                "2b1513e002075e8f",
+                "8616788a903aaa57"
             ]
         ]
     },
@@ -385,21 +386,21 @@
         "id": "b09c7a1b6d17db83",
         "type": "inject",
         "z": "44ae34a704e13388",
-        "name": "Elke nacht 01:00",
+        "name": "Elke nacht 07:30",
         "props": [
             {
                 "p": "payload"
             }
         ],
         "repeat": "",
-        "crontab": "00 01 * * *",
+        "crontab": "30 07 * * *",
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 450,
-        "y": 660,
+        "x": 210,
+        "y": 380,
         "wires": [
             [
                 "9d34e86c39fe6e8c"
@@ -411,41 +412,18 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Multi-Query Gisteren",
-        "func": "let nu = new Date();\nlet vandaag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate());\nlet gisteren = new Date(vandaag.getTime() - 24 * 60 * 60 * 1000);\n\nlet startStr = gisteren.toISOString();\nlet eindStr = vandaag.toISOString();\n\nlet qMin = `SELECT \"prijs\" FROM \"onbalans_minuut\" WHERE time >= '${startStr}' AND time < '${eindStr}' ORDER BY time ASC`;\nlet qQOnb = `SELECT \"prijs\" FROM \"onbalans_kwartier\" WHERE time >= '${startStr}' AND time < '${eindStr}' ORDER BY time ASC`;\nlet qQEpex = `SELECT \"prijs\" FROM \"epex_kwartier\" WHERE time >= '${startStr}' AND time < '${eindStr}' ORDER BY time ASC`;\n\nmsg.url = \"http://epex_influxdb:8086/query?db=energie_db&epoch=ms&q=\" + encodeURIComponent(`${qMin};${qQOnb};${qQEpex}`);\nmsg.headers = { \"Authorization\": \"Token epex_super_secret_token_2026\" };\nmsg.startMs = gisteren.getTime();\nmsg.datumWeergave = gisteren.toLocaleDateString('nl-BE');\n// Als deze via de Rescue Delay komt, bewaar dan de status!\nif (msg.isRescueCheck !== undefined) {\n    msg.isRescueCheck = msg.isRescueCheck;\n}\nreturn msg;",
+        "func": "let nu = new Date();\nlet vandaag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate());\nlet gisteren = new Date(vandaag.getTime() - 24 * 60 * 60 * 1000);\nlet morgen = new Date(vandaag.getTime() + 24 * 60 * 60 * 1000);\n\n// Onbalans = gisteren, EPEX = vandaag (nu)\nlet qMin = `SELECT \"prijs\" FROM \"onbalans_minuut\" WHERE time >= '${gisteren.toISOString()}' AND time < '${vandaag.toISOString()}' ORDER BY time ASC`;\nlet qQOnb = `SELECT \"prijs\" FROM \"onbalans_kwartier\" WHERE time >= '${gisteren.toISOString()}' AND time < '${vandaag.toISOString()}' ORDER BY time ASC`;\nlet qQEpex = `SELECT \"prijs\" FROM \"epex_kwartier\" WHERE time >= '${vandaag.toISOString()}' AND time < '${morgen.toISOString()}' ORDER BY time ASC`;\n\nmsg.url = \"http://epex_influxdb:8086/query?db=energie_db&epoch=ms&q=\" + encodeURIComponent(`${qMin};${qQOnb};${qQEpex}`);\nmsg.headers = { \"Authorization\": \"Token epex_super_secret_token_2026\" };\n\n// Geef de tijden door voor de analyse!\nmsg.startGisterenMs = gisteren.getTime();\nmsg.startVandaagMs = vandaag.getTime();\nmsg.datumGisteren = gisteren.toLocaleDateString('nl-BE');\nmsg.datumVandaag = vandaag.toLocaleDateString('nl-BE');\n\nif (msg.isRescueCheck !== undefined) {\n    msg.isRescueCheck = msg.isRescueCheck;\n}\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 700,
-        "y": 660,
+        "x": 460,
+        "y": 380,
         "wires": [
             [
-                "46eef2a86e6abe65"
-            ]
-        ]
-    },
-    {
-        "id": "5946c0dbadecec06",
-        "type": "function",
-        "z": "44ae34a704e13388",
-        "name": "Analyseer Gaten & API",
-        "func": "let results = msg.payload.results;\nif (!results || results.length < 3) return [null, null];\n\nlet startMs = msg.startMs;\nlet datum = msg.datumWeergave;\nlet isRescueCheck = msg.isRescueCheck === true;\n\nlet actualMin = new Set();\nlet actualQOnb = new Set();\nlet actualQEpex = new Set();\n\nif (results[0] && results[0].series) results[0].series[0].values.forEach(v => actualMin.add(v[0]));\nif (results[1] && results[1].series) results[1].series[0].values.forEach(v => actualQOnb.add(v[0]));\nif (results[2] && results[2].series) results[2].series[0].values.forEach(v => actualQEpex.add(v[0]));\n\nlet missingMin = [];\nlet missingQOnb = [];\nlet missingQEpex = [];\n\nfunction formatTijd(tms) {\n    let d = new Date(tms);\n    return d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n}\n\nfor (let i = 0; i < 1440; i++) {\n    let t = startMs + i * 60 * 1000;\n    if (!actualMin.has(t)) missingMin.push(formatTijd(t));\n}\nfor (let i = 0; i < 96; i++) {\n    let t = startMs + i * 15 * 60 * 1000;\n    let tStr = formatTijd(t);\n    if (!actualQOnb.has(t)) missingQOnb.push(tStr);\n    if (!actualQEpex.has(t)) missingQEpex.push(tStr);\n}\n\nlet isDeprecated = global.get(\"epex_api_deprecated\") === true;\n\nif (missingMin.length > 0 || missingQOnb.length > 0 || missingQEpex.length > 0 || isDeprecated) {\n    if (!isRescueCheck && !isDeprecated) {\n        // EERSTE KEER: Gaten ontdekt! Stuur naar Output 2 (Rescue)\n        node.status({ fill: \"yellow\", shape: \"ring\", text: \"Gaten ontdekt! Rescue gestart...\" });\n        msg.datumWeergave = datum;\n        return [null, msg]; // Output 2\n    } else {\n        // TWEEDE KEER of API kapot: Pech! Bericht naar Admin via Output 1\n        let bericht = `⚠️ <b>WATCHDOG RAPPORT (${datum})</b>\\n\\n`;\n        if (isRescueCheck) bericht = `🚨 <b>RESCUE MISLUKT (${datum})</b>\\nNiet alle gaten konden worden hersteld. Pech...\\n\\n`;\n        if (isDeprecated) bericht += `🚨 <b>LET OP:</b> Energy-Charts API stopt binnenkort!\\n\\n`;\n        \n        if (missingQEpex.length > 0) bericht += `❌ <b>EPEX Kwartier (${96 - missingQEpex.length}/96)</b>\\n\\n`;\n        if (missingQOnb.length > 0) bericht += `❌ <b>Onbalans Kwartier (${96 - missingQOnb.length}/96)</b>\\n\\n`;\n        if (missingMin.length > 0) bericht += `❌ <b>Onbalans Minuut (${1440 - missingMin.length}/1440)</b>\\n`;\n\n        node.status({ fill: \"red\", shape: \"dot\", text: \"Pech: gaten overgebleven.\" });\n        let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n        msg.payload = { chatId: targetChat, type: \"message\", content: bericht, options: { parse_mode: \"HTML\" } };\n        return [msg, null]; // Output 1\n    }\n}\n\nif (isRescueCheck) {\n    // TWEEDE KEER: Geen gaten meer! Rescue was succesvol!\n    node.status({ fill: \"green\", shape: \"dot\", text: \"Rescue succesvol!\" });\n    let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n    msg.payload = { chatId: targetChat, type: \"message\", content: `✅ <b>RESCUE GESLAAGD (${datum})</b>\\nAlle gaten zijn gedicht! 🛠️`, options: { parse_mode: \"HTML\" } };\n    return [msg, null]; // Output 1\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${datum}: 100% compleet!` });\nreturn [null, null];",
-        "outputs": 2,
-        "timeout": "",
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 1160,
-        "y": 660,
-        "wires": [
-            [
-                "8616788a903aaa57"
-            ],
-            [
-                "9bdb5e6f4c18b9d4"
+                "eb3c9da30b21431b"
             ]
         ]
     },
@@ -457,8 +435,8 @@
         "bot": "7fdca0379777c9a8",
         "haserroroutput": false,
         "outputs": 1,
-        "x": 1430,
-        "y": 600,
+        "x": 1130,
+        "y": 300,
         "wires": [
             []
         ]
@@ -471,8 +449,8 @@
         "bot": "5801c82befe61e4e",
         "haserroroutput": false,
         "outputs": 1,
-        "x": 1400,
-        "y": 640,
+        "x": 1260,
+        "y": 340,
         "wires": [
             []
         ]
@@ -487,8 +465,8 @@
         "upload": false,
         "skipBodyParsing": false,
         "swaggerDoc": "",
-        "x": 420,
-        "y": 800,
+        "x": 200,
+        "y": 500,
         "wires": [
             [
                 "query_bouw"
@@ -507,8 +485,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 660,
-        "y": 800,
+        "x": 440,
+        "y": 500,
         "wires": [
             [
                 "db_login"
@@ -521,12 +499,11 @@
         "z": "44ae34a704e13388",
         "mydb": "0d836172df78c3f2",
         "name": "MariaDB",
-        "x": 880,
-        "y": 820,
+        "x": 660,
+        "y": 500,
         "wires": [
             [
-                "login_check",
-                "register_check"
+                "login_check"
             ]
         ]
     },
@@ -542,8 +519,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1090,
-        "y": 800,
+        "x": 870,
+        "y": 500,
         "wires": [
             [
                 "register_out"
@@ -559,8 +536,8 @@
         "method": "post",
         "upload": false,
         "swaggerDoc": "",
-        "x": 430,
-        "y": 840,
+        "x": 210,
+        "y": 540,
         "wires": [
             [
                 "query_register"
@@ -579,11 +556,11 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 660,
-        "y": 840,
+        "x": 440,
+        "y": 540,
         "wires": [
             [
-                "db_login"
+                "e58c28287f0a830b"
             ]
         ]
     },
@@ -599,8 +576,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1090,
-        "y": 840,
+        "x": 870,
+        "y": 540,
         "wires": [
             [
                 "register_out"
@@ -614,8 +591,8 @@
         "name": "",
         "statusCode": "",
         "headers": {},
-        "x": 1450,
-        "y": 840,
+        "x": 1170,
+        "y": 640,
         "wires": []
     },
     {
@@ -627,8 +604,8 @@
             "db_register"
         ],
         "uncaught": false,
-        "x": 810,
-        "y": 760,
+        "x": 590,
+        "y": 460,
         "wires": [
             [
                 "register_error"
@@ -647,8 +624,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1020,
-        "y": 760,
+        "x": 800,
+        "y": 460,
         "wires": [
             [
                 "register_out"
@@ -665,8 +642,8 @@
         "upload": false,
         "skipBodyParsing": false,
         "swaggerDoc": "",
-        "x": 420,
-        "y": 900,
+        "x": 200,
+        "y": 600,
         "wires": [
             [
                 "build_flux"
@@ -685,8 +662,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 670,
-        "y": 900,
+        "x": 450,
+        "y": 600,
         "wires": [
             [
                 "query_influx"
@@ -704,15 +681,11 @@
         "precision": "",
         "retentionPolicy": "",
         "org": "epex_org",
-        "x": 890,
-        "y": 1020,
+        "x": 670,
+        "y": 600,
         "wires": [
             [
-                "format_chart",
-                "format_chart_profiel",
-                "calc_maand_turbo",
-                "29f380309365c195",
-                "calc_seizoen_turbo"
+                "format_chart"
             ]
         ]
     },
@@ -728,8 +701,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1100,
-        "y": 900,
+        "x": 880,
+        "y": 600,
         "wires": [
             [
                 "register_out"
@@ -745,8 +718,8 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 440,
-        "y": 960,
+        "x": 220,
+        "y": 660,
         "wires": [
             [
                 "build_flux_profiel"
@@ -765,11 +738,11 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 680,
-        "y": 960,
+        "x": 460,
+        "y": 660,
         "wires": [
             [
-                "query_influx"
+                "fbd52162dae1288f"
             ]
         ]
     },
@@ -785,8 +758,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1110,
-        "y": 960,
+        "x": 890,
+        "y": 660,
         "wires": [
             [
                 "register_out"
@@ -802,8 +775,8 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 450,
-        "y": 1020,
+        "x": 230,
+        "y": 720,
         "wires": [
             [
                 "build_flux_maand"
@@ -822,11 +795,11 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 670,
-        "y": 1020,
+        "x": 450,
+        "y": 720,
         "wires": [
             [
-                "query_influx"
+                "f340a9764c77f173"
             ]
         ]
     },
@@ -842,8 +815,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1110,
-        "y": 1020,
+        "x": 890,
+        "y": 720,
         "wires": [
             [
                 "register_out"
@@ -859,8 +832,8 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 440,
-        "y": 1080,
+        "x": 220,
+        "y": 780,
         "wires": [
             [
                 "69bc24122c408407"
@@ -879,11 +852,11 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 670,
-        "y": 1080,
+        "x": 450,
+        "y": 780,
         "wires": [
             [
-                "query_influx"
+                "1a7a3fbd2a854a85"
             ]
         ]
     },
@@ -899,8 +872,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1120,
-        "y": 1080,
+        "x": 900,
+        "y": 780,
         "wires": [
             [
                 "register_out"
@@ -916,8 +889,8 @@
         "method": "get",
         "upload": false,
         "swaggerDoc": "",
-        "x": 450,
-        "y": 1140,
+        "x": 230,
+        "y": 840,
         "wires": [
             [
                 "build_flux_seizoen"
@@ -929,18 +902,18 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Bouw Flux (Seizoen)",
-        "func": "let jarenStr = (msg.req && msg.req.query && msg.req.query.jaren) ? msg.req.query.jaren : String(new Date().getFullYear());\nlet jaren = jarenStr.split(',').map(y => parseInt(y.trim(), 10)).filter(y => !isNaN(y)).sort((a, b) => a - b);\nif (jaren.length === 0) jaren = [new Date().getFullYear()];\n\nlet minJaar = Math.min(...jaren);\nlet maxJaar = Math.max(...jaren);\n\nlet dStart = new Date(Date.UTC(minJaar, 0, 1, -4, 0, 0));\nlet dStop = new Date(Date.UTC(maxJaar, 11, 31, 27, 59, 59));\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `Jaren: ${jaren.join(', ')}` });\n\n// Enkel epex_kwartier ophalen (geen onbalans, dus supersnel!)\nmsg.query = `\nfrom(bucket: \"energie_db\")\n  |> range(start: ${dStart.toISOString()}, stop: ${dStop.toISOString()})\n  |> filter(fn: (r) => r[\"_measurement\"] == \"epex_kwartier\")\n  |> filter(fn: (r) => r[\"_field\"] == \"prijs\")\n`;\n\nmsg.jaren = jaren;\nreturn msg;",
+        "func": "let jarenStr = (msg.req && msg.req.query && msg.req.query.jaren) ? msg.req.query.jaren : String(new Date().getFullYear());\nlet jaren = jarenStr.split(',').map(y => parseInt(y.trim(), 10)).filter(y => !isNaN(y)).sort((a, b) => a - b);\nif (jaren.length === 0) jaren = [new Date().getFullYear()];\n\nlet minJaar = Math.min(...jaren);\nlet maxJaar = Math.max(...jaren);\n\n// FIX: We starten in december van het VORIGE jaar (minJaar - 1) om de winter compleet te maken!\nlet dStart = new Date(Date.UTC(minJaar - 1, 11, 20, -4, 0, 0));\nlet dStop = new Date(Date.UTC(maxJaar, 11, 31, 27, 59, 59));\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `Jaren: ${jaren.join(', ')}` });\n\nmsg.query = `\nfrom(bucket: \"energie_db\")\n  |> range(start: ${dStart.toISOString()}, stop: ${dStop.toISOString()})\n  |> filter(fn: (r) => r[\"_measurement\"] == \"epex_kwartier\")\n  |> filter(fn: (r) => r[\"_field\"] == \"prijs\")\n`;\n\nmsg.jaren = jaren;\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 680,
-        "y": 1140,
+        "x": 460,
+        "y": 840,
         "wires": [
             [
-                "query_influx"
+                "0cb8de8073d955ac"
             ]
         ]
     },
@@ -949,15 +922,15 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Bereken Seizoenen (Turbo)",
-        "func": "if (!msg.payload || !Array.isArray(msg.payload)) {\n    msg.payload = { jaren: {} };\n    return msg;\n}\n\nconst dtFormatter = new Intl.DateTimeFormat('sv-SE', {\n    timeZone: 'Europe/Brussels',\n    year: 'numeric', month: '2-digit', day: '2-digit',\n    hour: '2-digit', minute: '2-digit', hour12: false\n});\n\nlet huidigeDatumStr = dtFormatter.format(new Date()).substring(0, 10); // Vandaag in YYYY-MM-DD\nlet jarenSet = new Set(msg.jaren);\nlet buckets = {};\nmsg.jaren.forEach(y => {\n    buckets[y] = { Lente: {}, Zomer: {}, Herfst: {}, Winter: {} };\n});\n\nfunction bepaalSeizoen(mmdd) {\n    if (mmdd >= \"03-21\" && mmdd < \"06-21\") return \"Lente\";\n    if (mmdd >= \"06-21\" && mmdd < \"09-21\") return \"Zomer\";\n    if (mmdd >= \"09-21\" && mmdd < \"12-21\") return \"Herfst\";\n    return \"Winter\";\n}\n\nfor (let i = 0; i < msg.payload.length; i++) {\n    let row = msg.payload[i];\n    if (!row._time || row._value === null || row._value === undefined) continue;\n\n    let dtStr = dtFormatter.format(new Date(row._time)); // \"YYYY-MM-DD HH:mm\"\n    let datumDag = dtStr.substring(0, 10);\n\n    // CRUCIAAL: Als de data in de toekomst ligt (bijv. december 2026), negeer deze direct!\n    if (datumDag > huidigeDatumStr) continue;\n\n    let jaar = parseInt(dtStr.substring(0, 4), 10);\n    if (!jarenSet.has(jaar)) continue;\n\n    let mmdd = dtStr.substring(5, 10);\n    let tijdStr = dtStr.substring(11, 16);\n    let seizoen = bepaalSeizoen(mmdd);\n\n    if (!buckets[jaar][seizoen][tijdStr]) {\n        buckets[jaar][seizoen][tijdStr] = [];\n    }\n    buckets[jaar][seizoen][tijdStr].push(Number(row._value));\n}\n\nfunction avg(arr) {\n    if (!arr || arr.length === 0) return null;\n    let sum = 0;\n    for (let i = 0; i < arr.length; i++) sum += arr[i];\n    return sum / arr.length;\n}\n\nlet labels = [];\nfor (let h = 0; h < 24; h++) {\n    for (let m = 0; m < 60; m += 15) {\n        labels.push(String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));\n    }\n}\n\nlet resultaatJaren = {};\nmsg.jaren.forEach(y => {\n    resultaatJaren[y] = { Lente: [], Zomer: [], Herfst: [], Winter: [] };\n    [\"Lente\", \"Zomer\", \"Herfst\", \"Winter\"].forEach(s => {\n        labels.forEach(t => {\n            let gemVal = avg(buckets[y][s][t]);\n            // Als er voor dit seizoen in dit jaar nog geen data is (of in de toekomst ligt), zet dan op null zodat de lijn stopt\n            resultaatJaren[y][s].push(gemVal);\n        });\n    });\n});\n\nnode.status({ fill: \"blue\", shape: \"dot\", text: \"Seizoenen gefilterd tot vandaag\" });\nmsg.payload = { labels: labels, jaren: resultaatJaren };\nreturn msg;",
+        "func": "if (!msg.payload || !Array.isArray(msg.payload)) {\n    msg.payload = { jaren: {} };\n    return msg;\n}\n\nconst dtFormatter = new Intl.DateTimeFormat('sv-SE', {\n    timeZone: 'Europe/Brussels',\n    year: 'numeric', month: '2-digit', day: '2-digit',\n    hour: '2-digit', minute: '2-digit', hour12: false\n});\n\nlet huidigeDatumStr = dtFormatter.format(new Date()).substring(0, 10); \nlet jarenSet = new Set(msg.jaren);\nlet buckets = {};\nmsg.jaren.forEach(y => {\n    buckets[y] = { Lente: {}, Zomer: {}, Herfst: {}, Winter: {} };\n});\n\nfunction bepaalSeizoen(mmdd) {\n    if (mmdd >= \"03-21\" && mmdd < \"06-21\") return \"Lente\";\n    if (mmdd >= \"06-21\" && mmdd < \"09-21\") return \"Zomer\";\n    if (mmdd >= \"09-21\" && mmdd < \"12-21\") return \"Herfst\";\n    return \"Winter\";\n}\n\nfor (let i = 0; i < msg.payload.length; i++) {\n    let row = msg.payload[i];\n    if (!row._time || row._value === null || row._value === undefined) continue;\n\n    let dtStr = dtFormatter.format(new Date(row._time)); \n    let datumDag = dtStr.substring(0, 10);\n\n    if (datumDag > huidigeDatumStr) continue;\n\n    let jaar = parseInt(dtStr.substring(0, 4), 10);\n    let mmdd = dtStr.substring(5, 10);\n    let seizoen = bepaalSeizoen(mmdd);\n\n    // FIX: Als het Winter is én de datum is 21 december of later, \n    // tel dan 1 op bij het jaar zodat het bij de 'volgende' aaneengesloten winter hoort!\n    if (seizoen === \"Winter\" && mmdd >= \"12-21\") {\n        jaar = jaar + 1;\n    }\n\n    if (!jarenSet.has(jaar)) continue;\n\n    let tijdStr = dtStr.substring(11, 16);\n\n    if (!buckets[jaar][seizoen][tijdStr]) {\n        buckets[jaar][seizoen][tijdStr] = [];\n    }\n    buckets[jaar][seizoen][tijdStr].push(Number(row._value));\n}\n\nfunction avg(arr) {\n    if (!arr || arr.length === 0) return null;\n    let sum = 0;\n    for (let i = 0; i < arr.length; i++) sum += arr[i];\n    return sum / arr.length;\n}\n\nlet labels = [];\nfor (let h = 0; h < 24; h++) {\n    for (let m = 0; m < 60; m += 15) {\n        labels.push(String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));\n    }\n}\n\nlet resultaatJaren = {};\nmsg.jaren.forEach(y => {\n    resultaatJaren[y] = { Lente: [], Zomer: [], Herfst: [], Winter: [] };\n    [\"Lente\", \"Zomer\", \"Herfst\", \"Winter\"].forEach(s => {\n        labels.forEach(t => {\n            let gemVal = avg(buckets[y][s][t]);\n            resultaatJaren[y][s].push(gemVal);\n        });\n    });\n});\n\nnode.status({ fill: \"blue\", shape: \"dot\", text: \"Seizoenen naadloos gefilterd!\" });\nmsg.payload = { labels: labels, jaren: resultaatJaren };\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1120,
-        "y": 1140,
+        "x": 900,
+        "y": 840,
         "wires": [
             [
                 "register_out"
@@ -965,56 +938,92 @@
         ]
     },
     {
-        "id": "9bdb5e6f4c18b9d4",
-        "type": "function",
+        "id": "e58c28287f0a830b",
+        "type": "mysql",
         "z": "44ae34a704e13388",
-        "name": "Bouw Rescue URLs",
-        "func": "let nu = new Date();\nlet vandaag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate());\nlet gisteren = new Date(vandaag.getTime() - 24 * 60 * 60 * 1000);\n\nlet startStr = gisteren.getFullYear() + \"-\" + String(gisteren.getMonth()+1).padStart(2,'0') + \"-\" + String(gisteren.getDate()).padStart(2,'0');\nlet endStr = vandaag.getFullYear() + \"-\" + String(vandaag.getMonth()+1).padStart(2,'0') + \"-\" + String(vandaag.getDate()).padStart(2,'0');\n\nlet msgEpex = { url: `https://api.energy-charts.info/price?bzn=BE&start=${startStr}&end=${endStr}` };\nlet msgEliaKw = { url: \"https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods162/records?select=datetime%2C%20imbalanceprice&order_by=datetime%20desc&limit=100\" };\nlet msgEliaMin = { url: \"https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods161/records?select=datetime%2C%20imbalanceprice&order_by=datetime%20desc&limit=1440\" };\nlet msgDelay = { isRescueCheck: true, datumWeergave: msg.datumWeergave };\n\nnode.status({ fill: \"blue\", shape: \"dot\", text: \"Rescue data ophalen...\" });\nreturn [msgEpex, msgEliaKw, msgEliaMin, msgDelay];",
-        "outputs": 4,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 1400,
-        "y": 700,
+        "mydb": "0d836172df78c3f2",
+        "name": "MariaDB",
+        "x": 660,
+        "y": 540,
         "wires": [
             [
-                "91d8b0fe1b4c6ddc"
-            ],
-            [
-                "2a934532d991f448"
-            ],
-            [
-                "e799b3c63445fd30"
-            ],
-            [
-                "5749be8816f6661a"
+                "register_check"
             ]
         ]
     },
     {
-        "id": "5749be8816f6661a",
-        "type": "delay",
+        "id": "fbd52162dae1288f",
+        "type": "influxdb in",
         "z": "44ae34a704e13388",
-        "name": "",
-        "pauseType": "delay",
-        "timeout": "15",
-        "timeoutUnits": "seconds",
-        "rate": "1",
-        "nbRateUnits": "1",
-        "rateUnits": "second",
-        "randomFirst": "1",
-        "randomLast": "5",
-        "randomUnits": "seconds",
-        "drop": false,
-        "allowrate": false,
-        "outputs": 1,
-        "x": 1600,
-        "y": 740,
+        "influxdb": "c37561ff29513d8a",
+        "name": "InfluxDB 2.7",
+        "query": "",
+        "rawOutput": false,
+        "precision": "",
+        "retentionPolicy": "",
+        "org": "epex_org",
+        "x": 670,
+        "y": 660,
         "wires": [
             [
-                "125307c567eea786"
+                "format_chart_profiel"
+            ]
+        ]
+    },
+    {
+        "id": "f340a9764c77f173",
+        "type": "influxdb in",
+        "z": "44ae34a704e13388",
+        "influxdb": "c37561ff29513d8a",
+        "name": "InfluxDB 2.7",
+        "query": "",
+        "rawOutput": false,
+        "precision": "",
+        "retentionPolicy": "",
+        "org": "epex_org",
+        "x": 670,
+        "y": 720,
+        "wires": [
+            [
+                "calc_maand_turbo"
+            ]
+        ]
+    },
+    {
+        "id": "1a7a3fbd2a854a85",
+        "type": "influxdb in",
+        "z": "44ae34a704e13388",
+        "influxdb": "c37561ff29513d8a",
+        "name": "InfluxDB 2.7",
+        "query": "",
+        "rawOutput": false,
+        "precision": "",
+        "retentionPolicy": "",
+        "org": "epex_org",
+        "x": 670,
+        "y": 780,
+        "wires": [
+            [
+                "29f380309365c195"
+            ]
+        ]
+    },
+    {
+        "id": "0cb8de8073d955ac",
+        "type": "influxdb in",
+        "z": "44ae34a704e13388",
+        "influxdb": "c37561ff29513d8a",
+        "name": "InfluxDB 2.7",
+        "query": "",
+        "rawOutput": false,
+        "precision": "",
+        "retentionPolicy": "",
+        "org": "epex_org",
+        "x": 670,
+        "y": 840,
+        "wires": [
+            [
+                "calc_seizoen_turbo"
             ]
         ]
     },
@@ -1034,39 +1043,187 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 950,
-        "y": 620,
+        "x": 690,
+        "y": 300,
         "wires": [
             [
-                "2324340e06a283b2",
-                "7d169d3a37a550b6",
+                "2324340e06a283b2"
+            ]
+        ]
+    },
+    {
+        "id": "95d420bc0c9db51a",
+        "type": "http request",
+        "z": "44ae34a704e13388",
+        "name": "InfluxDB 2.7",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 690,
+        "y": 340,
+        "wires": [
+            [
+                "7d169d3a37a550b6"
+            ]
+        ]
+    },
+    {
+        "id": "eb3c9da30b21431b",
+        "type": "http request",
+        "z": "44ae34a704e13388",
+        "name": "InfluxDB 2.7",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 690,
+        "y": 380,
+        "wires": [
+            [
                 "5946c0dbadecec06"
             ]
         ]
     },
     {
-        "id": "125307c567eea786",
-        "type": "link out",
+        "id": "5946c0dbadecec06",
+        "type": "function",
         "z": "44ae34a704e13388",
-        "name": "link out 1",
-        "mode": "link",
-        "links": [
-            "0f0d98b0e61a6fdd"
-        ],
-        "x": 1695,
-        "y": 740,
-        "wires": []
+        "name": "Analyseer Gaten & Maak Taken",
+        "func": "let results = msg.payload.results;\nif (!results || results.length < 3) return [null, null];\n\nlet startGisterenMs = msg.startGisterenMs;\nlet startVandaagMs = msg.startVandaagMs;\nlet isRescueCheck = msg.isRescueCheck === true;\n\nlet actualMin = new Set();\nlet actualQOnb = new Set();\nlet actualQEpex = new Set();\n\nif (results[0] && results[0].series) results[0].series[0].values.forEach(v => actualMin.add(v[0]));\nif (results[1] && results[1].series) results[1].series[0].values.forEach(v => actualQOnb.add(v[0]));\nif (results[2] && results[2].series) results[2].series[0].values.forEach(v => actualQEpex.add(v[0]));\n\nlet missingMinTijden = [];\nlet missingMinRapport = [];\nlet missingQOnbRapport = [];\nlet missingQEpexRapport = [];\n\nfunction formatTijd(tms) {\n    let d = new Date(tms);\n    return d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n}\n\n// 1. Controleer Onbalans over gisteren (1440 min & 96 kwartier)\nfor (let i = 0; i < 1440; i++) {\n    let t = startGisterenMs + i * 60 * 1000;\n    if (!actualMin.has(t)) {\n        missingMinRapport.push(formatTijd(t));\n        missingMinTijden.push(new Date(t).toISOString());\n    }\n}\nfor (let i = 0; i < 96; i++) {\n    let t = startGisterenMs + i * 15 * 60 * 1000;\n    if (!actualQOnb.has(t)) missingQOnbRapport.push(formatTijd(t));\n}\n// 2. Controleer EPEX over vandaag (96 kwartier)\nfor (let i = 0; i < 96; i++) {\n    let t = startVandaagMs + i * 15 * 60 * 1000;\n    if (!actualQEpex.has(t)) missingQEpexRapport.push(formatTijd(t));\n}\n\nlet isDeprecated = global.get(\"epex_api_deprecated\") === true;\n\nif (missingMinRapport.length > 0 || missingQOnbRapport.length > 0 || missingQEpexRapport.length > 0 || isDeprecated) {\n    if (!isRescueCheck && !isDeprecated) {\n        node.status({ fill: \"yellow\", shape: \"ring\", text: \"Gaten ontdekt! Takenlijst maken...\" });\n        \n        let rescueTasks = [];\n        \n        // Taak 1: EPEX Hele dag (vandaag)\n        if (missingQEpexRapport.length > 0) {\n            rescueTasks.push({ type: \"epex\", dag: msg.startVandaagMs });\n        }\n        \n        // Taak 2: Kwartier Hele dag (gisteren) - Limiet 100 is genoeg voor 96 kwartieren!\n        if (missingQOnbRapport.length > 0) {\n            rescueTasks.push({ type: \"elia_kwartier_bulk\", startIso: new Date(startGisterenMs).toISOString(), eindIso: new Date(startVandaagMs).toISOString() });\n        }\n        \n        // Taak 3: Minuten één voor één (Specifieke minuut opvragen)\n        missingMinTijden.forEach(t => {\n            rescueTasks.push({ type: \"elia_minuut\", isoTijd: t });\n        });\n\n        // Taak 4: De Loop-Back verificatie (Laatste taak in de rij!)\n        rescueTasks.push({ \n            type: \"check_again\", \n            datumGisteren: msg.datumGisteren,\n            datumVandaag: msg.datumVandaag,\n            startGisterenMs: startGisterenMs, \n            startVandaagMs: startVandaagMs \n        });\n\n        msg.payload = rescueTasks;\n        return [null, msg]; // Naar de splitter\n    } else {\n        let bericht = `⚠️ <b>WATCHDOG RAPPORT</b>\\n\\n`;\n        if (isRescueCheck) bericht = `🚨 <b>RESCUE MISLUKT</b>\\nNiet alle gaten konden worden hersteld.\\n\\n`;\n        if (isDeprecated) bericht += `🚨 <b>LET OP:</b> Energy-Charts API stopt binnenkort!\\n\\n`;\n        \n        if (missingQEpexRapport.length > 0) bericht += `❌ <b>EPEX VANDAAG (${msg.datumVandaag}) - (${96 - missingQEpexRapport.length}/96)</b>\\n\\n`;\n        if (missingQOnbRapport.length > 0) bericht += `❌ <b>Onb. Kwartier GISTEREN (${msg.datumGisteren}) - (${96 - missingQOnbRapport.length}/96)</b>\\n\\n`;\n        if (missingMinRapport.length > 0) bericht += `❌ <b>Onb. Minuut GISTEREN (${msg.datumGisteren}) - (${1440 - missingMinRapport.length}/1440)</b>\\n`;\n\n        node.status({ fill: \"red\", shape: \"dot\", text: \"Pech: gaten overgebleven.\" });\n        let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n        msg.payload = { chatId: targetChat, type: \"message\", content: bericht, options: { parse_mode: \"HTML\" } };\n        return [msg, null];\n    }\n}\n\nif (isRescueCheck) {\n    node.status({ fill: \"green\", shape: \"dot\", text: \"Rescue succesvol!\" });\n    let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n    msg.payload = { chatId: targetChat, type: \"message\", content: `✅ <b>RESCUE GESLAAGD</b>\\nAlle gaten zijn gedicht! 🛠️`, options: { parse_mode: \"HTML\" } };\n    return [msg, null];\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: \"100% compleet!\" });\nreturn [null, null];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 910,
+        "y": 380,
+        "wires": [
+            [
+                "8616788a903aaa57"
+            ],
+            [
+                "split_taken"
+            ]
+        ]
     },
     {
-        "id": "0f0d98b0e61a6fdd",
+        "id": "split_taken",
+        "type": "split",
+        "z": "44ae34a704e13388",
+        "name": "Splits Taken",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 1130,
+        "y": 400,
+        "wires": [
+            [
+                "rate_limit_api"
+            ]
+        ]
+    },
+    {
+        "id": "rate_limit_api",
+        "type": "delay",
+        "z": "44ae34a704e13388",
+        "name": "1 per seconde",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1320,
+        "y": 400,
+        "wires": [
+            [
+                "bouw_specifieke_url"
+            ]
+        ]
+    },
+    {
+        "id": "bouw_specifieke_url",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Bouw Specifieke URL",
+        "func": "let taak = msg.payload;\n\nfunction formatYMD(d) {\n    return d.getFullYear() + \"-\" + String(d.getMonth() + 1).padStart(2, '0') + \"-\" + String(d.getDate()).padStart(2, '0');\n}\n\nif (taak.type === \"epex\") {\n    let vandaag = new Date(taak.dag);\n    let morgen = new Date(vandaag.getTime() + 24 * 60 * 60 * 1000);\n    msg.url = `https://api.energy-charts.info/price?bzn=BE&start=${formatYMD(vandaag)}&end=${formatYMD(morgen)}`;\n    msg.rescueType = \"epex\";\n    return [msg, null]; // Output 1 -> GET Rescue API\n}\n\nif (taak.type === \"elia_kwartier_bulk\") {\n    let encodedWhere = encodeURIComponent(`datetime >= \"${taak.startIso}\" AND datetime < \"${taak.eindIso}\"`);\n    msg.url = `https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods134/records?select=datetime%2C%20imbalanceprice&where=${encodedWhere}&limit=100`;\n    msg.rescueType = \"elia_kwartier\";\n    return [msg, null]; // Output 1 -> GET Rescue API\n}\n\nif (taak.type === \"elia_minuut\") {\n    // Gebruik >= en < (tijdvenster van 1 minuut) i.p.v. '=' zodat .000Z nooit faalt!\n    let tStart = new Date(taak.isoTijd);\n    let tEind = new Date(tStart.getTime() + 60 * 1000); // +1 minuut\n\n    let encodedWhere = encodeURIComponent(`datetime >= \"${tStart.toISOString()}\" AND datetime < \"${tEind.toISOString()}\"`);\n    msg.url = `https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods133/records?select=datetime%2C%20imbalanceprice&where=${encodedWhere}&limit=10`;\n    msg.rescueType = \"elia_minuut\";\n    return [msg, null]; // Output 1 -> GET Rescue API\n}\n\nif (taak.type === \"check_again\") {\n    msg.isRescueCheck = true;\n    msg.startGisterenMs = taak.startGisterenMs;\n    msg.startVandaagMs = taak.startVandaagMs;\n    msg.datumGisteren = taak.datumGisteren;\n    msg.datumVandaag = taak.datumVandaag;\n    return [null, msg]; // Output 2 -> Wacht 15s\n}\n\nreturn null;",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1160,
+        "y": 460,
+        "wires": [
+            [
+                "7ae0a29a640b4a94"
+            ],
+            [
+                "delay_check"
+            ]
+        ]
+    },
+    {
+        "id": "delay_check",
+        "type": "delay",
+        "z": "44ae34a704e13388",
+        "name": "Wacht 15s",
+        "pauseType": "delay",
+        "timeout": "15",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1370,
+        "y": 500,
+        "wires": [
+            [
+                "8dc9069821445696"
+            ]
+        ]
+    },
+    {
+        "id": "f6e83bacad4bbe05",
         "type": "link in",
         "z": "44ae34a704e13388",
         "name": "link in 1",
         "links": [
-            "125307c567eea786"
+            "8dc9069821445696"
         ],
-        "x": 565,
-        "y": 700,
+        "x": 325,
+        "y": 400,
         "wires": [
             [
                 "9d34e86c39fe6e8c"
@@ -1074,91 +1231,90 @@
         ]
     },
     {
-        "id": "9844164402b7f4d2",
-        "type": "link in",
+        "id": "8dc9069821445696",
+        "type": "link out",
         "z": "44ae34a704e13388",
-        "name": "link in 2",
+        "name": "link out 1",
+        "mode": "link",
         "links": [
-            "e799b3c63445fd30"
+            "f6e83bacad4bbe05"
         ],
-        "x": 835,
-        "y": 520,
+        "x": 1475,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "7ae0a29a640b4a94",
+        "type": "http request",
+        "z": "44ae34a704e13388",
+        "name": "GET Rescue API",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1390,
+        "y": 460,
         "wires": [
             [
-                "http_elia_minuut"
+                "f0d35b13daf92ed8"
             ]
         ]
     },
     {
-        "id": "1962aae79cb52da9",
-        "type": "link in",
+        "id": "f0d35b13daf92ed8",
+        "type": "function",
         "z": "44ae34a704e13388",
-        "name": "link in 3",
-        "links": [
-            "2a934532d991f448"
-        ],
-        "x": 835,
-        "y": 480,
+        "name": "function 3",
+        "func": "let points = [];\n\n// 1. Als het EPEX is:\nif (msg.rescueType === \"epex\") {\n    let tijden = msg.payload.unix_seconds;\n    let prijzen = msg.payload.price;\n    if (!tijden || !prijzen) return null;\n\n    for (let i = 0; i < tijden.length; i++) {\n        let p = parseFloat(prijzen[i]);\n        if (!isNaN(p)) {\n            points.push({\n                measurement: \"epex_kwartier\",\n                fields: { prijs: p },\n                tags: { type: \"epex\" },\n                timestamp: new Date(tijden[i] * 1000)\n            });\n        }\n    }\n}\n\n// 2. Als het Elia Kwartier (ods134) is:\nelse if (msg.rescueType === \"elia_kwartier\") {\n    let records = msg.payload.results;\n    if (!records || records.length === 0) return null;\n\n    records.forEach(item => {\n        let p = parseFloat(item.imbalanceprice);\n        if (!isNaN(p) && item.datetime) {\n            points.push({\n                measurement: \"onbalans_kwartier\",\n                fields: { prijs: p },\n                tags: { type: \"onbalans\" },\n                timestamp: new Date(item.datetime)\n            });\n        }\n    });\n}\n\n// 3. Als het Elia Minuut (ods133) is (+ automatische kwartier-vuller op minuut 14, 29, 44, 59!):\nelse if (msg.rescueType === \"elia_minuut\") {\n    let records = msg.payload.results;\n    if (!records || records.length === 0) return null;\n\n    records.forEach(item => {\n        let p = parseFloat(item.imbalanceprice);\n        if (!isNaN(p) && item.datetime) {\n            let d = new Date(item.datetime);\n            \n            // Sla altijd de minuut op\n            points.push({\n                measurement: \"onbalans_minuut\",\n                fields: { prijs: p },\n                tags: { type: \"onbalans\" },\n                timestamp: d\n            });\n\n            // Jouw truc: is dit minuut 14, 29, 44 of 59? Dan is dit óók de kwartierprijs van het bijbehorende kwartier (-14 min)!\n            let min = d.getMinutes();\n            if (min === 14 || min === 29 || min === 44 || min === 59) {\n                let kwartierStart = new Date(d.getTime() - (14 * 60 * 1000));\n                points.push({\n                    measurement: \"onbalans_kwartier\",\n                    fields: { prijs: p },\n                    tags: { type: \"onbalans\" },\n                    timestamp: kwartierStart\n                });\n            }\n        }\n    });\n}\n\nif (points.length === 0) {\n    node.status({ fill: \"yellow\", shape: \"ring\", text: `Leeg antwoord (${msg.rescueType})` });\n    return null;\n}\nnode.status({ fill: \"green\", shape: \"dot\", text: `Rescue: ${points.length}x ${msg.rescueType} gered` });\nmsg.payload = points;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1560,
+        "y": 460,
         "wires": [
             [
-                "http_elia_kwartier"
+                "85929f296e6e8371"
             ]
         ]
     },
     {
-        "id": "b594486145382314",
-        "type": "link in",
-        "z": "44ae34a704e13388",
-        "name": "link in 4",
-        "links": [
-            "91d8b0fe1b4c6ddc"
-        ],
-        "x": 825,
-        "y": 400,
-        "wires": [
-            [
-                "http_epex_request"
-            ]
-        ]
-    },
-    {
-        "id": "91d8b0fe1b4c6ddc",
+        "id": "85929f296e6e8371",
         "type": "link out",
         "z": "44ae34a704e13388",
         "name": "link out 2",
         "mode": "link",
         "links": [
-            "b594486145382314"
+            "3fd1c58016ec59be"
         ],
-        "x": 1555,
-        "y": 660,
+        "x": 1655,
+        "y": 460,
         "wires": []
     },
     {
-        "id": "2a934532d991f448",
-        "type": "link out",
+        "id": "3fd1c58016ec59be",
+        "type": "link in",
         "z": "44ae34a704e13388",
-        "name": "link out 3",
-        "mode": "link",
+        "name": "link in 2",
         "links": [
-            "1962aae79cb52da9"
+            "85929f296e6e8371"
         ],
-        "x": 1595,
-        "y": 680,
-        "wires": []
-    },
-    {
-        "id": "e799b3c63445fd30",
-        "type": "link out",
-        "z": "44ae34a704e13388",
-        "name": "link out 4",
-        "mode": "link",
-        "links": [
-            "9844164402b7f4d2"
-        ],
-        "x": 1645,
-        "y": 700,
-        "wires": []
+        "x": 1105,
+        "y": 120,
+        "wires": [
+            [
+                "98965db8d1aa2365"
+            ]
+        ]
     },
     {
         "id": "c37561ff29513d8a",
@@ -1240,7 +1396,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "df3b97044c4f87f3",
+        "id": "d7376579d8793d36",
         "type": "global-config",
         "env": [],
         "modules": {
