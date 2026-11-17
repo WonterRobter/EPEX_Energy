@@ -54,7 +54,7 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Maak URL (Vandaag + Morgen)",
-        "func": "function formatDate(d) {\n    let jaar = d.getFullYear();\n    let maand = String(d.getMonth() + 1).padStart(2, '0');\n    let dag = String(d.getDate()).padStart(2, '0');\n    return `${jaar}-${maand}-${dag}`;\n}\n\nlet vandaag = new Date();\nlet morgen = new Date();\nmorgen.setDate(vandaag.getDate() + 1);\n\nlet startStr = formatDate(vandaag);\nlet endStr = formatDate(morgen);\n\nmsg.url = `https://api.energy-charts.info/price?bzn=BE&start=${startStr}&end=${endStr}`;\nreturn msg;",
+        "func": "function formatDate(d) {\n    let jaar = d.getFullYear();\n    let maand = String(d.getMonth() + 1).padStart(2, '0');\n    let dag = String(d.getDate()).padStart(2, '0');\n    return `${jaar}-${maand}-${dag}`;\n}\n\nlet vandaag = new Date();\nlet morgen = new Date();\nmorgen.setDate(vandaag.getDate() + 1);\n\nlet startStr = formatDate(vandaag);\nlet endStr = formatDate(morgen);\n\nmsg.url = `https://api.energy-charts.info/v2/price?bzn=BE&start=${startStr}&end=${endStr}`;\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -98,7 +98,7 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Format EPEX -> Influx 2.7",
-        "func": "let tijden = msg.payload.unix_seconds;\nlet prijzen = msg.payload.price;\n\n// Sla API-status op voor het Watchdog tabblad\nglobal.set(\"epex_api_deprecated\", msg.payload.deprecated === true);\n\nif (!tijden || !prijzen || tijden.length === 0) {\n    node.status({ fill: \"yellow\", shape: \"ring\", text: \"Geen data ontvangen\" });\n    return null;\n}\n\nlet points = [];\nfor (let i = 0; i < tijden.length; i++) {\n    let prijsGetal = parseFloat(prijzen[i]);\n    if (isNaN(prijsGetal)) continue;\n\n    points.push({\n        measurement: \"epex_kwartier\",\n        fields: { prijs: prijsGetal },\n        tags: { type: \"epex\" },\n        timestamp: new Date(tijden[i] * 1000)\n    });\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${points.length} kwartieren opgeslagen` });\nmsg.payload = points;\nreturn msg;",
+        "func": "// Sla API-status op voor het Watchdog tabblad (V2 zal zelden 'true' geven, maar toch veilig)\nglobal.set(\"epex_api_deprecated\", msg.payload.deprecated === true);\n\nlet dataset = msg.payload.data;\n\nif (!dataset || !Array.isArray(dataset) || dataset.length === 0) {\n    node.status({ fill: \"yellow\", shape: \"ring\", text: \"Geen V2 data ontvangen\" });\n    return null;\n}\n\nlet points = [];\n\nfor (let i = 0; i < dataset.length; i++) {\n    let record = dataset[i];\n\n    if (record.timestamp && record.values) {\n        // Pak dynamisch de eerste waarde, ongeacht hoe ze de sleutel noemen\n        let rawVal = Object.values(record.values)[0];\n        let p = parseFloat(rawVal);\n\n        if (!isNaN(p)) {\n            let d = new Date(record.timestamp);\n            let nextRecord = dataset[i + 1];\n\n            // Controleer of de data per uur binnenkomt in plaats van per kwartier\n            let isUurData = false;\n            if (nextRecord && nextRecord.timestamp) {\n                let diffMs = new Date(nextRecord.timestamp).getTime() - d.getTime();\n                if (diffMs === 3600000) { // 3.600.000 ms = 1 vol uur\n                    isUurData = true;\n                }\n            }\n            if (!nextRecord && d.getMinutes() === 0) {\n                isUurData = true;\n            }\n\n            // Sla het basis-tijdstip op\n            points.push({\n                measurement: \"epex_kwartier\",\n                fields: { prijs: p },\n                tags: { type: \"epex\" },\n                timestamp: d\n            });\n\n            // Vul de 3 overige kwartieren aan als het een uur-blok is\n            if (isUurData) {\n                points.push({ measurement: \"epex_kwartier\", fields: { prijs: p }, tags: { type: \"epex\" }, timestamp: new Date(d.getTime() + 15 * 60000) });\n                points.push({ measurement: \"epex_kwartier\", fields: { prijs: p }, tags: { type: \"epex\" }, timestamp: new Date(d.getTime() + 30 * 60000) });\n                points.push({ measurement: \"epex_kwartier\", fields: { prijs: p }, tags: { type: \"epex\" }, timestamp: new Date(d.getTime() + 45 * 60000) });\n            }\n        }\n    }\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${points.length} V2 kwartieren opgeslagen` });\nmsg.payload = points;\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -186,13 +186,13 @@
         "id": "inj_onb_minuut",
         "type": "inject",
         "z": "44ae34a704e13388",
-        "name": "Elke 15 minuten",
+        "name": "Elke 30 minuten",
         "props": [
             {
                 "p": "payload"
             }
         ],
-        "repeat": "900",
+        "repeat": "1800",
         "crontab": "",
         "once": false,
         "onceDelay": 0.1,
@@ -1104,7 +1104,7 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Analyseer Gaten & Maak Taken",
-        "func": "let results = msg.payload.results;\nif (!results || results.length < 3) return [null, null];\n\nlet startGisterenMs = msg.startGisterenMs;\nlet startVandaagMs = msg.startVandaagMs;\nlet isRescueCheck = msg.isRescueCheck === true;\n\nlet actualMin = new Set();\nlet actualQOnb = new Set();\nlet actualQEpex = new Set();\n\nif (results[0] && results[0].series) results[0].series[0].values.forEach(v => actualMin.add(v[0]));\nif (results[1] && results[1].series) results[1].series[0].values.forEach(v => actualQOnb.add(v[0]));\nif (results[2] && results[2].series) results[2].series[0].values.forEach(v => actualQEpex.add(v[0]));\n\nlet missingMinTijden = [];\nlet missingMinRapport = [];\nlet missingQOnbRapport = [];\nlet missingQEpexRapport = [];\n\nfunction formatTijd(tms) {\n    let d = new Date(tms);\n    return d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n}\n\n// 1. Controleer Onbalans over gisteren (1440 min & 96 kwartier)\nfor (let i = 0; i < 1440; i++) {\n    let t = startGisterenMs + i * 60 * 1000;\n    if (!actualMin.has(t)) {\n        missingMinRapport.push(formatTijd(t));\n        missingMinTijden.push(new Date(t).toISOString());\n    }\n}\nfor (let i = 0; i < 96; i++) {\n    let t = startGisterenMs + i * 15 * 60 * 1000;\n    if (!actualQOnb.has(t)) missingQOnbRapport.push(formatTijd(t));\n}\n// 2. Controleer EPEX over vandaag (96 kwartier)\nfor (let i = 0; i < 96; i++) {\n    let t = startVandaagMs + i * 15 * 60 * 1000;\n    if (!actualQEpex.has(t)) missingQEpexRapport.push(formatTijd(t));\n}\n\nlet isDeprecated = global.get(\"epex_api_deprecated\") === true;\n\nif (missingMinRapport.length > 0 || missingQOnbRapport.length > 0 || missingQEpexRapport.length > 0 || isDeprecated) {\n    if (!isRescueCheck && !isDeprecated) {\n        node.status({ fill: \"yellow\", shape: \"ring\", text: \"Gaten ontdekt! Takenlijst maken...\" });\n        \n        let rescueTasks = [];\n        \n        // Taak 1: EPEX Hele dag (vandaag)\n        if (missingQEpexRapport.length > 0) {\n            rescueTasks.push({ type: \"epex\", dag: msg.startVandaagMs });\n        }\n        \n        // Taak 2: Kwartier Hele dag (gisteren) - Limiet 100 is genoeg voor 96 kwartieren!\n        if (missingQOnbRapport.length > 0) {\n            rescueTasks.push({ type: \"elia_kwartier_bulk\", startIso: new Date(startGisterenMs).toISOString(), eindIso: new Date(startVandaagMs).toISOString() });\n        }\n        \n        // Taak 3: Minuten één voor één (Specifieke minuut opvragen)\n        missingMinTijden.forEach(t => {\n            rescueTasks.push({ type: \"elia_minuut\", isoTijd: t });\n        });\n\n        // Taak 4: De Loop-Back verificatie (Laatste taak in de rij!)\n        rescueTasks.push({ \n            type: \"check_again\", \n            datumGisteren: msg.datumGisteren,\n            datumVandaag: msg.datumVandaag,\n            startGisterenMs: startGisterenMs, \n            startVandaagMs: startVandaagMs \n        });\n\n        msg.payload = rescueTasks;\n        return [null, msg]; // Naar de splitter\n    } else {\n        let bericht = `⚠️ <b>WATCHDOG RAPPORT</b>\\n\\n`;\n        if (isRescueCheck) bericht = `🚨 <b>RESCUE MISLUKT</b>\\nNiet alle gaten konden worden hersteld.\\n\\n`;\n        if (isDeprecated) bericht += `🚨 <b>LET OP:</b> Energy-Charts API stopt binnenkort!\\n\\n`;\n        \n        if (missingQEpexRapport.length > 0) bericht += `❌ <b>EPEX VANDAAG (${msg.datumVandaag}) - (${96 - missingQEpexRapport.length}/96)</b>\\n\\n`;\n        if (missingQOnbRapport.length > 0) bericht += `❌ <b>Onb. Kwartier GISTEREN (${msg.datumGisteren}) - (${96 - missingQOnbRapport.length}/96)</b>\\n\\n`;\n        if (missingMinRapport.length > 0) bericht += `❌ <b>Onb. Minuut GISTEREN (${msg.datumGisteren}) - (${1440 - missingMinRapport.length}/1440)</b>\\n`;\n\n        node.status({ fill: \"red\", shape: \"dot\", text: \"Pech: gaten overgebleven.\" });\n        let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n        msg.payload = { chatId: targetChat, type: \"message\", content: bericht, options: { parse_mode: \"HTML\" } };\n        return [msg, null];\n    }\n}\n\nif (isRescueCheck) {\n    node.status({ fill: \"green\", shape: \"dot\", text: \"Rescue succesvol!\" });\n    let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n    msg.payload = { chatId: targetChat, type: \"message\", content: `✅ <b>RESCUE GESLAAGD</b>\\nAlle gaten zijn gedicht! 🛠️`, options: { parse_mode: \"HTML\" } };\n    return [msg, null];\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: \"100% compleet!\" });\nreturn [null, null];",
+        "func": "let results = msg.payload.results;\nif (!results || results.length < 3) return [null, null];\n\nlet startGisterenMs = msg.startGisterenMs;\nlet startVandaagMs = msg.startVandaagMs;\nlet isRescueCheck = msg.isRescueCheck === true;\n\nlet actualMin = new Set();\nlet actualQOnb = new Set();\nlet actualQEpex = new Set();\n\nif (results[0] && results[0].series) results[0].series[0].values.forEach(v => actualMin.add(v[0]));\nif (results[1] && results[1].series) results[1].series[0].values.forEach(v => actualQOnb.add(v[0]));\nif (results[2] && results[2].series) results[2].series[0].values.forEach(v => actualQEpex.add(v[0]));\n\nlet missingMinTijden = [];\nlet missingMinRapport = [];\nlet missingQOnbRapport = [];\nlet missingQEpexRapport = [];\nlet ontbrekendeMinutenLijst = []; // Nieuwe lijst voor leesbare minuten\n\nfunction formatTijd(tms) {\n    let d = new Date(tms);\n    return d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n}\n\n// Functie om opeenvolgende gaten te groeperen\nfunction formatGaten(tijdenMs) {\n    if (tijdenMs.length === 0) return \"\";\n    let gaten = [];\n    let formatT = (ms) => {\n        let d = new Date(ms);\n        return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');\n    };\n\n    let startGat = tijdenMs[0];\n    for (let i = 1; i <= tijdenMs.length; i++) {\n        // Als we aan het einde zijn of het volgende punt is niet precies 1 minuut (60000ms) later\n        if (i === tijdenMs.length || tijdenMs[i] !== tijdenMs[i - 1] + 60000) {\n            let eindGat = tijdenMs[i - 1];\n            if (startGat === eindGat) {\n                gaten.push(formatT(startGat));\n            } else {\n                gaten.push(`${formatT(startGat)}-${formatT(eindGat)}`);\n            }\n            if (i < tijdenMs.length) {\n                startGat = tijdenMs[i];\n            }\n        }\n    }\n    return gaten.join(', ');\n}\n\n\nlet missingMinTijdenMs = []; // Tijdelijke array om de milliseconden op te slaan voor de groepering\n\n// 1. Controleer Onbalans over gisteren (1440 min & 96 kwartier)\nfor (let i = 0; i < 1440; i++) {\n    let t = startGisterenMs + i * 60 * 1000;\n    if (!actualMin.has(t)) {\n        missingMinRapport.push(formatTijd(t));\n        missingMinTijden.push(new Date(t).toISOString());\n        missingMinTijdenMs.push(t);\n    }\n}\nfor (let i = 0; i < 96; i++) {\n    let t = startGisterenMs + i * 15 * 60 * 1000;\n    if (!actualQOnb.has(t)) missingQOnbRapport.push(formatTijd(t));\n}\n// 2. Controleer EPEX over vandaag (96 kwartier)\nfor (let i = 0; i < 96; i++) {\n    let t = startVandaagMs + i * 15 * 60 * 1000;\n    if (!actualQEpex.has(t)) missingQEpexRapport.push(formatTijd(t));\n}\n\nlet minGatenTekst = formatGaten(missingMinTijdenMs);\nlet isDeprecated = global.get(\"epex_api_deprecated\") === true;\n\nif (missingMinRapport.length > 0 || missingQOnbRapport.length > 0 || missingQEpexRapport.length > 0 || isDeprecated) {\n    if (!isRescueCheck && !isDeprecated) {\n        node.status({ fill: \"yellow\", shape: \"ring\", text: \"Gaten ontdekt! Takenlijst maken...\" });\n\n        let rescueTasks = [];\n\n        // Taak 1: EPEX Hele dag (vandaag)\n        if (missingQEpexRapport.length > 0) {\n            rescueTasks.push({ type: \"epex\", dag: msg.startVandaagMs });\n        }\n\n        // Taak 2: Kwartier Hele dag (gisteren) - Limiet 100 is genoeg voor 96 kwartieren!\n        if (missingQOnbRapport.length > 0) {\n            rescueTasks.push({ type: \"elia_kwartier_bulk\", startIso: new Date(startGisterenMs).toISOString(), eindIso: new Date(startVandaagMs).toISOString() });\n        }\n\n        // Taak 3: Minuten één voor één (Specifieke minuut opvragen)\n        missingMinTijden.forEach(t => {\n            rescueTasks.push({ type: \"elia_minuut\", isoTijd: t });\n        });\n\n        // Taak 4: De Loop-Back verificatie (Laatste taak in de rij!)\n        rescueTasks.push({\n            type: \"check_again\",\n            datumGisteren: msg.datumGisteren,\n            datumVandaag: msg.datumVandaag,\n            startGisterenMs: startGisterenMs,\n            startVandaagMs: startVandaagMs\n        });\n\n        msg.payload = rescueTasks;\n        return [null, msg]; // Naar de splitter\n    } else {\n        let bericht = `⚠️ <b>WATCHDOG RAPPORT</b>\\n\\n`;\n        if (isRescueCheck) bericht = `🚨 <b>RESCUE MISLUKT</b>\\nNiet alle gaten konden worden hersteld.\\n\\n`;\n        if (isDeprecated) bericht += `🚨 <b>LET OP:</b> Energy-Charts API stopt binnenkort!\\n\\n`;\n\n        if (missingQEpexRapport.length > 0) bericht += `❌ <b>EPEX VANDAAG (${msg.datumVandaag}) - (${96 - missingQEpexRapport.length}/96)</b>\\n\\n`;\n        if (missingQOnbRapport.length > 0) bericht += `❌ <b>Onb. Kwartier GISTEREN (${msg.datumGisteren}) - (${96 - missingQOnbRapport.length}/96)</b>\\n\\n`;\n\n        if (missingMinRapport.length > 0) {\n            bericht += `❌ <b>Onb. Minuut GISTEREN (${msg.datumGisteren}) - (${1440 - missingMinRapport.length}/1440)</b>\\n`;\n            bericht += `Ontbrekend: [${minGatenTekst}]\\n`;\n        }\n\n        node.status({ fill: \"red\", shape: \"dot\", text: \"Pech: gaten overgebleven.\" });\n        let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n        msg.payload = { chatId: targetChat, type: \"message\", content: bericht, options: { parse_mode: \"HTML\" } };\n        return [msg, null];\n    }\n}\n\nif (isRescueCheck) {\n    node.status({ fill: \"green\", shape: \"dot\", text: \"Rescue succesvol!\" });\n    let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n    msg.payload = { chatId: targetChat, type: \"message\", content: `✅ <b>RESCUE GESLAAGD</b>\\nAlle gaten zijn gedicht! 🛠️`, options: { parse_mode: \"HTML\" } };\n    return [msg, null];\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: \"100% compleet!\" });\nreturn [null, null];",
         "outputs": 2,
         "timeout": "",
         "noerr": 0,
@@ -1158,7 +1158,7 @@
         "drop": false,
         "allowrate": false,
         "outputs": 1,
-        "x": 1320,
+        "x": 1300,
         "y": 400,
         "wires": [
             [
@@ -1179,7 +1179,7 @@
         "finalize": "",
         "libs": [],
         "x": 1160,
-        "y": 460,
+        "y": 440,
         "wires": [
             [
                 "7ae0a29a640b4a94"
@@ -1207,7 +1207,7 @@
         "allowrate": false,
         "outputs": 1,
         "x": 1370,
-        "y": 500,
+        "y": 480,
         "wires": [
             [
                 "8dc9069821445696"
@@ -1260,7 +1260,7 @@
         "senderr": false,
         "headers": [],
         "x": 1390,
-        "y": 460,
+        "y": 440,
         "wires": [
             [
                 "f0d35b13daf92ed8"
@@ -1280,7 +1280,7 @@
         "finalize": "",
         "libs": [],
         "x": 1560,
-        "y": 460,
+        "y": 440,
         "wires": [
             [
                 "85929f296e6e8371"
@@ -1296,8 +1296,8 @@
         "links": [
             "3fd1c58016ec59be"
         ],
-        "x": 1655,
-        "y": 460,
+        "x": 1595,
+        "y": 400,
         "wires": []
     },
     {
@@ -1396,7 +1396,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "d7376579d8793d36",
+        "id": "05b65b3f160ebe2b",
         "type": "global-config",
         "env": [],
         "modules": {

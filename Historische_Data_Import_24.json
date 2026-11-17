@@ -1,0 +1,1371 @@
+[
+    {
+        "id": "280606155c056123",
+        "type": "tab",
+        "label": "Historische Import",
+        "disabled": true,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "3de81d42c63510bf",
+        "type": "inject",
+        "z": "280606155c056123",
+        "name": "HAAL KWARTIEREN OP (1 Jan - 29 Sep)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 380,
+        "y": 200,
+        "wires": [
+            [
+                "68c9c691faf6a21f"
+            ]
+        ]
+    },
+    {
+        "id": "68c9c691faf6a21f",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Bouw Dagenlijst",
+        "func": "let startJaar = new Date(\"2026-01-01T00:00:00Z\");\n// We stoppen op 30 september, dus hij neemt 29 september als laatste dag mee.\nlet eindDatum = new Date(\"2026-09-30T00:00:00Z\"); \n\nfunction formatYMD(d) {\n    return d.getFullYear() + \"-\" + String(d.getMonth() + 1).padStart(2, '0') + \"-\" + String(d.getDate()).padStart(2, '0');\n}\n\nlet eliaTaken = [];\nlet loopDate = new Date(startJaar);\n\nwhile(loopDate < eindDatum) {\n    let dagStart = new Date(loopDate);\n    let dagEind = new Date(loopDate.getTime() + 24 * 60 * 60 * 1000);\n\n    eliaTaken.push({\n        startIso: dagStart.toISOString(),\n        eindIso: dagEind.toISOString(),\n        weergave: formatYMD(dagStart)\n    });\n\n    loopDate = dagEind;\n}\n\nmsg.payload = eliaTaken;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 200,
+        "wires": [
+            [
+                "c31bffa60ebc134c"
+            ]
+        ]
+    },
+    {
+        "id": "c31bffa60ebc134c",
+        "type": "split",
+        "z": "280606155c056123",
+        "name": "Splits per dag",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 860,
+        "y": 200,
+        "wires": [
+            [
+                "6d628b831f4d0677"
+            ]
+        ]
+    },
+    {
+        "id": "6d628b831f4d0677",
+        "type": "delay",
+        "z": "280606155c056123",
+        "name": "1 dag per 5s",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1050,
+        "y": 200,
+        "wires": [
+            [
+                "10f6e1917b92922f"
+            ]
+        ]
+    },
+    {
+        "id": "10f6e1917b92922f",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Bouw ODS134 URL",
+        "func": "let d = msg.payload;\n\n// We gebruiken /exports/json in plaats van /records zodat we alle 96 kwartieren in één keer krijgen\nlet encodedWhere = encodeURIComponent(`datetime >= \"${d.startIso}\" AND datetime < \"${d.eindIso}\"`);\nmsg.url = `https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods134/exports/json?select=datetime%2C%20imbalanceprice&where=${encodedWhere}&timezone=UTC`;\nmsg.dag = d.weergave;\n\nnode.status({ fill: \"blue\", shape: \"ring\", text: `Vraagt op: ${msg.dag}` });\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 240,
+        "wires": [
+            [
+                "b8edcff6c1554c93"
+            ]
+        ]
+    },
+    {
+        "id": "b8edcff6c1554c93",
+        "type": "http request",
+        "z": "280606155c056123",
+        "name": "GET Elia ODS134",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 870,
+        "y": 240,
+        "wires": [
+            [
+                "92c066f1323613a9"
+            ]
+        ]
+    },
+    {
+        "id": "92c066f1323613a9",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Format ODS134 -> Influx",
+        "func": "let records = msg.payload; \nif (!Array.isArray(records) || records.length === 0) {\n    node.status({fill: \"yellow\", shape: \"ring\", text: `${msg.dag}: Geen data`});\n    return null;\n}\n\nlet points = [];\nrecords.forEach(item => {\n    let p = parseFloat(item.imbalanceprice);\n    if (!isNaN(p) && item.datetime) {\n        // ODS134 heeft al de perfecte :00, :15, :30, :45 tijden!\n        points.push({\n            measurement: \"onbalans_kwartier\",\n            fields: { prijs: p },\n            tags: { type: \"onbalans\" },\n            timestamp: new Date(item.datetime)\n        });\n    }\n});\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${msg.dag}: ${points.length} kwartieren` });\nmsg.payload = points;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1090,
+        "y": 240,
+        "wires": [
+            [
+                "7eab210c9197b98d"
+            ]
+        ]
+    },
+    {
+        "id": "7eab210c9197b98d",
+        "type": "influxdb batch",
+        "z": "280606155c056123",
+        "influxdb": "c37561ff29513d8a",
+        "precision": "",
+        "retentionPolicy": "",
+        "name": "Schrijf naar InfluxDB 2.7",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "epex_org",
+        "bucket": "energie_db",
+        "x": 1330,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "48c8acd550cdf0d1",
+        "type": "inject",
+        "z": "280606155c056123",
+        "name": "HAAL MINUTEN OP (1 Jan - Vandaag)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 370,
+        "y": 260,
+        "wires": [
+            [
+                "e8d29959df8d5417"
+            ]
+        ]
+    },
+    {
+        "id": "e8d29959df8d5417",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Bouw Dagenlijst Minuten",
+        "func": "let startJaar = new Date(\"2026-01-01T00:00:00Z\");\nlet eindDatum = new Date();\n\nfunction formatYMD(d) {\n    return d.getFullYear() + \"-\" + String(d.getMonth() + 1).padStart(2, '0') + \"-\" + String(d.getDate()).padStart(2, '0');\n}\n\nlet eliaTaken = [];\nlet loopDate = new Date(startJaar);\n\nwhile(loopDate < eindDatum) {\n    let dagStart = new Date(loopDate);\n    let dagEind = new Date(loopDate.getTime() + 24 * 60 * 60 * 1000);\n\n    eliaTaken.push({\n        startIso: dagStart.toISOString(),\n        eindIso: dagEind.toISOString(),\n        weergave: formatYMD(dagStart)\n    });\n    loopDate = dagEind;\n}\n\nmsg.payload = eliaTaken;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 670,
+        "y": 280,
+        "wires": [
+            [
+                "1d469f1994db130f"
+            ]
+        ]
+    },
+    {
+        "id": "1d469f1994db130f",
+        "type": "split",
+        "z": "280606155c056123",
+        "name": "Splits per dag",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 880,
+        "y": 280,
+        "wires": [
+            [
+                "4236342244c062c5"
+            ]
+        ]
+    },
+    {
+        "id": "4236342244c062c5",
+        "type": "delay",
+        "z": "280606155c056123",
+        "name": "1 dag per 5s",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1050,
+        "y": 280,
+        "wires": [
+            [
+                "e8fc76dbd3a0e2a1"
+            ]
+        ]
+    },
+    {
+        "id": "e8fc76dbd3a0e2a1",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Bouw ODS133 URL",
+        "func": "let d = msg.payload;\nlet encodedWhere = encodeURIComponent(`datetime >= \"${d.startIso}\" AND datetime < \"${d.eindIso}\"`);\nmsg.url = `https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods133/exports/json?select=datetime%2C%20imbalanceprice&where=${encodedWhere}&timezone=UTC`;\nmsg.dag = d.weergave;\nnode.status({ fill: \"blue\", shape: \"ring\", text: `Vraagt op: ${msg.dag}` });\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 320,
+        "wires": [
+            [
+                "4ee35867cc97d2bd"
+            ]
+        ]
+    },
+    {
+        "id": "4ee35867cc97d2bd",
+        "type": "http request",
+        "z": "280606155c056123",
+        "name": "GET Elia ODS133",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 870,
+        "y": 320,
+        "wires": [
+            [
+                "1f5129c1099bc192"
+            ]
+        ]
+    },
+    {
+        "id": "1f5129c1099bc192",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Format ODS133 -> Influx",
+        "func": "let records = msg.payload; \nif (!Array.isArray(records) || records.length === 0) {\n    node.status({fill: \"red\", shape: \"ring\", text: `${msg.dag}: Helemaal leeg!`});\n    node.warn(`⚠️ ELIA FOUT: ${msg.dag} gaf 0 minuten terug!`);\n    return null;\n}\n\n// 1. Haal de datapunten eruit inclusief de exacte tijd in milliseconden\nlet parsedRecords = [];\nrecords.forEach(item => {\n    let p = parseFloat(item.imbalanceprice);\n    if (!isNaN(p) && item.datetime) {\n        parsedRecords.push({\n            timeMs: new Date(item.datetime).getTime(),\n            p: p\n        });\n    }\n});\n\n// Zorg dat ze altijd netjes chronologisch staan\nparsedRecords.sort((a, b) => a.timeMs - b.timeMs);\n\n// 2. Bouw het payload-lijstje voor InfluxDB\nlet points = [];\nparsedRecords.forEach(pr => {\n    points.push({\n        measurement: \"onbalans_minuut\",\n        fields: { prijs: pr.p },\n        tags: { type: \"onbalans\" },\n        timestamp: new Date(pr.timeMs)\n    });\n});\n\n// 3. Spoor de ontbrekende gaten op als we onder de 1440 minuten duiken\nlet ontbrekendeMinuten = [];\nif (points.length < 1440) {\n    // Exacte start en eind van deze dag (in UTC)\n    let startOfDayMs = new Date(msg.dag + \"T00:00:00Z\").getTime();\n    let endOfDayMs = startOfDayMs + (24 * 60 * 60 * 1000); \n\n    // We maken een check-lijst inclusief virtuele meetpunten aan de rand van de dag,\n    // zodat hij ook gaten ontdekt als Elia de allereerste of allerlaatste minuut vergeet.\n    let checkRecords = [\n        { timeMs: startOfDayMs - 60000 }, \n        ...parsedRecords,\n        { timeMs: endOfDayMs }            \n    ];\n\n    let formatT = (ms) => {\n        let d = new Date(ms);\n        // Lokale tijd voor in je Node-RED debug paneel\n        return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');\n    };\n\n    for (let i = 1; i < checkRecords.length; i++) {\n        let diff = checkRecords[i].timeMs - checkRecords[i-1].timeMs;\n        \n        // Is het gat groter dan 1 minuut (60.000 ms)? Dan missen we data!\n        if (diff > 60000) { \n            let gatStartMs = checkRecords[i-1].timeMs + 60000;\n            let gatEindMs = checkRecords[i].timeMs - 60000;\n            \n            if (gatStartMs === gatEindMs) {\n                ontbrekendeMinuten.push(formatT(gatStartMs)); // Eén losse minuut mist\n            } else {\n                ontbrekendeMinuten.push(`${formatT(gatStartMs)}-${formatT(gatEindMs)}`); // Heel blok mist\n            }\n        }\n    }\n\n    // 4. Stuur de gaten netjes naar je Debug paneel\n    let tekort = 1440 - points.length;\n    node.status({ fill: \"yellow\", shape: \"dot\", text: `${points.length} min (mist ${tekort})` });\n    \n    if (points.length === 1380) {\n        node.warn(`ℹ️ ${msg.dag} mist 60 min: ${ontbrekendeMinuten.join(', ')} (Waarschijnlijk Zomertijd)`);\n    } else {\n        node.warn(`⚠️ ELIA: ${msg.dag} mist ${tekort} min! Gaten: [${ontbrekendeMinuten.join(' | ')}]`);\n    }\n} else if (points.length > 1440) {\n    node.status({ fill: \"blue\", shape: \"dot\", text: `${points.length} min` });\n} else {\n    node.status({ fill: \"green\", shape: \"dot\", text: `${msg.dag}: 1440 min` });\n}\n\nmsg.payload = points;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1090,
+        "y": 320,
+        "wires": [
+            [
+                "3bbc61cc212224f5"
+            ]
+        ]
+    },
+    {
+        "id": "3bbc61cc212224f5",
+        "type": "influxdb batch",
+        "z": "280606155c056123",
+        "influxdb": "c37561ff29513d8a",
+        "precision": "",
+        "retentionPolicy": "",
+        "name": "Schrijf naar InfluxDB",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "epex_org",
+        "bucket": "energie_db",
+        "x": 1320,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "6af1709e8bf6575b",
+        "type": "inject",
+        "z": "280606155c056123",
+        "name": "HAAL EPEX V2 OP (HEEL JAAR)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 360,
+        "y": 320,
+        "wires": [
+            [
+                "376f663811ad7dc1"
+            ]
+        ]
+    },
+    {
+        "id": "376f663811ad7dc1",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Bouw EPEX V2 URL",
+        "func": "function formatYMD(d) {\n    return d.getFullYear() + \"-\" + String(d.getMonth() + 1).padStart(2, '0') + \"-\" + String(d.getDate()).padStart(2, '0');\n}\n\nlet startStr = \"2026-01-01\";\nlet endStr = formatYMD(new Date());\n\nmsg.url = `https://api.energy-charts.info/v2/price?bzn=BE&start=${startStr}&end=${endStr}`;\nnode.status({ fill: \"blue\", shape: \"dot\", text: `Vraagt heel jaar op...` });\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 360,
+        "wires": [
+            [
+                "86be62ded8ca1990"
+            ]
+        ]
+    },
+    {
+        "id": "86be62ded8ca1990",
+        "type": "http request",
+        "z": "280606155c056123",
+        "name": "GET EPEX V2",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 860,
+        "y": 360,
+        "wires": [
+            [
+                "77be14096d43ced7"
+            ]
+        ]
+    },
+    {
+        "id": "77be14096d43ced7",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Format EPEX V2 -> Influx",
+        "func": "let dataset = msg.payload.data;\n\nif (!dataset || !Array.isArray(dataset) || dataset.length === 0) {\n    node.status({ fill: \"red\", shape: \"ring\", text: \"EPEX V2 leeg!\" });\n    return null;\n}\n\nlet points = [];\n\ndataset.forEach(record => {\n    if (record.timestamp && record.values) {\n        // Pak de allereerste value in het 'values' object, \n        // want de API noemt het soms niet letterlijk 'price'\n        let rawVal = Object.values(record.values)[0];\n        let p = parseFloat(rawVal);\n        \n        if (!isNaN(p)) {\n            points.push({\n                measurement: \"epex_kwartier\",\n                fields: { prijs: p },\n                tags: { type: \"epex\" },\n                timestamp: new Date(record.timestamp)\n            });\n        }\n    }\n});\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${points.length} EPEX uren gered!` });\nmsg.payload = points;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1090,
+        "y": 360,
+        "wires": [
+            [
+                "49d1917bbbe17398"
+            ]
+        ]
+    },
+    {
+        "id": "49d1917bbbe17398",
+        "type": "influxdb batch",
+        "z": "280606155c056123",
+        "influxdb": "c37561ff29513d8a",
+        "precision": "",
+        "retentionPolicy": "",
+        "name": "Schrijf naar InfluxDB",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "epex_org",
+        "bucket": "energie_db",
+        "x": 1320,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "a8f337f173f1aa38",
+        "type": "inject",
+        "z": "280606155c056123",
+        "name": "HAAL MINUTEN 2025 OP",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 330,
+        "y": 440,
+        "wires": [
+            [
+                "e9babb39d29b23b5"
+            ]
+        ]
+    },
+    {
+        "id": "e9babb39d29b23b5",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Bouw Dagen 2025",
+        "func": "let startJaar = new Date(\"2025-01-01T00:00:00Z\");\n// We stoppen exact op 1 januari 2026, zodat 31 december 2025 de laatste dag is\nlet eindDatum = new Date(\"2026-01-01T00:00:00Z\");\n\nfunction formatYMD(d) {\n    return d.getFullYear() + \"-\" + String(d.getMonth() + 1).padStart(2, '0') + \"-\" + String(d.getDate()).padStart(2, '0');\n}\n\nlet eliaTaken = [];\nlet loopDate = new Date(startJaar);\n\nwhile(loopDate < eindDatum) {\n    let dagStart = new Date(loopDate);\n    let dagEind = new Date(loopDate.getTime() + 24 * 60 * 60 * 1000);\n\n    eliaTaken.push({\n        startIso: dagStart.toISOString(),\n        eindIso: dagEind.toISOString(),\n        weergave: formatYMD(dagStart)\n    });\n    loopDate = dagEind;\n}\n\nmsg.payload = eliaTaken;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 440,
+        "wires": [
+            [
+                "e930afa7fc294818"
+            ]
+        ]
+    },
+    {
+        "id": "e930afa7fc294818",
+        "type": "split",
+        "z": "280606155c056123",
+        "name": "Splits per dag",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 860,
+        "y": 440,
+        "wires": [
+            [
+                "e42ef3429998c8aa"
+            ]
+        ]
+    },
+    {
+        "id": "e42ef3429998c8aa",
+        "type": "delay",
+        "z": "280606155c056123",
+        "name": "1 dag per 5s",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1050,
+        "y": 440,
+        "wires": [
+            [
+                "2f658268a37504ef"
+            ]
+        ]
+    },
+    {
+        "id": "2f658268a37504ef",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "URL ODS133",
+        "func": "let d = msg.payload;\nlet encodedWhere = encodeURIComponent(`datetime >= \"${d.startIso}\" AND datetime < \"${d.eindIso}\"`);\nmsg.url = `https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods133/exports/json?select=datetime%2C%20imbalanceprice&where=${encodedWhere}&timezone=UTC`;\nmsg.dag = d.weergave;\nnode.status({ fill: \"blue\", shape: \"ring\", text: `Vraagt op: ${msg.dag}` });\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 480,
+        "wires": [
+            [
+                "180225f39f666511"
+            ]
+        ]
+    },
+    {
+        "id": "180225f39f666511",
+        "type": "http request",
+        "z": "280606155c056123",
+        "name": "GET ODS133",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 860,
+        "y": 480,
+        "wires": [
+            [
+                "f24c743b0fdc9f0c"
+            ]
+        ]
+    },
+    {
+        "id": "f24c743b0fdc9f0c",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Format + Gap Detectie",
+        "func": "let records = msg.payload; \nif (!Array.isArray(records) || records.length === 0) {\n    node.status({fill: \"red\", shape: \"ring\", text: `${msg.dag}: Leeg!`});\n    node.warn(`⚠️ ELIA FOUT: ${msg.dag} gaf 0 minuten terug!`);\n    return null;\n}\n\nlet parsedRecords = [];\nrecords.forEach(item => {\n    let p = parseFloat(item.imbalanceprice);\n    if (!isNaN(p) && item.datetime) {\n        parsedRecords.push({ timeMs: new Date(item.datetime).getTime(), p: p });\n    }\n});\nparsedRecords.sort((a, b) => a.timeMs - b.timeMs);\n\nlet points = [];\nparsedRecords.forEach(pr => {\n    points.push({\n        measurement: \"onbalans_minuut\",\n        fields: { prijs: pr.p },\n        tags: { type: \"onbalans\" },\n        timestamp: new Date(pr.timeMs)\n    });\n});\n\nlet ontbrekendeMinuten = [];\nif (points.length < 1440) {\n    let startOfDayMs = new Date(msg.dag + \"T00:00:00Z\").getTime();\n    let endOfDayMs = startOfDayMs + (24 * 60 * 60 * 1000); \n    let checkRecords = [{ timeMs: startOfDayMs - 60000 }, ...parsedRecords, { timeMs: endOfDayMs }];\n    let formatT = (ms) => { let d = new Date(ms); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };\n\n    for (let i = 1; i < checkRecords.length; i++) {\n        let diff = checkRecords[i].timeMs - checkRecords[i-1].timeMs;\n        if (diff > 60000) {\n            let gatStartMs = checkRecords[i-1].timeMs + 60000;\n            let gatEindMs = checkRecords[i].timeMs - 60000;\n            if (gatStartMs === gatEindMs) ontbrekendeMinuten.push(formatT(gatStartMs));\n            else ontbrekendeMinuten.push(`${formatT(gatStartMs)}-${formatT(gatEindMs)}`);\n        }\n    }\n    let tekort = 1440 - points.length;\n    node.status({ fill: \"yellow\", shape: \"dot\", text: `${points.length} min (mist ${tekort})` });\n    \n    if (points.length === 1380) node.warn(`ℹ️ ${msg.dag} mist 60 min: ${ontbrekendeMinuten.join(', ')} (Waarschijnlijk Zomertijd)`);\n    else node.warn(`⚠️ ELIA: ${msg.dag} mist ${tekort} min! Gaten: [${ontbrekendeMinuten.join(' | ')}]`);\n} else if (points.length > 1440) {\n    node.status({ fill: \"blue\", shape: \"dot\", text: `${points.length} min` });\n} else {\n    node.status({ fill: \"green\", shape: \"dot\", text: `${msg.dag}: 1440 min` });\n}\n\nmsg.payload = points;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1080,
+        "y": 480,
+        "wires": [
+            [
+                "2ed7362ab8eff9f8"
+            ]
+        ]
+    },
+    {
+        "id": "2ed7362ab8eff9f8",
+        "type": "influxdb batch",
+        "z": "280606155c056123",
+        "influxdb": "c37561ff29513d8a",
+        "precision": "",
+        "retentionPolicy": "",
+        "name": "Schrijf InfluxDB",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "epex_org",
+        "bucket": "energie_db",
+        "x": 1300,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "43172247a06b5189",
+        "type": "inject",
+        "z": "280606155c056123",
+        "name": "HAAL KWARTIEREN 2025 OP",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 350,
+        "y": 500,
+        "wires": [
+            [
+                "460df6d82f66f885"
+            ]
+        ]
+    },
+    {
+        "id": "460df6d82f66f885",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Bouw Dagen 2025",
+        "func": "let startJaar = new Date(\"2025-01-01T00:00:00Z\");\nlet eindDatum = new Date(\"2026-01-01T00:00:00Z\");\n\nfunction formatYMD(d) {\n    return d.getFullYear() + \"-\" + String(d.getMonth() + 1).padStart(2, '0') + \"-\" + String(d.getDate()).padStart(2, '0');\n}\n\nlet eliaTaken = [];\nlet loopDate = new Date(startJaar);\n\nwhile(loopDate < eindDatum) {\n    let dagStart = new Date(loopDate);\n    let dagEind = new Date(loopDate.getTime() + 24 * 60 * 60 * 1000);\n\n    eliaTaken.push({\n        startIso: dagStart.toISOString(),\n        eindIso: dagEind.toISOString(),\n        weergave: formatYMD(dagStart)\n    });\n    loopDate = dagEind;\n}\n\nmsg.payload = eliaTaken;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 520,
+        "wires": [
+            [
+                "f2d81a8df0443482"
+            ]
+        ]
+    },
+    {
+        "id": "f2d81a8df0443482",
+        "type": "split",
+        "z": "280606155c056123",
+        "name": "Splits per dag",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 860,
+        "y": 520,
+        "wires": [
+            [
+                "9e201f69be8c7b86"
+            ]
+        ]
+    },
+    {
+        "id": "9e201f69be8c7b86",
+        "type": "delay",
+        "z": "280606155c056123",
+        "name": "1 dag per 5s",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1050,
+        "y": 520,
+        "wires": [
+            [
+                "21e57bfe75738530"
+            ]
+        ]
+    },
+    {
+        "id": "21e57bfe75738530",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "URL ODS134",
+        "func": "let d = msg.payload;\nlet encodedWhere = encodeURIComponent(`datetime >= \"${d.startIso}\" AND datetime < \"${d.eindIso}\"`);\nmsg.url = `https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods134/exports/json?select=datetime%2C%20imbalanceprice&where=${encodedWhere}&timezone=UTC`;\nmsg.dag = d.weergave;\nnode.status({ fill: \"blue\", shape: \"ring\", text: `Vraagt op: ${msg.dag}` });\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 560,
+        "wires": [
+            [
+                "850c8751c2baf1e1"
+            ]
+        ]
+    },
+    {
+        "id": "850c8751c2baf1e1",
+        "type": "http request",
+        "z": "280606155c056123",
+        "name": "GET ODS134",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 860,
+        "y": 560,
+        "wires": [
+            [
+                "6fdd60bc34373e43"
+            ]
+        ]
+    },
+    {
+        "id": "6fdd60bc34373e43",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Format ODS134",
+        "func": "let records = msg.payload; \nif (!Array.isArray(records) || records.length === 0) {\n    node.status({fill: \"yellow\", shape: \"ring\", text: `${msg.dag}: Geen data`});\n    return null;\n}\nlet points = [];\nrecords.forEach(item => {\n    let p = parseFloat(item.imbalanceprice);\n    if (!isNaN(p) && item.datetime) {\n        points.push({\n            measurement: \"onbalans_kwartier\",\n            fields: { prijs: p },\n            tags: { type: \"onbalans\" },\n            timestamp: new Date(item.datetime)\n        });\n    }\n});\nnode.status({ fill: \"green\", shape: \"dot\", text: `${msg.dag}: ${points.length} kwartieren` });\nmsg.payload = points;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1060,
+        "y": 560,
+        "wires": [
+            [
+                "474f87c294400155"
+            ]
+        ]
+    },
+    {
+        "id": "474f87c294400155",
+        "type": "influxdb batch",
+        "z": "280606155c056123",
+        "influxdb": "c37561ff29513d8a",
+        "precision": "",
+        "retentionPolicy": "",
+        "name": "Schrijf InfluxDB",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "epex_org",
+        "bucket": "energie_db",
+        "x": 1300,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "948c3bc4c6430cfe",
+        "type": "inject",
+        "z": "280606155c056123",
+        "name": "HAAL EPEX 2025 OP",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 320,
+        "y": 560,
+        "wires": [
+            [
+                "20d704a4cecaa24f"
+            ]
+        ]
+    },
+    {
+        "id": "20d704a4cecaa24f",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Bouw EPEX V2 2025",
+        "func": "// Hardcoded voor het hele jaar 2025\nlet startStr = \"2025-01-01\";\nlet endStr = \"2025-12-31\";\n\nmsg.url = `https://api.energy-charts.info/v2/price?bzn=BE&start=${startStr}&end=${endStr}`;\nnode.status({ fill: \"blue\", shape: \"dot\", text: `Vraagt heel 2025 op...` });\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 600,
+        "wires": [
+            [
+                "7bdfd2f40cfa1d21"
+            ]
+        ]
+    },
+    {
+        "id": "7bdfd2f40cfa1d21",
+        "type": "http request",
+        "z": "280606155c056123",
+        "name": "GET EPEX V2",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 860,
+        "y": 600,
+        "wires": [
+            [
+                "79f167398c66aec2"
+            ]
+        ]
+    },
+    {
+        "id": "79f167398c66aec2",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Format EPEX V2 -> Influx",
+        "func": "let dataset = msg.payload.data;\n\nif (!dataset || !Array.isArray(dataset) || dataset.length === 0) {\n    node.status({ fill: \"red\", shape: \"ring\", text: \"EPEX V2 leeg!\" });\n    return null;\n}\n\nlet points = [];\n\nfor (let i = 0; i < dataset.length; i++) {\n    let record = dataset[i];\n\n    if (record.timestamp && record.values) {\n        let rawVal = Object.values(record.values)[0];\n        let p = parseFloat(rawVal);\n\n        if (!isNaN(p)) {\n            let d = new Date(record.timestamp);\n            let nextRecord = dataset[i + 1];\n\n            // Is dit een uur-notering (minuut 00)? \n            // EN is het volgende punt in de reeks pas een vol uur later?\n            let isUurData = false;\n            if (nextRecord && nextRecord.timestamp) {\n                let diffMs = new Date(nextRecord.timestamp).getTime() - d.getTime();\n                // 3600000 ms = 1 uur\n                if (diffMs === 3600000) {\n                    isUurData = true;\n                }\n            }\n            // Voor het allerlaatste punt in de reeks vangen we het ook af:\n            if (!nextRecord && d.getMinutes() === 0) {\n                isUurData = true; // Neem aan dat historische eindpunten ook uren zijn\n            }\n\n            // Voeg het basis-kwartier (of uur) altijd toe\n            points.push({\n                measurement: \"epex_kwartier\",\n                fields: { prijs: p },\n                tags: { type: \"epex\" },\n                timestamp: d\n            });\n\n            // Als dit een historisch uur-blok is, vul dan de overige 3 kwartieren kunstmatig aan!\n            if (isUurData) {\n                points.push({ measurement: \"epex_kwartier\", fields: { prijs: p }, tags: { type: \"epex\" }, timestamp: new Date(d.getTime() + 15 * 60000) });\n                points.push({ measurement: \"epex_kwartier\", fields: { prijs: p }, tags: { type: \"epex\" }, timestamp: new Date(d.getTime() + 30 * 60000) });\n                points.push({ measurement: \"epex_kwartier\", fields: { prijs: p }, tags: { type: \"epex\" }, timestamp: new Date(d.getTime() + 45 * 60000) });\n            }\n        }\n    }\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${points.length} EPEX punten (V2) gegenereerd!` });\nmsg.payload = points;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1090,
+        "y": 600,
+        "wires": [
+            [
+                "6dd77bdebf4eedc8"
+            ]
+        ]
+    },
+    {
+        "id": "6dd77bdebf4eedc8",
+        "type": "influxdb batch",
+        "z": "280606155c056123",
+        "influxdb": "c37561ff29513d8a",
+        "precision": "",
+        "retentionPolicy": "",
+        "name": "Schrijf InfluxDB",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "epex_org",
+        "bucket": "energie_db",
+        "x": 1300,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "ea341ddcd2fc2b8b",
+        "type": "inject",
+        "z": "280606155c056123",
+        "name": "HAAL MINUTEN 2024 OP",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 330,
+        "y": 680,
+        "wires": [
+            [
+                "cfcdfd7114851972"
+            ]
+        ]
+    },
+    {
+        "id": "cfcdfd7114851972",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Bouw Dagen 2024",
+        "func": "let startJaar = new Date(\"2024-05-22T00:00:00Z\"); // Start MARI platform Elia\nlet eindDatum = new Date(\"2025-01-01T00:00:00Z\");\n\nfunction formatYMD(d) {\n    return d.getFullYear() + \"-\" + String(d.getMonth() + 1).padStart(2, '0') + \"-\" + String(d.getDate()).padStart(2, '0');\n}\n\nlet eliaTaken = [];\nlet loopDate = new Date(startJaar);\n\nwhile(loopDate < eindDatum) {\n    let dagStart = new Date(loopDate);\n    let dagEind = new Date(loopDate.getTime() + 24 * 60 * 60 * 1000);\n\n    eliaTaken.push({\n        startIso: dagStart.toISOString(),\n        eindIso: dagEind.toISOString(),\n        weergave: formatYMD(dagStart)\n    });\n    loopDate = dagEind;\n}\n\nmsg.payload = eliaTaken;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 680,
+        "wires": [
+            [
+                "6283a3fdd5d02907"
+            ]
+        ]
+    },
+    {
+        "id": "6283a3fdd5d02907",
+        "type": "split",
+        "z": "280606155c056123",
+        "name": "Splits per dag",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 860,
+        "y": 680,
+        "wires": [
+            [
+                "98230a78cbe54865"
+            ]
+        ]
+    },
+    {
+        "id": "98230a78cbe54865",
+        "type": "delay",
+        "z": "280606155c056123",
+        "name": "1 dag per 5s",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1050,
+        "y": 680,
+        "wires": [
+            [
+                "6eaa4d2aa87dd742"
+            ]
+        ]
+    },
+    {
+        "id": "6eaa4d2aa87dd742",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "URL ODS133",
+        "func": "let d = msg.payload;\nlet encodedWhere = encodeURIComponent(`datetime >= \"${d.startIso}\" AND datetime < \"${d.eindIso}\"`);\nmsg.url = `https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods133/exports/json?select=datetime%2C%20imbalanceprice&where=${encodedWhere}&timezone=UTC`;\nmsg.dag = d.weergave;\nnode.status({ fill: \"blue\", shape: \"ring\", text: `Vraagt op: ${msg.dag}` });\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 720,
+        "wires": [
+            [
+                "4d4024a53b40c5d9"
+            ]
+        ]
+    },
+    {
+        "id": "4d4024a53b40c5d9",
+        "type": "http request",
+        "z": "280606155c056123",
+        "name": "GET ODS133",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 860,
+        "y": 720,
+        "wires": [
+            [
+                "3edaa7fd53e3a699"
+            ]
+        ]
+    },
+    {
+        "id": "3edaa7fd53e3a699",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Format + Gap Detectie",
+        "func": "let records = msg.payload; \nif (!Array.isArray(records) || records.length === 0) {\n    node.status({fill: \"red\", shape: \"ring\", text: `${msg.dag}: Leeg!`});\n    node.warn(`⚠️ ELIA FOUT: ${msg.dag} gaf 0 minuten terug!`);\n    return null;\n}\n\nlet parsedRecords = [];\nrecords.forEach(item => {\n    let p = parseFloat(item.imbalanceprice);\n    if (!isNaN(p) && item.datetime) {\n        parsedRecords.push({ timeMs: new Date(item.datetime).getTime(), p: p });\n    }\n});\nparsedRecords.sort((a, b) => a.timeMs - b.timeMs);\n\nlet points = [];\nparsedRecords.forEach(pr => {\n    points.push({\n        measurement: \"onbalans_minuut\",\n        fields: { prijs: pr.p },\n        tags: { type: \"onbalans\" },\n        timestamp: new Date(pr.timeMs)\n    });\n});\n\nlet ontbrekendeMinuten = [];\nif (points.length < 1440) {\n    let startOfDayMs = new Date(msg.dag + \"T00:00:00Z\").getTime();\n    let endOfDayMs = startOfDayMs + (24 * 60 * 60 * 1000); \n    let checkRecords = [{ timeMs: startOfDayMs - 60000 }, ...parsedRecords, { timeMs: endOfDayMs }];\n    let formatT = (ms) => { let d = new Date(ms); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };\n\n    for (let i = 1; i < checkRecords.length; i++) {\n        let diff = checkRecords[i].timeMs - checkRecords[i-1].timeMs;\n        if (diff > 60000) {\n            let gatStartMs = checkRecords[i-1].timeMs + 60000;\n            let gatEindMs = checkRecords[i].timeMs - 60000;\n            if (gatStartMs === gatEindMs) ontbrekendeMinuten.push(formatT(gatStartMs));\n            else ontbrekendeMinuten.push(`${formatT(gatStartMs)}-${formatT(gatEindMs)}`);\n        }\n    }\n    let tekort = 1440 - points.length;\n    node.status({ fill: \"yellow\", shape: \"dot\", text: `${points.length} min (mist ${tekort})` });\n    \n    if (points.length === 1380) node.warn(`ℹ️ ${msg.dag} mist 60 min: ${ontbrekendeMinuten.join(', ')} (Waarschijnlijk Zomertijd)`);\n    else node.warn(`⚠️ ELIA: ${msg.dag} mist ${tekort} min! Gaten: [${ontbrekendeMinuten.join(' | ')}]`);\n} else if (points.length > 1440) {\n    node.status({ fill: \"blue\", shape: \"dot\", text: `${points.length} min` });\n} else {\n    node.status({ fill: \"green\", shape: \"dot\", text: `${msg.dag}: 1440 min` });\n}\n\nmsg.payload = points;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1080,
+        "y": 720,
+        "wires": [
+            [
+                "5f4b8a3ce5ee7170"
+            ]
+        ]
+    },
+    {
+        "id": "5f4b8a3ce5ee7170",
+        "type": "influxdb batch",
+        "z": "280606155c056123",
+        "influxdb": "c37561ff29513d8a",
+        "precision": "",
+        "retentionPolicy": "",
+        "name": "Schrijf InfluxDB",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "epex_org",
+        "bucket": "energie_db",
+        "x": 1300,
+        "y": 720,
+        "wires": []
+    },
+    {
+        "id": "015075969561d5ce",
+        "type": "inject",
+        "z": "280606155c056123",
+        "name": "HAAL KWARTIEREN 2024 OP",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 350,
+        "y": 740,
+        "wires": [
+            [
+                "380e035fd3bd1ec6"
+            ]
+        ]
+    },
+    {
+        "id": "380e035fd3bd1ec6",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Bouw Dagen 2024",
+        "func": "let startJaar = new Date(\"2024-10-05T00:00:00Z\"); // Start MARI platform Elia\nlet eindDatum = new Date(\"2025-01-01T00:00:00Z\");\n\nfunction formatYMD(d) {\n    return d.getFullYear() + \"-\" + String(d.getMonth() + 1).padStart(2, '0') + \"-\" + String(d.getDate()).padStart(2, '0');\n}\n\nlet eliaTaken = [];\nlet loopDate = new Date(startJaar);\n\nwhile(loopDate < eindDatum) {\n    let dagStart = new Date(loopDate);\n    let dagEind = new Date(loopDate.getTime() + 24 * 60 * 60 * 1000);\n\n    eliaTaken.push({\n        startIso: dagStart.toISOString(),\n        eindIso: dagEind.toISOString(),\n        weergave: formatYMD(dagStart)\n    });\n    loopDate = dagEind;\n}\n\nmsg.payload = eliaTaken;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 760,
+        "wires": [
+            [
+                "0460ca9fe43f6f9a"
+            ]
+        ]
+    },
+    {
+        "id": "0460ca9fe43f6f9a",
+        "type": "split",
+        "z": "280606155c056123",
+        "name": "Splits per dag",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 860,
+        "y": 760,
+        "wires": [
+            [
+                "9817cfc696790997"
+            ]
+        ]
+    },
+    {
+        "id": "9817cfc696790997",
+        "type": "delay",
+        "z": "280606155c056123",
+        "name": "1 dag per 1s",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1050,
+        "y": 760,
+        "wires": [
+            [
+                "da4175c1ef8d076d"
+            ]
+        ]
+    },
+    {
+        "id": "da4175c1ef8d076d",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "URL ODS134",
+        "func": "let d = msg.payload;\nlet encodedWhere = encodeURIComponent(`datetime >= \"${d.startIso}\" AND datetime < \"${d.eindIso}\"`);\nmsg.url = `https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods134/exports/json?select=datetime%2C%20imbalanceprice&where=${encodedWhere}&timezone=UTC`;\nmsg.dag = d.weergave;\nnode.status({ fill: \"blue\", shape: \"ring\", text: `Vraagt op: ${msg.dag}` });\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 800,
+        "wires": [
+            [
+                "dae180ae96ca01b9"
+            ]
+        ]
+    },
+    {
+        "id": "dae180ae96ca01b9",
+        "type": "http request",
+        "z": "280606155c056123",
+        "name": "GET ODS134",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 860,
+        "y": 800,
+        "wires": [
+            [
+                "5cfa38b906db9fd1"
+            ]
+        ]
+    },
+    {
+        "id": "5cfa38b906db9fd1",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Format ODS134",
+        "func": "let records = msg.payload; \nif (!Array.isArray(records) || records.length === 0) {\n    node.status({fill: \"yellow\", shape: \"ring\", text: `${msg.dag}: Geen data`});\n    return null;\n}\nlet points = [];\nrecords.forEach(item => {\n    let p = parseFloat(item.imbalanceprice);\n    if (!isNaN(p) && item.datetime) {\n        points.push({\n            measurement: \"onbalans_kwartier\",\n            fields: { prijs: p },\n            tags: { type: \"onbalans\" },\n            timestamp: new Date(item.datetime)\n        });\n    }\n});\nnode.status({ fill: \"green\", shape: \"dot\", text: `${msg.dag}: ${points.length} kwartieren` });\nmsg.payload = points;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1060,
+        "y": 800,
+        "wires": [
+            [
+                "d280b81d8091ef92"
+            ]
+        ]
+    },
+    {
+        "id": "d280b81d8091ef92",
+        "type": "influxdb batch",
+        "z": "280606155c056123",
+        "influxdb": "c37561ff29513d8a",
+        "precision": "",
+        "retentionPolicy": "",
+        "name": "Schrijf InfluxDB",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "epex_org",
+        "bucket": "energie_db",
+        "x": 1300,
+        "y": 800,
+        "wires": []
+    },
+    {
+        "id": "c715cee9948b5fb8",
+        "type": "inject",
+        "z": "280606155c056123",
+        "name": "HAAL EPEX 2024 OP",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 320,
+        "y": 800,
+        "wires": [
+            [
+                "cc2b9019e233f212"
+            ]
+        ]
+    },
+    {
+        "id": "cc2b9019e233f212",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Bouw EPEX V2 2024",
+        "func": "// Hardcoded vanaf de Elia MARI go-live\nlet startStr = \"2024-05-22\";\nlet endStr = \"2024-12-31\";\n\nmsg.url = `https://api.energy-charts.info/v2/price?bzn=BE&start=${startStr}&end=${endStr}`;\nnode.status({ fill: \"blue\", shape: \"dot\", text: `Vraagt 2024 op...` });\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 840,
+        "wires": [
+            [
+                "cf468c52f2deb922"
+            ]
+        ]
+    },
+    {
+        "id": "cf468c52f2deb922",
+        "type": "http request",
+        "z": "280606155c056123",
+        "name": "GET EPEX V2",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 860,
+        "y": 840,
+        "wires": [
+            [
+                "1f89a63c803aee52"
+            ]
+        ]
+    },
+    {
+        "id": "1f89a63c803aee52",
+        "type": "function",
+        "z": "280606155c056123",
+        "name": "Format EPEX V2 -> Influx",
+        "func": "let dataset = msg.payload.data;\n\nif (!dataset || !Array.isArray(dataset) || dataset.length === 0) {\n    node.status({ fill: \"red\", shape: \"ring\", text: \"EPEX V2 leeg!\" });\n    return null;\n}\n\nlet points = [];\n\nfor (let i = 0; i < dataset.length; i++) {\n    let record = dataset[i];\n\n    if (record.timestamp && record.values) {\n        let rawVal = Object.values(record.values)[0];\n        let p = parseFloat(rawVal);\n\n        if (!isNaN(p)) {\n            let d = new Date(record.timestamp);\n            let nextRecord = dataset[i + 1];\n\n            // Is dit een uur-notering (minuut 00)? \n            // EN is het volgende punt in de reeks pas een vol uur later?\n            let isUurData = false;\n            if (nextRecord && nextRecord.timestamp) {\n                let diffMs = new Date(nextRecord.timestamp).getTime() - d.getTime();\n                // 3600000 ms = 1 uur\n                if (diffMs === 3600000) {\n                    isUurData = true;\n                }\n            }\n            // Voor het allerlaatste punt in de reeks vangen we het ook af:\n            if (!nextRecord && d.getMinutes() === 0) {\n                isUurData = true; // Neem aan dat historische eindpunten ook uren zijn\n            }\n\n            // Voeg het basis-kwartier (of uur) altijd toe\n            points.push({\n                measurement: \"epex_kwartier\",\n                fields: { prijs: p },\n                tags: { type: \"epex\" },\n                timestamp: d\n            });\n\n            // Als dit een historisch uur-blok is, vul dan de overige 3 kwartieren kunstmatig aan!\n            if (isUurData) {\n                points.push({ measurement: \"epex_kwartier\", fields: { prijs: p }, tags: { type: \"epex\" }, timestamp: new Date(d.getTime() + 15 * 60000) });\n                points.push({ measurement: \"epex_kwartier\", fields: { prijs: p }, tags: { type: \"epex\" }, timestamp: new Date(d.getTime() + 30 * 60000) });\n                points.push({ measurement: \"epex_kwartier\", fields: { prijs: p }, tags: { type: \"epex\" }, timestamp: new Date(d.getTime() + 45 * 60000) });\n            }\n        }\n    }\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${points.length} EPEX punten (V2) gegenereerd!` });\nmsg.payload = points;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1090,
+        "y": 840,
+        "wires": [
+            [
+                "4d6d7e4fd8a6fec0"
+            ]
+        ]
+    },
+    {
+        "id": "4d6d7e4fd8a6fec0",
+        "type": "influxdb batch",
+        "z": "280606155c056123",
+        "influxdb": "c37561ff29513d8a",
+        "precision": "",
+        "retentionPolicy": "",
+        "name": "Schrijf InfluxDB",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "epex_org",
+        "bucket": "energie_db",
+        "x": 1300,
+        "y": 840,
+        "wires": []
+    },
+    {
+        "id": "c37561ff29513d8a",
+        "type": "influxdb",
+        "hostname": "127.0.0.1",
+        "port": 8086,
+        "protocol": "http",
+        "database": "database",
+        "name": "InfluxDB 2.7",
+        "usetls": false,
+        "tls": "",
+        "influxdbVersion": "2.0",
+        "url": "http://epex_influxdb:8086",
+        "timeout": 10,
+        "rejectUnauthorized": false
+    },
+    {
+        "id": "966a7b402c933106",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-contrib-influxdb": "0.7.0"
+        }
+    }
+]
