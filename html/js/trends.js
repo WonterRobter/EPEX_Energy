@@ -819,7 +819,7 @@ async function laadMaandOverzicht() {
 let actiefJaar = new Date().getFullYear();
 let jaarGridStart = actiefJaar - 5;
 let jaarGrafiek = null;
-let datasetZichtbaarJaar = [prefEpex, prefOnb15, prefOnb1, prefEpex, prefEpex];
+let datasetZichtbaarJaar = [prefEpex, prefOnb15, prefEpex, prefEpex];
 
 window.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('#jaar-legend .legend-item').forEach(item => {
@@ -922,14 +922,14 @@ async function laadJaarOverzicht() {
         let goedkoopsteGemRu = Infinity, goedkoopsteMaandNaam = "--";
         let duursteGemRu = -Infinity, duursteMaandNaam = "--";
 
-        let labelsMaand = [], dataEpexGem = [], dataOnb15Gem = [], dataOnb1Gem = [], dataEpexMin = [], dataEpexMax = [];
+        // dataOnb1Gem is hier compleet uit verwijderd
+        let labelsMaand = [], dataEpexGem = [], dataOnb15Gem = [], dataEpexMin = [], dataEpexMax = [];
 
         data.forEach(item => {
             const mIndex = item.maand - 1;
             labelsMaand.push(window.innerWidth <= 768 ? maandNamenKort[mIndex] : maandNamenVol[mIndex]);
             dataEpexGem.push(berekenPrijs(item.epex_gem));
             dataOnb15Gem.push(berekenPrijs(item.onb15_gem));
-            dataOnb1Gem.push(berekenPrijs(item.onb1_gem));
             dataEpexMin.push(berekenPrijs(item.epex_min));
             dataEpexMax.push(berekenPrijs(item.epex_max));
 
@@ -958,9 +958,8 @@ async function laadJaarOverzicht() {
             jaarGrafiek.data.labels = labelsMaand;
             jaarGrafiek.data.datasets[0].data = dataEpexGem;
             jaarGrafiek.data.datasets[1].data = dataOnb15Gem;
-            jaarGrafiek.data.datasets[2].data = dataOnb1Gem;
-            jaarGrafiek.data.datasets[3].data = dataEpexMin;
-            jaarGrafiek.data.datasets[4].data = dataEpexMax;
+            jaarGrafiek.data.datasets[2].data = dataEpexMin;
+            jaarGrafiek.data.datasets[3].data = dataEpexMax;
             datasetZichtbaarJaar.forEach((zichtbaar, idx) => { jaarGrafiek.setDatasetVisibility(idx, zichtbaar); });
             jaarGrafiek.options.scales.y.title.text = eenheidL;
             jaarGrafiek.update();
@@ -974,11 +973,11 @@ async function laadJaarOverzicht() {
             data: {
                 labels: labelsMaand,
                 datasets: [
-                    { type: 'bar', label: 'Gem. EPEX', data: dataEpexGem, backgroundColor: 'rgba(67, 140, 230, 0.75)', borderColor: '#438ce6', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarMaand[0] },
+                    // BUGFIX toegepast: hidden keek naar datasetZichtbaarMaand, kijkt nu netjes naar datasetZichtbaarJaar
+                    { type: 'bar', label: 'Gem. EPEX', data: dataEpexGem, backgroundColor: 'rgba(67, 140, 230, 0.75)', borderColor: '#438ce6', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarJaar[0] },
                     { type: 'bar', label: 'Gem. Onbalans (15m)', data: dataOnb15Gem, backgroundColor: 'rgba(249, 115, 22, 0.65)', borderColor: '#f97316', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarJaar[1] },
-                    { type: 'bar', label: 'Gem. Onbalans (1m)', data: dataOnb1Gem, backgroundColor: 'rgba(168, 85, 247, 0.65)', borderColor: '#a855f7', borderWidth: 1, borderRadius: 4, hidden: !datasetZichtbaarJaar[2] },
-                    { type: 'line', label: 'Min EPEX', data: dataEpexMin, borderColor: '#10b981', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 3, pointBackgroundColor: '#10b981', hidden: !datasetZichtbaarJaar[3] },
-                    { type: 'line', label: 'Max EPEX', data: dataEpexMax, borderColor: '#ef4444', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 3, pointBackgroundColor: '#ef4444', hidden: !datasetZichtbaarJaar[4] }
+                    { type: 'line', label: 'Min EPEX', data: dataEpexMin, borderColor: '#10b981', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 3, pointBackgroundColor: '#10b981', hidden: !datasetZichtbaarJaar[2] },
+                    { type: 'line', label: 'Max EPEX', data: dataEpexMax, borderColor: '#ef4444', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 3, pointBackgroundColor: '#ef4444', hidden: !datasetZichtbaarJaar[3] }
                 ]
             },
             options: {

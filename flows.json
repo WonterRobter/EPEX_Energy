@@ -412,7 +412,7 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Multi-Query Gisteren",
-        "func": "let nu = new Date();\nlet vandaag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate());\nlet gisteren = new Date(vandaag.getTime() - 24 * 60 * 60 * 1000);\nlet morgen = new Date(vandaag.getTime() + 24 * 60 * 60 * 1000);\n\n// Onbalans = gisteren, EPEX = vandaag (nu)\nlet qMin = `SELECT \"prijs\" FROM \"onbalans_minuut\" WHERE time >= '${gisteren.toISOString()}' AND time < '${vandaag.toISOString()}' ORDER BY time ASC`;\nlet qQOnb = `SELECT \"prijs\" FROM \"onbalans_kwartier\" WHERE time >= '${gisteren.toISOString()}' AND time < '${vandaag.toISOString()}' ORDER BY time ASC`;\nlet qQEpex = `SELECT \"prijs\" FROM \"epex_kwartier\" WHERE time >= '${vandaag.toISOString()}' AND time < '${morgen.toISOString()}' ORDER BY time ASC`;\n\nmsg.url = \"http://epex_influxdb:8086/query?db=energie_db&epoch=ms&q=\" + encodeURIComponent(`${qMin};${qQOnb};${qQEpex}`);\nmsg.headers = { \"Authorization\": \"Token epex_super_secret_token_2026\" };\n\n// Geef de tijden door voor de analyse!\nmsg.startGisterenMs = gisteren.getTime();\nmsg.startVandaagMs = vandaag.getTime();\nmsg.datumGisteren = gisteren.toLocaleDateString('nl-BE');\nmsg.datumVandaag = vandaag.toLocaleDateString('nl-BE');\n\nif (msg.isRescueCheck !== undefined) {\n    msg.isRescueCheck = msg.isRescueCheck;\n}\nreturn msg;",
+        "func": "let nu = new Date();\nlet vandaag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate());\nlet gisteren = new Date(vandaag.getTime() - 24 * 60 * 60 * 1000);\nlet morgen = new Date(vandaag.getTime() + 24 * 60 * 60 * 1000);\n\n// Onbalans = gisteren, EPEX = vandaag (nu)\nlet qMin = `SELECT \"prijs\" FROM \"onbalans_minuut\" WHERE time >= '${gisteren.toISOString()}' AND time < '${vandaag.toISOString()}' ORDER BY time ASC`;\nlet qQOnb = `SELECT \"prijs\" FROM \"onbalans_kwartier\" WHERE time >= '${gisteren.toISOString()}' AND time < '${vandaag.toISOString()}' ORDER BY time ASC`;\nlet qQEpex = `SELECT \"prijs\" FROM \"epex_kwartier\" WHERE time >= '${vandaag.toISOString()}' AND time < '${morgen.toISOString()}' ORDER BY time ASC`;\n\nmsg.url = \"http://epex_influxdb:8086/query?db=energie_db&epoch=ms&q=\" + encodeURIComponent(`${qMin};${qQOnb};${qQEpex}`);\nmsg.headers = { \"Authorization\": \"Token epex_super_secret_token_2026\" };\n\n// Geef de tijden door voor analyse\nmsg.startGisterenMs = gisteren.getTime();\nmsg.startVandaagMs = vandaag.getTime();\nmsg.datumGisteren = gisteren.toLocaleDateString('nl-BE');\nmsg.datumVandaag = vandaag.toLocaleDateString('nl-BE');\n\n// Speciaal voor MariaDB: SQL-vriendelijke YYYY-MM-DD datums\nlet formatSql = (d) => d.getFullYear() + \"-\" + String(d.getMonth() + 1).padStart(2, '0') + \"-\" + String(d.getDate()).padStart(2, '0');\nmsg.datumGisterenSql = msg.isRescueCheck ? msg.datumGisterenSql : formatSql(gisteren);\nmsg.datumVandaagSql = msg.isRescueCheck ? msg.datumVandaagSql : formatSql(vandaag);\n\nif (msg.isRescueCheck !== undefined) {\n    msg.isRescueCheck = msg.isRescueCheck;\n}\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -845,7 +845,7 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Bouw Flux (Jaar)",
-        "func": "let jaar = (msg.req && msg.req.query && msg.req.query.jaar) ? parseInt(msg.req.query.jaar) : new Date().getFullYear();\nlet strJaar = String(jaar);\n\n// Ruime UTC grenzen rondom het jaar (+- 4 uur voor tijdzone)\nlet dStart = new Date(Date.UTC(jaar, 0, 1, -4, 0, 0));\nlet dStop = new Date(Date.UTC(jaar, 11, 31, 27, 59, 59));\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `Jaar: ${strJaar}` });\n\n// InfluxDB aggregeert razendsnel per uur met native functies, zodat Node-RED geen 600.000 rijen hoeft in te laden!\nmsg.query = `\ndata = from(bucket: \"energie_db\")\n  |> range(start: ${dStart.toISOString()}, stop: ${dStop.toISOString()})\n  |> filter(fn: (r) => r[\"_measurement\"] == \"epex_kwartier\" or r[\"_measurement\"] == \"onbalans_kwartier\" or r[\"_measurement\"] == \"onbalans_minuut\")\n  |> filter(fn: (r) => r[\"_field\"] == \"prijs\")\n\ngem = data\n  |> aggregateWindow(every: 1h, fn: mean, createEmpty: false)\n  |> set(key: \"stat\", value: \"gem\")\n\nmin_epex = data\n  |> filter(fn: (r) => r[\"_measurement\"] == \"epex_kwartier\")\n  |> aggregateWindow(every: 1h, fn: min, createEmpty: false)\n  |> set(key: \"stat\", value: \"min\")\n\nmax_epex = data\n  |> filter(fn: (r) => r[\"_measurement\"] == \"epex_kwartier\")\n  |> aggregateWindow(every: 1h, fn: max, createEmpty: false)\n  |> set(key: \"stat\", value: \"max\")\n\nunion(tables: [gem, min_epex, max_epex])\n`;\n\nmsg.targetPrefix = `${strJaar}-`;\nreturn msg;",
+        "func": "let jaar = (msg.req && msg.req.query && msg.req.query.jaar) ? parseInt(msg.req.query.jaar) : new Date().getFullYear();\nlet strJaar = String(jaar);\n\n// Ruime UTC grenzen rondom het jaar (+- 4 uur voor tijdzone)\nlet dStart = new Date(Date.UTC(jaar, 0, 1, -4, 0, 0));\nlet dStop = new Date(Date.UTC(jaar, 11, 31, 27, 59, 59));\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `Jaar: ${strJaar} (Zonder minuten)` });\n\n// InfluxDB aggregeert razendsnel per uur met native functies. Minuten weggelaten voor enorme snelheidsboost!\nmsg.query = `\ndata = from(bucket: \"energie_db\")\n  |> range(start: ${dStart.toISOString()}, stop: ${dStop.toISOString()})\n  |> filter(fn: (r) => r[\"_measurement\"] == \"epex_kwartier\" or r[\"_measurement\"] == \"onbalans_kwartier\")\n  |> filter(fn: (r) => r[\"_field\"] == \"prijs\")\n\ngem = data\n  |> aggregateWindow(every: 1h, fn: mean, createEmpty: false)\n  |> set(key: \"stat\", value: \"gem\")\n\nmin_epex = data\n  |> filter(fn: (r) => r[\"_measurement\"] == \"epex_kwartier\")\n  |> aggregateWindow(every: 1h, fn: min, createEmpty: false)\n  |> set(key: \"stat\", value: \"min\")\n\nmax_epex = data\n  |> filter(fn: (r) => r[\"_measurement\"] == \"epex_kwartier\")\n  |> aggregateWindow(every: 1h, fn: max, createEmpty: false)\n  |> set(key: \"stat\", value: \"max\")\n\nunion(tables: [gem, min_epex, max_epex])\n`;\n\nmsg.targetPrefix = `${strJaar}-`;\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -865,7 +865,7 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Bereken Per Maand (Turbo)",
-        "func": "if (!msg.payload || !Array.isArray(msg.payload)) {\n    msg.payload = [];\n    return msg;\n}\n\nconst dtFormatter = new Intl.DateTimeFormat('sv-SE', {\n    timeZone: 'Europe/Brussels',\n    year: 'numeric', month: '2-digit', day: '2-digit'\n});\n\nlet buckets = {};\nfor (let m = 1; m <= 12; m++) {\n    buckets[m] = { epex_gem: [], epex_min: [], epex_max: [], onb15: [], onb1: [] };\n}\n\nfor (let i = 0; i < msg.payload.length; i++) {\n    let row = msg.payload[i];\n    if (!row._time || row._value === null || row._value === undefined) continue;\n    \n    // aggregateWindow zet _time op het einde van het uur; trek 1 minuut af zodat het in het juiste uur/dag valt\n    let d = new Date(new Date(row._time).getTime() - 60000);\n    let dtStr = dtFormatter.format(d);\n\n    // Keiharde jaar-filter tegen overloop\n    if (!dtStr.startsWith(msg.targetPrefix)) continue;\n\n    let maandNr = parseInt(dtStr.split('-')[1], 10);\n    let b = buckets[maandNr];\n    if (!b) continue;\n\n    if (row.stat === \"gem\") {\n        if (row._measurement === \"epex_kwartier\") b.epex_gem.push(row._value);\n        else if (row._measurement === \"onbalans_kwartier\") b.onb15.push(row._value);\n        else if (row._measurement === \"onbalans_minuut\") b.onb1.push(row._value);\n    } else if (row.stat === \"min\") {\n        b.epex_min.push(row._value);\n    } else if (row.stat === \"max\") {\n        b.epex_max.push(row._value);\n    }\n}\n\nfunction avg(arr) {\n    if (!arr || arr.length === 0) return null;\n    let sum = 0;\n    for (let i = 0; i < arr.length; i++) sum += arr[i];\n    return sum / arr.length;\n}\n\nlet resultaat = [];\nfor (let m = 1; m <= 12; m++) {\n    let b = buckets[m];\n    resultaat.push({\n        maand: m,\n        epex_gem: avg(b.epex_gem),\n        epex_min: b.epex_min.length > 0 ? Math.min(...b.epex_min) : null,\n        epex_max: b.epex_max.length > 0 ? Math.max(...b.epex_max) : null,\n        onb15_gem: avg(b.onb15),\n        onb1_gem: avg(b.onb1)\n    });\n}\n\nnode.status({ fill: \"blue\", shape: \"dot\", text: `Klaar: 12 maanden` });\nmsg.payload = resultaat;\nreturn msg;",
+        "func": "if (!msg.payload || !Array.isArray(msg.payload)) {\n    msg.payload = [];\n    return msg;\n}\n\nconst dtFormatter = new Intl.DateTimeFormat('sv-SE', {\n    timeZone: 'Europe/Brussels',\n    year: 'numeric', month: '2-digit', day: '2-digit'\n});\n\nlet buckets = {};\nfor (let m = 1; m <= 12; m++) {\n    // onb1 arrays zijn hier verwijderd om geheugen te besparen\n    buckets[m] = { epex_gem: [], epex_min: [], epex_max: [], onb15: [] };\n}\n\nfor (let i = 0; i < msg.payload.length; i++) {\n    let row = msg.payload[i];\n    if (!row._time || row._value === null || row._value === undefined) continue;\n\n    // aggregateWindow zet _time op het einde van het uur; trek 1 minuut af zodat het in het juiste uur/dag valt\n    let d = new Date(new Date(row._time).getTime() - 60000);\n    let dtStr = dtFormatter.format(d);\n\n    // Keiharde jaar-filter tegen overloop\n    if (!dtStr.startsWith(msg.targetPrefix)) continue;\n\n    let maandNr = parseInt(dtStr.split('-')[1], 10);\n    let b = buckets[maandNr];\n    if (!b) continue;\n\n    if (row.stat === \"gem\") {\n        if (row._measurement === \"epex_kwartier\") b.epex_gem.push(row._value);\n        else if (row._measurement === \"onbalans_kwartier\") b.onb15.push(row._value);\n    } else if (row.stat === \"min\") {\n        b.epex_min.push(row._value);\n    } else if (row.stat === \"max\") {\n        b.epex_max.push(row._value);\n    }\n}\n\nfunction avg(arr) {\n    if (!arr || arr.length === 0) return null;\n    let sum = 0;\n    for (let i = 0; i < arr.length; i++) sum += arr[i];\n    return sum / arr.length;\n}\n\nlet resultaat = [];\nfor (let m = 1; m <= 12; m++) {\n    let b = buckets[m];\n    resultaat.push({\n        maand: m,\n        epex_gem: avg(b.epex_gem),\n        epex_min: b.epex_min.length > 0 ? Math.min(...b.epex_min) : null,\n        epex_max: b.epex_max.length > 0 ? Math.max(...b.epex_max) : null,\n        onb15_gem: avg(b.onb15),\n        onb1_gem: null // Doorgeven als 'null' zodat de frontend grafiek niet crasht\n    });\n}\n\nnode.status({ fill: \"blue\", shape: \"dot\", text: `Klaar: 12 maanden (Zonder minuten)` });\nmsg.payload = resultaat;\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -1104,21 +1104,24 @@
         "type": "function",
         "z": "44ae34a704e13388",
         "name": "Analyseer Gaten & Maak Taken",
-        "func": "let results = msg.payload.results;\nif (!results || results.length < 3) return [null, null];\n\nlet startGisterenMs = msg.startGisterenMs;\nlet startVandaagMs = msg.startVandaagMs;\nlet isRescueCheck = msg.isRescueCheck === true;\n\nlet actualMin = new Set();\nlet actualQOnb = new Set();\nlet actualQEpex = new Set();\n\nif (results[0] && results[0].series) results[0].series[0].values.forEach(v => actualMin.add(v[0]));\nif (results[1] && results[1].series) results[1].series[0].values.forEach(v => actualQOnb.add(v[0]));\nif (results[2] && results[2].series) results[2].series[0].values.forEach(v => actualQEpex.add(v[0]));\n\nlet missingMinTijden = [];\nlet missingMinRapport = [];\nlet missingQOnbRapport = [];\nlet missingQEpexRapport = [];\nlet ontbrekendeMinutenLijst = []; // Nieuwe lijst voor leesbare minuten\n\nfunction formatTijd(tms) {\n    let d = new Date(tms);\n    return d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n}\n\n// Functie om opeenvolgende gaten te groeperen\nfunction formatGaten(tijdenMs) {\n    if (tijdenMs.length === 0) return \"\";\n    let gaten = [];\n    let formatT = (ms) => {\n        let d = new Date(ms);\n        return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');\n    };\n\n    let startGat = tijdenMs[0];\n    for (let i = 1; i <= tijdenMs.length; i++) {\n        // Als we aan het einde zijn of het volgende punt is niet precies 1 minuut (60000ms) later\n        if (i === tijdenMs.length || tijdenMs[i] !== tijdenMs[i - 1] + 60000) {\n            let eindGat = tijdenMs[i - 1];\n            if (startGat === eindGat) {\n                gaten.push(formatT(startGat));\n            } else {\n                gaten.push(`${formatT(startGat)}-${formatT(eindGat)}`);\n            }\n            if (i < tijdenMs.length) {\n                startGat = tijdenMs[i];\n            }\n        }\n    }\n    return gaten.join(', ');\n}\n\n\nlet missingMinTijdenMs = []; // Tijdelijke array om de milliseconden op te slaan voor de groepering\n\n// 1. Controleer Onbalans over gisteren (1440 min & 96 kwartier)\nfor (let i = 0; i < 1440; i++) {\n    let t = startGisterenMs + i * 60 * 1000;\n    if (!actualMin.has(t)) {\n        missingMinRapport.push(formatTijd(t));\n        missingMinTijden.push(new Date(t).toISOString());\n        missingMinTijdenMs.push(t);\n    }\n}\nfor (let i = 0; i < 96; i++) {\n    let t = startGisterenMs + i * 15 * 60 * 1000;\n    if (!actualQOnb.has(t)) missingQOnbRapport.push(formatTijd(t));\n}\n// 2. Controleer EPEX over vandaag (96 kwartier)\nfor (let i = 0; i < 96; i++) {\n    let t = startVandaagMs + i * 15 * 60 * 1000;\n    if (!actualQEpex.has(t)) missingQEpexRapport.push(formatTijd(t));\n}\n\nlet minGatenTekst = formatGaten(missingMinTijdenMs);\nlet isDeprecated = global.get(\"epex_api_deprecated\") === true;\n\nif (missingMinRapport.length > 0 || missingQOnbRapport.length > 0 || missingQEpexRapport.length > 0 || isDeprecated) {\n    if (!isRescueCheck && !isDeprecated) {\n        node.status({ fill: \"yellow\", shape: \"ring\", text: \"Gaten ontdekt! Takenlijst maken...\" });\n\n        let rescueTasks = [];\n\n        // Taak 1: EPEX Hele dag (vandaag)\n        if (missingQEpexRapport.length > 0) {\n            rescueTasks.push({ type: \"epex\", dag: msg.startVandaagMs });\n        }\n\n        // Taak 2: Kwartier Hele dag (gisteren) - Limiet 100 is genoeg voor 96 kwartieren!\n        if (missingQOnbRapport.length > 0) {\n            rescueTasks.push({ type: \"elia_kwartier_bulk\", startIso: new Date(startGisterenMs).toISOString(), eindIso: new Date(startVandaagMs).toISOString() });\n        }\n\n        // Taak 3: Minuten één voor één (Specifieke minuut opvragen)\n        missingMinTijden.forEach(t => {\n            rescueTasks.push({ type: \"elia_minuut\", isoTijd: t });\n        });\n\n        // Taak 4: De Loop-Back verificatie (Laatste taak in de rij!)\n        rescueTasks.push({\n            type: \"check_again\",\n            datumGisteren: msg.datumGisteren,\n            datumVandaag: msg.datumVandaag,\n            startGisterenMs: startGisterenMs,\n            startVandaagMs: startVandaagMs\n        });\n\n        msg.payload = rescueTasks;\n        return [null, msg]; // Naar de splitter\n    } else {\n        let bericht = `⚠️ <b>WATCHDOG RAPPORT</b>\\n\\n`;\n        if (isRescueCheck) bericht = `🚨 <b>RESCUE MISLUKT</b>\\nNiet alle gaten konden worden hersteld.\\n\\n`;\n        if (isDeprecated) bericht += `🚨 <b>LET OP:</b> Energy-Charts API stopt binnenkort!\\n\\n`;\n\n        if (missingQEpexRapport.length > 0) bericht += `❌ <b>EPEX VANDAAG (${msg.datumVandaag}) - (${96 - missingQEpexRapport.length}/96)</b>\\n\\n`;\n        if (missingQOnbRapport.length > 0) bericht += `❌ <b>Onb. Kwartier GISTEREN (${msg.datumGisteren}) - (${96 - missingQOnbRapport.length}/96)</b>\\n\\n`;\n\n        if (missingMinRapport.length > 0) {\n            bericht += `❌ <b>Onb. Minuut GISTEREN (${msg.datumGisteren}) - (${1440 - missingMinRapport.length}/1440)</b>\\n`;\n            bericht += `Ontbrekend: [${minGatenTekst}]\\n`;\n        }\n\n        node.status({ fill: \"red\", shape: \"dot\", text: \"Pech: gaten overgebleven.\" });\n        let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n        msg.payload = { chatId: targetChat, type: \"message\", content: bericht, options: { parse_mode: \"HTML\" } };\n        return [msg, null];\n    }\n}\n\nif (isRescueCheck) {\n    node.status({ fill: \"green\", shape: \"dot\", text: \"Rescue succesvol!\" });\n    let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n    msg.payload = { chatId: targetChat, type: \"message\", content: `✅ <b>RESCUE GESLAAGD</b>\\nAlle gaten zijn gedicht! 🛠️`, options: { parse_mode: \"HTML\" } };\n    return [msg, null];\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: \"100% compleet!\" });\nreturn [null, null];",
-        "outputs": 2,
+        "func": "let results = msg.payload.results;\nif (!results || results.length < 3) return [null, null, null];\n\nlet startGisterenMs = msg.startGisterenMs;\nlet startVandaagMs = msg.startVandaagMs;\nlet isRescueCheck = msg.isRescueCheck === true;\n\n// 1. Veilige SQL datums genereren rechtstreeks uit de onverwoestbare tijdstempels\nlet dG = new Date(startGisterenMs);\nlet dV = new Date(startVandaagMs);\nlet datumGisterenSql = dG.getFullYear() + \"-\" + String(dG.getMonth() + 1).padStart(2, '0') + \"-\" + String(dG.getDate()).padStart(2, '0');\nlet datumVandaagSql = dV.getFullYear() + \"-\" + String(dV.getMonth() + 1).padStart(2, '0') + \"-\" + String(dV.getDate()).padStart(2, '0');\n\nlet actualMin = new Set();\nlet actualQOnb = new Set();\nlet actualQEpex = new Set();\n\nif (results[0] && results[0].series) results[0].series[0].values.forEach(v => actualMin.add(v[0]));\nif (results[1] && results[1].series) results[1].series[0].values.forEach(v => actualQOnb.add(v[0]));\nif (results[2] && results[2].series) results[2].series[0].values.forEach(v => actualQEpex.add(v[0]));\n\nlet missingMinTijden = [];\nlet missingMinRapport = [];\nlet missingQOnbRapport = [];\nlet missingQEpexRapport = [];\nlet missingMinTijdenMs = [];\n\nfunction formatTijd(tms) {\n    let d = new Date(tms);\n    return d.getHours().toString().padStart(2, '0') + \":\" + d.getMinutes().toString().padStart(2, '0');\n}\n\nfunction formatGaten(tijdenMs) {\n    if (tijdenMs.length === 0) return \"\";\n    let gaten = [];\n    let formatT = (ms) => {\n        let d = new Date(ms);\n        return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');\n    };\n    let startGat = tijdenMs[0];\n    for (let i = 1; i <= tijdenMs.length; i++) {\n        if (i === tijdenMs.length || tijdenMs[i] !== tijdenMs[i - 1] + 60000) {\n            let eindGat = tijdenMs[i - 1];\n            if (startGat === eindGat) gaten.push(formatT(startGat));\n            else gaten.push(`${formatT(startGat)}-${formatT(eindGat)}`);\n            if (i < tijdenMs.length) startGat = tijdenMs[i];\n        }\n    }\n    return gaten.join(', ');\n}\n\nfor (let i = 0; i < 1440; i++) {\n    let t = startGisterenMs + i * 60 * 1000;\n    if (!actualMin.has(t)) {\n        missingMinRapport.push(formatTijd(t));\n        missingMinTijden.push(new Date(t).toISOString());\n        missingMinTijdenMs.push(t);\n    }\n}\nfor (let i = 0; i < 96; i++) {\n    let t = startGisterenMs + i * 15 * 60 * 1000;\n    if (!actualQOnb.has(t)) missingQOnbRapport.push(formatTijd(t));\n}\nfor (let i = 0; i < 96; i++) {\n    let t = startVandaagMs + i * 15 * 60 * 1000;\n    if (!actualQEpex.has(t)) missingQEpexRapport.push(formatTijd(t));\n}\n\nlet minGatenTekst = formatGaten(missingMinTijdenMs);\nlet isDeprecated = global.get(\"epex_api_deprecated\") === true;\n\n// 2. ----- MARIADB LOGGING (OUTPUT 3) ----- \nlet sqlInsert = `INSERT INTO data_gaten (datum, api_type, aantal_gemist, gaten_details) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE aantal_gemist = VALUES(aantal_gemist), gaten_details = VALUES(gaten_details)`;\nlet sqlUpdateOpgelost = `UPDATE data_gaten SET aantal_gemist = 0 WHERE datum = ? AND api_type = ?`;\n\nlet dbMsgs = [];\n\n// Elia Minuut\nif (missingMinRapport.length > 0) {\n    dbMsgs.push({ topic: sqlInsert, payload: [datumGisterenSql, 'elia_minuut', missingMinRapport.length, minGatenTekst] });\n} else if (isRescueCheck) {\n    dbMsgs.push({ topic: sqlUpdateOpgelost, payload: [datumGisterenSql, 'elia_minuut'] });\n}\n\n// Elia Kwartier\nif (missingQOnbRapport.length > 0) {\n    dbMsgs.push({ topic: sqlInsert, payload: [datumGisterenSql, 'elia_kwartier', missingQOnbRapport.length, missingQOnbRapport.join(', ')] });\n} else if (isRescueCheck) {\n    dbMsgs.push({ topic: sqlUpdateOpgelost, payload: [datumGisterenSql, 'elia_kwartier'] });\n}\n\n// EPEX Kwartier\nif (missingQEpexRapport.length > 0) {\n    dbMsgs.push({ topic: sqlInsert, payload: [datumVandaagSql, 'epex_kwartier', missingQEpexRapport.length, missingQEpexRapport.join(', ')] });\n} else if (isRescueCheck) {\n    dbMsgs.push({ topic: sqlUpdateOpgelost, payload: [datumVandaagSql, 'epex_kwartier'] });\n}\n\n// 3. ----- FLOW ROUTING -----\nlet msgTelegram = null;\nlet msgRescue = null;\n\nif (missingMinRapport.length > 0 || missingQOnbRapport.length > 0 || missingQEpexRapport.length > 0 || isDeprecated) {\n    if (!isRescueCheck && !isDeprecated) {\n        node.status({ fill: \"yellow\", shape: \"ring\", text: \"Gaten ontdekt! Taken & DB Update...\" });\n\n        let rescueTasks = [];\n        if (missingQEpexRapport.length > 0) rescueTasks.push({ type: \"epex\", dag: msg.startVandaagMs });\n        if (missingQOnbRapport.length > 0) rescueTasks.push({ type: \"elia_kwartier_bulk\", startIso: new Date(startGisterenMs).toISOString(), eindIso: new Date(startVandaagMs).toISOString() });\n        missingMinTijden.forEach(t => rescueTasks.push({ type: \"elia_minuut\", isoTijd: t }));\n\n        rescueTasks.push({\n            type: \"check_again\",\n            datumGisteren: msg.datumGisteren, datumVandaag: msg.datumVandaag,\n            startGisterenMs: startGisterenMs, startVandaagMs: startVandaagMs\n        });\n\n        msgRescue = { payload: rescueTasks };\n        return [null, msgRescue, dbMsgs]; // output 3 krijgt direct de SQL query objecten\n    } else {\n        let bericht = `⚠️ <b>WATCHDOG RAPPORT</b>\\n\\n`;\n        if (isRescueCheck) bericht = `🚨 <b>RESCUE MISLUKT</b>\\nNiet alle gaten konden worden hersteld.\\n\\n`;\n        if (isDeprecated) bericht += `🚨 <b>LET OP:</b> Energy-Charts API stopt binnenkort!\\n\\n`;\n\n        if (missingQEpexRapport.length > 0) bericht += `❌ <b>EPEX VANDAAG (${msg.datumVandaag}) - (${96 - missingQEpexRapport.length}/96)</b>\\n\\n`;\n        if (missingQOnbRapport.length > 0) bericht += `❌ <b>Onb. Kwartier GISTEREN (${msg.datumGisteren}) - (${96 - missingQOnbRapport.length}/96)</b>\\n\\n`;\n\n        if (missingMinRapport.length > 0) {\n            bericht += `❌ <b>Onb. Minuut GISTEREN (${msg.datumGisteren}) - (${1440 - missingMinRapport.length}/1440)</b>\\n`;\n            bericht += `Ontbrekend: [${minGatenTekst}]\\n`;\n        }\n\n        node.status({ fill: \"red\", shape: \"dot\", text: \"Pech: gaten overgebleven.\" });\n        let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n        msgTelegram = { payload: { chatId: targetChat, type: \"message\", content: bericht, options: { parse_mode: \"HTML\" } } };\n        return [msgTelegram, null, dbMsgs];\n    }\n}\n\nif (isRescueCheck) {\n    node.status({ fill: \"green\", shape: \"dot\", text: \"Rescue succesvol!\" });\n    let targetChat = env.get(\"TELEGRAM_ADMIN_ID\") || (env.get(\"TELEGRAM_CHAT_ID\") || \"\").split(\",\")[0].trim();\n    msgTelegram = { payload: { chatId: targetChat, type: \"message\", content: `✅ <b>RESCUE GESLAAGD</b>\\nAlle gaten zijn gedicht en vastgelegd in MariaDB! 🛠️`, options: { parse_mode: \"HTML\" } } };\n    return [msgTelegram, null, dbMsgs];\n}\n\nnode.status({ fill: \"green\", shape: \"dot\", text: \"100% compleet!\" });\n// Zelfs als er niks mist, schrijven we dit naar DB voor een 100% Uptime score!\nreturn [null, null, dbMsgs];",
+        "outputs": 3,
         "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
         "x": 910,
-        "y": 380,
+        "y": 400,
         "wires": [
             [
                 "8616788a903aaa57"
             ],
             [
                 "split_taken"
+            ],
+            [
+                "30c0a84d633a80ad"
             ]
         ]
     },
@@ -1133,7 +1136,7 @@
         "arraySpltType": "len",
         "stream": false,
         "addname": "",
-        "x": 1130,
+        "x": 1170,
         "y": 400,
         "wires": [
             [
@@ -1158,7 +1161,7 @@
         "drop": false,
         "allowrate": false,
         "outputs": 1,
-        "x": 1300,
+        "x": 1340,
         "y": 400,
         "wires": [
             [
@@ -1178,7 +1181,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1160,
+        "x": 1220,
         "y": 440,
         "wires": [
             [
@@ -1206,7 +1209,7 @@
         "drop": false,
         "allowrate": false,
         "outputs": 1,
-        "x": 1370,
+        "x": 1430,
         "y": 480,
         "wires": [
             [
@@ -1239,8 +1242,8 @@
         "links": [
             "f6e83bacad4bbe05"
         ],
-        "x": 1475,
-        "y": 500,
+        "x": 1535,
+        "y": 480,
         "wires": []
     },
     {
@@ -1259,7 +1262,7 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 1390,
+        "x": 1450,
         "y": 440,
         "wires": [
             [
@@ -1279,7 +1282,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1560,
+        "x": 1620,
         "y": 440,
         "wires": [
             [
@@ -1296,8 +1299,8 @@
         "links": [
             "3fd1c58016ec59be"
         ],
-        "x": 1595,
-        "y": 400,
+        "x": 1715,
+        "y": 440,
         "wires": []
     },
     {
@@ -1314,6 +1317,18 @@
             [
                 "98965db8d1aa2365"
             ]
+        ]
+    },
+    {
+        "id": "30c0a84d633a80ad",
+        "type": "mysql",
+        "z": "44ae34a704e13388",
+        "mydb": "0d836172df78c3f2",
+        "name": "MariaDB Gaten Log",
+        "x": 1220,
+        "y": 500,
+        "wires": [
+            []
         ]
     },
     {
@@ -1396,7 +1411,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "05b65b3f160ebe2b",
+        "id": "0cb74249fdfa9b9a",
         "type": "global-config",
         "env": [],
         "modules": {

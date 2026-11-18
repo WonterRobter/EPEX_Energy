@@ -3,7 +3,7 @@
         "id": "be890a4256f62ed1",
         "type": "tab",
         "label": "Historische Import '19-'24",
-        "disabled": true,
+        "disabled": false,
         "info": "",
         "env": []
     },
@@ -24,8 +24,8 @@
         "topic": "",
         "payload": "{\"jaar\": 2019, \"start\": \"2019-09-01\", \"eind\": \"2019-12-31\"}",
         "payloadType": "json",
-        "x": 170,
-        "y": 380,
+        "x": 290,
+        "y": 260,
         "wires": [
             [
                 "6a2fa0e82192c934",
@@ -51,8 +51,8 @@
         "topic": "",
         "payload": "{\"jaar\": 2020, \"start\": \"2020-01-01\", \"eind\": \"2020-12-31\"}",
         "payloadType": "json",
-        "x": 130,
-        "y": 420,
+        "x": 260,
+        "y": 300,
         "wires": [
             [
                 "6a2fa0e82192c934",
@@ -78,8 +78,8 @@
         "topic": "",
         "payload": "{\"jaar\": 2021, \"start\": \"2021-01-01\", \"eind\": \"2021-12-31\"}",
         "payloadType": "json",
-        "x": 130,
-        "y": 460,
+        "x": 260,
+        "y": 340,
         "wires": [
             [
                 "6a2fa0e82192c934",
@@ -105,8 +105,8 @@
         "topic": "",
         "payload": "{\"jaar\": 2022, \"start\": \"2022-01-01\", \"eind\": \"2022-12-31\"}",
         "payloadType": "json",
-        "x": 130,
-        "y": 500,
+        "x": 260,
+        "y": 380,
         "wires": [
             [
                 "6a2fa0e82192c934",
@@ -132,8 +132,8 @@
         "topic": "",
         "payload": "{\"jaar\": 2023, \"start\": \"2023-01-01\", \"eind\": \"2023-12-31\"}",
         "payloadType": "json",
-        "x": 130,
-        "y": 540,
+        "x": 260,
+        "y": 420,
         "wires": [
             [
                 "6a2fa0e82192c934",
@@ -159,8 +159,8 @@
         "topic": "",
         "payload": "{\"jaar\": 2024, \"start\": \"2024-01-01\", \"eind\": \"2024-05-21\"}",
         "payloadType": "json",
-        "x": 170,
-        "y": 580,
+        "x": 290,
+        "y": 460,
         "wires": [
             [
                 "6a2fa0e82192c934",
@@ -173,7 +173,7 @@
         "id": "886f4960e50cec26",
         "type": "inject",
         "z": "be890a4256f62ed1",
-        "name": "🚑 RESCUE GAT",
+        "name": "RESCUE GAT",
         "props": [
             {
                 "p": "payload"
@@ -186,8 +186,8 @@
         "topic": "",
         "payload": "{\"jaar\": \"Rescue\", \"start\": \"2020-03-26\", \"eind\": \"2020-03-26\"}",
         "payloadType": "json",
-        "x": 140,
-        "y": 660,
+        "x": 330,
+        "y": 500,
         "wires": [
             [
                 "6a2fa0e82192c934",
@@ -208,8 +208,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 450,
-        "y": 380,
+        "x": 570,
+        "y": 280,
         "wires": [
             [
                 "3fc6c2f68778ba37"
@@ -227,8 +227,8 @@
         "arraySpltType": "len",
         "stream": false,
         "addname": "",
-        "x": 660,
-        "y": 380,
+        "x": 560,
+        "y": 320,
         "wires": [
             [
                 "7f24307fbed75e69"
@@ -252,8 +252,8 @@
         "drop": false,
         "allowrate": false,
         "outputs": 1,
-        "x": 840,
-        "y": 380,
+        "x": 730,
+        "y": 320,
         "wires": [
             [
                 "6705c9e21cacae9a"
@@ -272,8 +272,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1020,
-        "y": 380,
+        "x": 920,
+        "y": 320,
         "wires": [
             [
                 "b3b8cdeb5ab90b4d"
@@ -296,8 +296,8 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 1210,
-        "y": 380,
+        "x": 1140,
+        "y": 320,
         "wires": [
             [
                 "bff82b7987f990d3"
@@ -316,8 +316,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1400,
-        "y": 380,
+        "x": 1340,
+        "y": 320,
         "wires": [
             [
                 "114112ec630e8d49"
@@ -337,8 +337,8 @@
         "retentionPolicyV18Flux": "",
         "org": "epex_org",
         "bucket": "energie_db",
-        "x": 1600,
-        "y": 380,
+        "x": 1540,
+        "y": 320,
         "wires": []
     },
     {
@@ -353,8 +353,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 450,
-        "y": 480,
+        "x": 570,
+        "y": 360,
         "wires": [
             [
                 "3e95f0a964b67ba8"
@@ -372,8 +372,8 @@
         "arraySpltType": "len",
         "stream": false,
         "addname": "",
-        "x": 660,
-        "y": 480,
+        "x": 560,
+        "y": 400,
         "wires": [
             [
                 "360d8fe9396c5117"
@@ -397,8 +397,8 @@
         "drop": false,
         "allowrate": false,
         "outputs": 1,
-        "x": 840,
-        "y": 480,
+        "x": 730,
+        "y": 400,
         "wires": [
             [
                 "0212df7c5ca2e4e7"
@@ -417,8 +417,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1030,
-        "y": 480,
+        "x": 930,
+        "y": 400,
         "wires": [
             [
                 "f3b04deea0abea1e"
@@ -441,8 +441,8 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 1210,
-        "y": 480,
+        "x": 1140,
+        "y": 400,
         "wires": [
             [
                 "972099f089c22680"
@@ -461,8 +461,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1390,
-        "y": 480,
+        "x": 1320,
+        "y": 400,
         "wires": [
             [
                 "40a175ec13643941"
@@ -482,8 +482,8 @@
         "retentionPolicyV18Flux": "",
         "org": "epex_org",
         "bucket": "energie_db",
-        "x": 1600,
-        "y": 480,
+        "x": 1540,
+        "y": 400,
         "wires": []
     },
     {
@@ -498,8 +498,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 420,
-        "y": 580,
+        "x": 560,
+        "y": 460,
         "wires": [
             [
                 "29343b7b71421a68"
@@ -522,8 +522,8 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 630,
-        "y": 580,
+        "x": 780,
+        "y": 460,
         "wires": [
             [
                 "3c3a7109beeee9d4"
@@ -542,8 +542,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 850,
-        "y": 580,
+        "x": 1030,
+        "y": 460,
         "wires": [
             [
                 "ca455721cf1503fa"
@@ -563,23 +563,23 @@
         "retentionPolicyV18Flux": "",
         "org": "epex_org",
         "bucket": "energie_db",
-        "x": 1060,
-        "y": 580,
+        "x": 1240,
+        "y": 460,
         "wires": []
     },
     {
         "id": "inject_delete",
         "type": "inject",
         "z": "be890a4256f62ed1",
-        "name": "🚨 VERWIJDER ALLES VOOR 2022",
+        "name": "VERWIJDER ALLES VOOR 2022",
         "props": [],
         "repeat": "",
         "crontab": "",
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
-        "x": 210,
-        "y": 740,
+        "x": 310,
+        "y": 220,
         "wires": [
             [
                 "func_build_delete"
@@ -598,8 +598,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 490,
-        "y": 740,
+        "x": 600,
+        "y": 220,
         "wires": [
             [
                 "http_delete"
@@ -622,8 +622,8 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 720,
-        "y": 740,
+        "x": 810,
+        "y": 220,
         "wires": [
             [
                 "debug_delete"
@@ -642,8 +642,168 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 930,
-        "y": 740,
+        "x": 1000,
+        "y": 220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "be5bc556cb13f4fb",
+        "type": "inject",
+        "z": "be890a4256f62ed1",
+        "name": "▶ START HISTORISCHE GAP SCAN",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 330,
+        "y": 580,
+        "wires": [
+            [
+                "c9f9b98c90c51239"
+            ]
+        ]
+    },
+    {
+        "id": "c9f9b98c90c51239",
+        "type": "function",
+        "z": "be890a4256f62ed1",
+        "name": "Genereer Dagen (Sept '19 - Nu)",
+        "func": "// Start van de ods046/ods047 data\nlet startDatum = new Date(\"2019-09-30T12:00:00Z\");\nlet eindDatum = new Date();\neindDatum.setUTCHours(12, 0, 0, 0);\n\nlet dagen = [];\nlet d = startDatum;\n\nwhile (d <= eindDatum) {\n    let yyyy = d.getUTCFullYear();\n    let mm = String(d.getUTCMonth() + 1).padStart(2, '0');\n    let dd = String(d.getUTCDate()).padStart(2, '0');\n    \n    // Pak een extreem ruim UTC-venster (-4u tot +28u) om de Belgische dag veilig te omsluiten\n    let qStart = new Date(Date.UTC(yyyy, d.getUTCMonth(), d.getUTCDate(), -4, 0, 0));\n    let qStop = new Date(Date.UTC(yyyy, d.getUTCMonth(), d.getUTCDate(), 28, 0, 0));\n\n    dagen.push({\n        datumSql: `${yyyy}-${mm}-${dd}`,\n        startIso: qStart.toISOString(),\n        stopIso: qStop.toISOString()\n    });\n    \n    d = new Date(d.getTime() + 86400000); // +1 dag\n}\n\nmsg.payload = dagen;\nnode.status({ fill: \"blue\", shape: \"dot\", text: `Genereert ${dagen.length} dagen...` });\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 630,
+        "y": 580,
+        "wires": [
+            [
+                "b5344d30950f1382"
+            ]
+        ]
+    },
+    {
+        "id": "b5344d30950f1382",
+        "type": "split",
+        "z": "be890a4256f62ed1",
+        "name": "Splits Array",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 590,
+        "y": 620,
+        "wires": [
+            [
+                "fea1423cbf3d54bb"
+            ]
+        ]
+    },
+    {
+        "id": "fea1423cbf3d54bb",
+        "type": "delay",
+        "z": "be890a4256f62ed1",
+        "name": "5 Dagen / Seconde",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "5",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 770,
+        "y": 620,
+        "wires": [
+            [
+                "b4dc7c57e67460aa"
+            ]
+        ]
+    },
+    {
+        "id": "b4dc7c57e67460aa",
+        "type": "function",
+        "z": "be890a4256f62ed1",
+        "name": "Bouw Flux Query",
+        "func": "let info = msg.payload;\n\nmsg.query = `\nfrom(bucket: \"energie_db\")\n  |> range(start: ${info.startIso}, stop: ${info.stopIso})\n  |> filter(fn: (r) => r[\"_measurement\"] == \"epex_kwartier\" or r[\"_measurement\"] == \"onbalans_kwartier\" or r[\"_measurement\"] == \"onbalans_minuut\")\n  |> filter(fn: (r) => r[\"_field\"] == \"prijs\")\n`;\n\nmsg.datumSql = info.datumSql;\nnode.status({ fill: \"blue\", shape: \"ring\", text: `Scant: ${info.datumSql}` });\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 970,
+        "y": 620,
+        "wires": [
+            [
+                "20609c2650d74752"
+            ]
+        ]
+    },
+    {
+        "id": "20609c2650d74752",
+        "type": "influxdb in",
+        "z": "be890a4256f62ed1",
+        "influxdb": "c37561ff29513d8a",
+        "name": "InfluxDB 2.7",
+        "query": "",
+        "rawOutput": false,
+        "precision": "",
+        "retentionPolicy": "",
+        "org": "epex_org",
+        "x": 1150,
+        "y": 620,
+        "wires": [
+            [
+                "59c2bec9725b5b3a"
+            ]
+        ]
+    },
+    {
+        "id": "59c2bec9725b5b3a",
+        "type": "function",
+        "z": "be890a4256f62ed1",
+        "name": "Analyseer & Bouw SQL",
+        "func": "if (!msg.payload || !Array.isArray(msg.payload)) return null;\n\nconst targetDate = msg.datumSql; // \"YYYY-MM-DD\"\nconst dtFormatter = new Intl.DateTimeFormat('sv-SE', {\n    timeZone: 'Europe/Brussels',\n    year: 'numeric', month: '2-digit', day: '2-digit',\n    hour: '2-digit', minute: '2-digit', hour12: false\n});\n\nlet actualMin = new Set();\nlet actualQOnb = new Set();\nlet actualQEpex = new Set();\n\n// 1. Ophalen welke minuten/kwartieren écht in de DB zitten voor deze Lokale Dag\nmsg.payload.forEach(row => {\n    if (!row._time) return;\n    let dtStr = dtFormatter.format(new Date(row._time));\n    if (dtStr.startsWith(targetDate)) {\n        let hhmm = dtStr.substring(11, 16);\n        if (row._measurement === \"onbalans_minuut\") actualMin.add(hhmm);\n        else if (row._measurement === \"onbalans_kwartier\") actualQOnb.add(hhmm);\n        else if (row._measurement === \"epex_kwartier\") actualQEpex.add(hhmm);\n    }\n});\n\n// 2. Simuleer hoeveel minuten deze specifieke dag hoort te hebben (houdt perfect rekening met zomertijd!)\nlet expectedMin = [];\nlet expectedQ = [];\nlet baseMs = new Date(targetDate + \"T12:00:00Z\").getTime() - 24 * 3600 * 1000;\nfor(let i = 0; i < 48 * 60; i++) {\n    let d = new Date(baseMs + i * 60000);\n    let dtStr = dtFormatter.format(d);\n    if (dtStr.startsWith(targetDate)) {\n        let hhmm = dtStr.substring(11, 16);\n        expectedMin.push({ ms: d.getTime(), hhmm: hhmm });\n        if (d.getMinutes() % 15 === 0) expectedQ.push(hhmm);\n    }\n}\n\n// 3. Vergelijk verwacht met werkelijk\nlet missingMinRapport = [];\nlet missingMinMs = [];\nexpectedMin.forEach(item => {\n    if (!actualMin.has(item.hhmm)) {\n        missingMinRapport.push(item.hhmm);\n        missingMinMs.push(item.ms);\n    }\n});\n\nlet missingQOnbRapport = expectedQ.filter(q => !actualQOnb.has(q));\nlet missingQEpexRapport = expectedQ.filter(q => !actualQEpex.has(q));\n\n// 4. Maak leesbare tekst voor de minuten (\"02:00-02:59\")\nfunction formatGaten(tijdenMs) {\n    if (tijdenMs.length === 0) return \"\";\n    let gaten = [];\n    let formatT = (ms) => dtFormatter.format(new Date(ms)).substring(11, 16);\n\n    let startGat = tijdenMs[0];\n    for (let i = 1; i <= tijdenMs.length; i++) {\n        if (i === tijdenMs.length || tijdenMs[i] !== tijdenMs[i - 1] + 60000) {\n            let eindGat = tijdenMs[i - 1];\n            if (startGat === eindGat) gaten.push(formatT(startGat));\n            else gaten.push(`${formatT(startGat)}-${formatT(eindGat)}`);\n            if (i < tijdenMs.length) startGat = tijdenMs[i];\n        }\n    }\n    return gaten.join(' | ');\n}\n\nlet minGatenTekst = formatGaten(missingMinMs);\n\n// 5. Bouw SQL Arrays (Alleen wegschrijven als er effectief iets mist!)\nlet sqlQuery = `INSERT INTO data_gaten (datum, api_type, aantal_gemist, gaten_details) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE aantal_gemist = VALUES(aantal_gemist), gaten_details = VALUES(gaten_details)`;\n\nlet dbMsgs = [];\n\nif (missingMinRapport.length > 0) {\n    dbMsgs.push({ topic: sqlQuery, payload: [targetDate, 'elia_minuut', missingMinRapport.length, minGatenTekst] });\n}\nif (missingQOnbRapport.length > 0) {\n    dbMsgs.push({ topic: sqlQuery, payload: [targetDate, 'elia_kwartier', missingQOnbRapport.length, missingQOnbRapport.join(', ')] });\n}\nif (missingQEpexRapport.length > 0) {\n    dbMsgs.push({ topic: sqlQuery, payload: [targetDate, 'epex_kwartier', missingQEpexRapport.length, missingQEpexRapport.join(', ')] });\n}\n\nif (dbMsgs.length > 0) {\n    node.status({ fill: \"yellow\", shape: \"dot\", text: `${targetDate}: Gat gevonden!` });\n    return [dbMsgs]; // Stuurt elke SQL-taak rechtstreeks naar MariaDB zonder Split-node\n} else {\n    node.status({ fill: \"green\", shape: \"dot\", text: `${targetDate}: 100% Compleet` });\n    return null; // Niets naar MariaDB sturen\n}\n\nmsg.payload = dbMsgs;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1350,
+        "y": 620,
+        "wires": [
+            [
+                "90993565e9be5c31"
+            ]
+        ]
+    },
+    {
+        "id": "90993565e9be5c31",
+        "type": "mysql",
+        "z": "be890a4256f62ed1",
+        "mydb": "0d836172df78c3f2",
+        "name": "MariaDB",
+        "x": 1540,
+        "y": 620,
         "wires": [
             []
         ]
@@ -664,11 +824,22 @@
         "rejectUnauthorized": false
     },
     {
-        "id": "877ea48cc7ebc713",
+        "id": "0d836172df78c3f2",
+        "type": "MySQLdatabase",
+        "name": "EPEX_DB",
+        "host": "epex_mariadb",
+        "port": "3306",
+        "db": "energie_db",
+        "tz": "",
+        "charset": "UTF8"
+    },
+    {
+        "id": "f4e83377ca3aa2e7",
         "type": "global-config",
         "env": [],
         "modules": {
-            "node-red-contrib-influxdb": "0.7.0"
+            "node-red-contrib-influxdb": "0.7.0",
+            "node-red-node-mysql": "3.0.0"
         }
     }
 ]

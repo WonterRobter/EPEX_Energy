@@ -48,6 +48,7 @@ services:
     environment:
       - PMA_HOST=epex_mariadb
       - PMA_ARBITRARY=1
+      - TZ: Europe/Brussels
 
   influxdb:
     image: influxdb:2.7
