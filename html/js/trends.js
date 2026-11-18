@@ -209,14 +209,64 @@ function klikOpKalenderDag(geklikteDatum) {
     }
 }
 
+let periodeKalenderWeergave = 'dagen'; // 'dagen' | 'maanden' | 'jaren'
+
 function bouwPeriodeKalender(datum) {
     const elMaand = document.getElementById('kalender-maand');
     const dagenContainer = document.getElementById('kalender-dagen');
+    const weekdagenEl = document.querySelector('#periode-kalender-sectie .kalender-weekdagen');
     if (!elMaand || !dagenContainer) return;
 
     const maandNamen = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
-    elMaand.innerText = `${maandNamen[datum.getMonth()]} ${datum.getFullYear()}`;
+    const maandNamenKort = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
     dagenContainer.innerHTML = "";
+
+    // 1. JAREN-WEERGAVE
+    if (periodeKalenderWeergave === 'jaren') {
+        const startJaar = Math.floor(datum.getFullYear() / 12) * 12 - 1;
+        const eindJaar = startJaar + 11;
+        elMaand.innerText = `${startJaar} - ${eindJaar}`;
+        if (weekdagenEl) weekdagenEl.style.display = 'none';
+        dagenContainer.className = 'kalender-grid-3x4';
+
+        for (let y = startJaar; y <= eindJaar; y++) {
+            const btn = document.createElement('div');
+            btn.className = 'cal-item-btn' + (y === datum.getFullYear() ? ' active' : '');
+            btn.innerText = y;
+            btn.addEventListener('click', () => {
+                kalenderMaandDatum.setFullYear(y);
+                periodeKalenderWeergave = 'maanden';
+                bouwPeriodeKalender(kalenderMaandDatum);
+            });
+            dagenContainer.appendChild(btn);
+        }
+        return;
+    }
+
+    // 2. MAANDEN-WEERGAVE
+    if (periodeKalenderWeergave === 'maanden') {
+        elMaand.innerText = `${datum.getFullYear()}`;
+        if (weekdagenEl) weekdagenEl.style.display = 'none';
+        dagenContainer.className = 'kalender-grid-3x4';
+
+        for (let m = 0; m < 12; m++) {
+            const btn = document.createElement('div');
+            btn.className = 'cal-item-btn' + (m === datum.getMonth() ? ' active' : '');
+            btn.innerText = maandNamenKort[m];
+            btn.addEventListener('click', () => {
+                kalenderMaandDatum.setMonth(m);
+                periodeKalenderWeergave = 'dagen';
+                bouwPeriodeKalender(kalenderMaandDatum);
+            });
+            dagenContainer.appendChild(btn);
+        }
+        return;
+    }
+
+    // 3. DAGEN-WEERGAVE (Standaard)
+    elMaand.innerText = `${maandNamen[datum.getMonth()]} ${datum.getFullYear()}`;
+    if (weekdagenEl) weekdagenEl.style.display = '';
+    dagenContainer.className = '';
 
     const eersteDag = new Date(datum.getFullYear(), datum.getMonth(), 1).getDay();
     const startOffset = (eersteDag === 0 ? 6 : eersteDag - 1);
@@ -249,8 +299,35 @@ function bouwPeriodeKalender(datum) {
     }
 }
 
+const kalTitel = document.getElementById('kalender-maand');
+if (kalTitel) {
+    kalTitel.addEventListener('click', () => {
+        if (periodeKalenderWeergave === 'dagen') periodeKalenderWeergave = 'maanden';
+        else if (periodeKalenderWeergave === 'maanden') periodeKalenderWeergave = 'jaren';
+        else periodeKalenderWeergave = 'dagen';
+        bouwPeriodeKalender(kalenderMaandDatum);
+    });
+}
+
 const kalPrev = document.getElementById('kalender-prev');
 const kalNext = document.getElementById('kalender-next');
+if (kalPrev) {
+    kalPrev.addEventListener('click', () => {
+        if (periodeKalenderWeergave === 'dagen') kalenderMaandDatum.setMonth(kalenderMaandDatum.getMonth() - 1);
+        else if (periodeKalenderWeergave === 'maanden') kalenderMaandDatum.setFullYear(kalenderMaandDatum.getFullYear() - 1);
+        else kalenderMaandDatum.setFullYear(kalenderMaandDatum.getFullYear() - 12);
+        bouwPeriodeKalender(kalenderMaandDatum);
+    });
+}
+if (kalNext) {
+    kalNext.addEventListener('click', () => {
+        if (periodeKalenderWeergave === 'dagen') kalenderMaandDatum.setMonth(kalenderMaandDatum.getMonth() + 1);
+        else if (periodeKalenderWeergave === 'maanden') kalenderMaandDatum.setFullYear(kalenderMaandDatum.getFullYear() + 1);
+        else kalenderMaandDatum.setFullYear(kalenderMaandDatum.getFullYear() + 12);
+        bouwPeriodeKalender(kalenderMaandDatum);
+    });
+}
+
 if (kalPrev) {
     kalPrev.addEventListener('click', () => {
         kalenderMaandDatum.setMonth(kalenderMaandDatum.getMonth() - 1);

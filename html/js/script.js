@@ -123,12 +123,65 @@ function veranderActieveDag(nieuweDatum) {
     laadEpexData(formatteerApiDatum(actieveDatum), true);
 }
 
+let kalenderWeergave = 'dagen'; // 'dagen' | 'maanden' | 'jaren'
+
 function bouwKalender(datum) {
     const maandNamen = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
-    document.getElementById('kalender-maand').innerText = `${maandNamen[datum.getMonth()]} ${datum.getFullYear()}`;
-    
+    const maandNamenKort = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
+
+    const elTitel = document.getElementById('kalender-maand');
     const dagenContainer = document.getElementById('kalender-dagen');
+    const weekdagenEl = document.querySelector('.kalender-weekdagen');
+    if (!elTitel || !dagenContainer) return;
+
     dagenContainer.innerHTML = "";
+
+    // 1. JAREN-WEERGAVE
+    if (kalenderWeergave === 'jaren') {
+        const startJaar = Math.floor(datum.getFullYear() / 12) * 12 - 1; // bijv. 2015-2026 of 2019-2030
+        const eindJaar = startJaar + 11;
+        elTitel.innerText = `${startJaar} - ${eindJaar}`;
+        if (weekdagenEl) weekdagenEl.style.display = 'none';
+        dagenContainer.className = 'kalender-grid-3x4';
+
+        for (let y = startJaar; y <= eindJaar; y++) {
+            const btn = document.createElement('div');
+            btn.className = 'cal-item-btn' + (y === datum.getFullYear() ? ' active' : '');
+            btn.innerText = y;
+            btn.addEventListener('click', () => {
+                kalenderMaandDatum.setFullYear(y);
+                kalenderWeergave = 'maanden';
+                bouwKalender(kalenderMaandDatum);
+            });
+            dagenContainer.appendChild(btn);
+        }
+        return;
+    }
+
+    // 2. MAANDEN-WEERGAVE
+    if (kalenderWeergave === 'maanden') {
+        elTitel.innerText = `${datum.getFullYear()}`;
+        if (weekdagenEl) weekdagenEl.style.display = 'none';
+        dagenContainer.className = 'kalender-grid-3x4';
+
+        for (let m = 0; m < 12; m++) {
+            const btn = document.createElement('div');
+            btn.className = 'cal-item-btn' + (m === datum.getMonth() ? ' active' : '');
+            btn.innerText = maandNamenKort[m];
+            btn.addEventListener('click', () => {
+                kalenderMaandDatum.setMonth(m);
+                kalenderWeergave = 'dagen';
+                bouwKalender(kalenderMaandDatum);
+            });
+            dagenContainer.appendChild(btn);
+        }
+        return;
+    }
+
+    // 3. DAGEN-WEERGAVE (Standaard)
+    elTitel.innerText = `${maandNamen[datum.getMonth()]} ${datum.getFullYear()}`;
+    if (weekdagenEl) weekdagenEl.style.display = '';
+    dagenContainer.className = '';
 
     const eersteDag = new Date(datum.getFullYear(), datum.getMonth(), 1).getDay();
     const startOffset = (eersteDag === 0 ? 6 : eersteDag - 1);
@@ -156,12 +209,24 @@ function bouwKalender(datum) {
     }
 }
 
-document.getElementById('kalender-prev').addEventListener('click', () => {
-    kalenderMaandDatum.setMonth(kalenderMaandDatum.getMonth() - 1);
+document.getElementById('kalender-maand')?.addEventListener('click', () => {
+    if (kalenderWeergave === 'dagen') kalenderWeergave = 'maanden';
+    else if (kalenderWeergave === 'maanden') kalenderWeergave = 'jaren';
+    else kalenderWeergave = 'dagen';
     bouwKalender(kalenderMaandDatum);
 });
-document.getElementById('kalender-next').addEventListener('click', () => {
-    kalenderMaandDatum.setMonth(kalenderMaandDatum.getMonth() + 1);
+
+document.getElementById('kalender-prev')?.addEventListener('click', () => {
+    if (kalenderWeergave === 'dagen') kalenderMaandDatum.setMonth(kalenderMaandDatum.getMonth() - 1);
+    else if (kalenderWeergave === 'maanden') kalenderMaandDatum.setFullYear(kalenderMaandDatum.getFullYear() - 1);
+    else kalenderMaandDatum.setFullYear(kalenderMaandDatum.getFullYear() - 12);
+    bouwKalender(kalenderMaandDatum);
+});
+
+document.getElementById('kalender-next')?.addEventListener('click', () => {
+    if (kalenderWeergave === 'dagen') kalenderMaandDatum.setMonth(kalenderMaandDatum.getMonth() + 1);
+    else if (kalenderWeergave === 'maanden') kalenderMaandDatum.setFullYear(kalenderMaandDatum.getFullYear() + 1);
+    else kalenderMaandDatum.setFullYear(kalenderMaandDatum.getFullYear() + 12);
     bouwKalender(kalenderMaandDatum);
 });
 

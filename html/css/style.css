@@ -1221,3 +1221,15 @@ body.instellingen-pagina #instellingen-container {
         display: none;
     }
 }
+
+#kalender-maand {
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+#kalender-maand:hover {
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--blue);
+}
