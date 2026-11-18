@@ -34,6 +34,14 @@ if (menuBar) {
 if (closeMobileMenuBtn) closeMobileMenuBtn.addEventListener('click', sluitMobielMenu);
 sidebarOverlay.addEventListener('click', sluitMobielMenu);
 
+const allDropdowns = document.querySelectorAll('#sidebar .dropdown-btn');
+allDropdowns.forEach(btn => {
+    btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        this.parentElement.classList.toggle('show-menu');
+    });
+});
+
 const switchMode = document.getElementById('switch-mode');
 function syncThemaMetOpslag() {
     const isDark = localStorage.getItem('dark-mode') !== 'disabled';

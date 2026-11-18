@@ -39,6 +39,7 @@
                         <li><a href="trends.html?tab=maand" class="sub-tab-link" data-tab="maand">Maandoverzicht</a></li>
                         <li><a href="trends.html?tab=seizoen" class="sub-tab-link" data-tab="seizoen">Seizoensprofiel</a></li>
                         <li><a href="trends.html?tab=jaar" class="sub-tab-link" data-tab="jaar">Jaaroverzicht</a></li>
+                        <li><a href="trends.html?tab=kwaliteit" class="sub-tab-link" data-tab="kwaliteit">Datakwaliteit</a></li>
                     </ul>
                 </li>
                 <li><a href="meldingen.html"><i class='bx bxs-bell'></i><span class="text">Meldingen</span></a></li>
@@ -233,6 +234,79 @@
 
                     <div class="chart-wrapper">
                         <canvas id="seizoenGrafiek"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- TAB 5: DATAKWALITEIT (MISSING MINUTES) -->
+        <main id="view-kwaliteit" style="display: none;">
+            <div class="head-title">
+                <div class="left">
+                    <h1>Datakwaliteit &amp; Gemiste Minuten</h1>
+                </div>
+            </div>
+
+            <!-- BOVENBALK KPI'S -->
+            <ul class="box-info" style="margin-bottom: 24px;">
+                <li><span class="text"><p>Uptime (Laatste 7 dagen)</p><h3 id="kwaliteit-uptime">Laden...</h3></span></li>
+                <li><span class="text"><p>Totaal Gemiste Minuten</p><h3 id="kwaliteit-totaal">Laden...</h3></span></li>
+                <li><span class="text"><p>Zwaarste Storing Ooit</p><h3 id="kwaliteit-zwaarste">Laden...</h3></span></li>
+            </ul>
+
+            <!-- 2x2 DASHBOARD GRID -->
+            <div class="kwaliteit-grid">
+                <!-- LINKSBOVEN: Staafdiagram per maand -->
+                <div class="kwaliteit-card">
+                    <div class="kwaliteit-card-header">
+                        <h3>Gemiste minuten per maand</h3>
+                        <select id="kwaliteit-jaar-select" class="kwaliteit-select"></select>
+                    </div>
+                    <div class="kwaliteit-chart-box">
+                        <canvas id="kwaliteitMaandGrafiek"></canvas>
+                    </div>
+                </div>
+
+                <!-- RECHTSBOVEN: Scrollbare logboek tabel -->
+                <div class="kwaliteit-card">
+                    <div class="kwaliteit-card-header">
+                        <h3>Logboek gemiste data</h3>
+                        <span id="kwaliteit-tabel-aantal" style="font-size: 12px; color: var(--dark-grey);"></span>
+                    </div>
+                    <div class="kwaliteit-table-wrapper">
+                        <table class="kwaliteit-table">
+                            <thead>
+                                <tr>
+                                    <th>Datum</th>
+                                    <th>Bron</th>
+                                    <th>Gemist</th>
+                                    <th>Tijdstippen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="kwaliteit-tabel-body">
+                                <tr><td colspan="4">Laden...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- LINKSONDER: Taartdiagram per jaar -->
+                <div class="kwaliteit-card">
+                    <div class="kwaliteit-card-header">
+                        <h3>Verdeling per jaar</h3>
+                    </div>
+                    <div class="kwaliteit-chart-box">
+                        <canvas id="kwaliteitJaarTaart"></canvas>
+                    </div>
+                </div>
+
+                <!-- RECHTSONDER: Storingen per uur van de dag -->
+                <div class="kwaliteit-card">
+                    <div class="kwaliteit-card-header">
+                        <h3>Storingen per uur van de dag</h3>
+                    </div>
+                    <div class="kwaliteit-chart-box">
+                        <canvas id="kwaliteitUurGrafiek"></canvas>
                     </div>
                 </div>
             </div>

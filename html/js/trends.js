@@ -87,12 +87,14 @@ const viewKwartier = document.getElementById('view-kwartier');
 const viewMaand = document.getElementById('view-maand');
 const viewSeizoen = document.getElementById('view-seizoen');
 const viewJaar = document.getElementById('view-jaar');
+const viewKwaliteit = document.getElementById('view-kwaliteit');
 
 const kalenderPeriodeSectie = document.getElementById('periode-kalender-sectie');
 const kalenderMaandSectie = document.getElementById('maand-kalender-sectie');
 const kalenderJaarSectie = document.getElementById('jaar-kalender-sectie');
 
 function openTab(tabNaam) {
+    document.body.classList.toggle('tab-kwaliteit-actief', tabNaam === 'kwaliteit');
     subTabLinks.forEach(l => l.classList.remove('active-sub'));
     const targetLink = document.querySelector(`.sub-tab-link[data-tab="${tabNaam}"]`);
     if (targetLink) targetLink.classList.add('active-sub');
@@ -105,6 +107,7 @@ function openTab(tabNaam) {
     if (kalenderPeriodeSectie) kalenderPeriodeSectie.style.display = 'none';
     if (kalenderMaandSectie) kalenderMaandSectie.style.display = 'none';
     if (kalenderJaarSectie) kalenderJaarSectie.style.display = 'none';
+    if (viewKwaliteit) viewKwaliteit.style.display = 'none';
 
     if (tabNaam === 'kwartier') {
         if (viewKwartier) viewKwartier.style.display = 'flex';
@@ -124,6 +127,9 @@ function openTab(tabNaam) {
         if (kalenderJaarSectie) kalenderJaarSectie.style.display = 'block';
         bouwZijbalkJaarKalender();
         laadJaarOverzicht();
+    } else if (tabNaam === 'kwaliteit') {
+        if (viewKwaliteit) viewKwaliteit.style.display = 'flex';
+        laadDataKwaliteit();
     }
     herberekenGrafiekHoogte();
 }
@@ -1249,6 +1255,9 @@ function herberekenGrafiekHoogte() {
             if (typeof maandGrafiek !== 'undefined' && maandGrafiek) maandGrafiek.resize();
             if (typeof jaarGrafiek !== 'undefined' && jaarGrafiek) jaarGrafiek.resize();
             if (typeof seizoenGrafiek !== 'undefined' && seizoenGrafiek) seizoenGrafiek.resize();
+            if (typeof kwaliteitMaandGrafiek !== 'undefined' && kwaliteitMaandGrafiek) kwaliteitMaandGrafiek.resize();
+            if (typeof kwaliteitJaarTaart !== 'undefined' && kwaliteitJaarTaart) kwaliteitJaarTaart.resize();
+            if (typeof kwaliteitUurGrafiek !== 'undefined' && kwaliteitUurGrafiek) kwaliteitUurGrafiek.resize();
         }, delay);
     });
 }
@@ -1261,6 +1270,173 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js')
             .then(reg => console.log('PWA Service Worker geregistreerd!', reg))
             .catch(err => console.error('PWA registratie mislukt:', err));
+    });
+}
+
+// ==========================================
+// 11. DATAKWALITEIT DASHBOARD (MISSING MINUTES)
+// ==========================================
+let kwaliteitMaandGrafiek = null;
+let kwaliteitJaarTaart = null;
+let kwaliteitUurGrafiek = null;
+let kwaliteitDataCache = null;
+
+async function laadDataKwaliteit() {
+    try {
+        const response = await fetch(`/api/datakwaliteit?_t=${Date.now()}`);
+        const data = await response.json();
+        if (!data || !data.kpis) return;
+
+        kwaliteitDataCache = data;
+
+        // 1. KPI Bovenbalk vullen
+        const uptime = data.kpis.uptime_week_pct;
+        const uptimeKleur = uptime >= 99.5 ? '#10b981' : (uptime >= 98 ? '#f59e0b' : '#ef4444');
+        document.getElementById('kwaliteit-uptime').innerHTML =
+            `<span style="color: ${uptimeKleur};">${uptime.toFixed(2)}%</span> <span class="unit-label">(${data.kpis.gemist_laatste_week} min gemist)</span>`;
+
+        document.getElementById('kwaliteit-totaal').innerHTML =
+            `<span style="color: var(--dark);">${data.kpis.totaal_min_gemist}</span> <span class="unit-label">min (${data.kpis.aantal_dagen_met_gaten} dagen)</span>`;
+
+        const zwaarste = data.wall_of_shame && data.wall_of_shame[0];
+        document.getElementById('kwaliteit-zwaarste').innerHTML = zwaarste
+            ? `<span style="color: #ef4444;">${zwaarste.aantal_gemist} min</span> <span class="unit-label">(${zwaarste.datum})</span>`
+            : `<span style="color: #10b981;">Geen storingen</span>`;
+
+        // 2. Jaarkiezer vullen voor maand-staafdiagram
+        const jaarSelect = document.getElementById('kwaliteit-jaar-select');
+        const jaren = Object.keys(data.per_maand || {}).sort((a, b) => b - a);
+        jaarSelect.innerHTML = '';
+        jaren.forEach(j => {
+            const opt = document.createElement('option');
+            opt.value = j;
+            opt.textContent = j;
+            jaarSelect.appendChild(opt);
+        });
+
+        jaarSelect.onchange = () => tekenKwaliteitMaandGrafiek(jaarSelect.value);
+        if (jaren.length > 0) tekenKwaliteitMaandGrafiek(jaren[0]);
+
+        // 3. Tabel vullen (Rechtsboven)
+        const tbody = document.getElementById('kwaliteit-tabel-body');
+        const tabel = data.tabel || [];
+        document.getElementById('kwaliteit-tabel-aantal').innerText = `${tabel.length} meldingen`;
+
+        if (tabel.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#10b981;">Geen gemiste data gevonden!</td></tr>`;
+        } else {
+            tbody.innerHTML = tabel.map(r => `
+                <tr>
+                    <td style="white-space: nowrap;">${r.datum}</td>
+                    <td>${r.api_type.replace('_', ' ')}</td>
+                    <td><span class="kwaliteit-badge">${r.aantal_gemist}</span></td>
+                    <td style="font-family: monospace; font-size: 12px;">${r.gaten_details || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // 4. Taartdiagram per jaar (Linksonder)
+        tekenKwaliteitJaarTaart(data.per_jaar || []);
+
+        // 5. Staafdiagram per uur van de dag (Rechtsonder)
+        tekenKwaliteitUurGrafiek(data.per_uur || Array(24).fill(0));
+
+    } catch (error) {
+        console.error("Fout bij ophalen van datakwaliteit:", error);
+    }
+}
+
+function tekenKwaliteitMaandGrafiek(jaar) {
+    if (!kwaliteitDataCache) return;
+    const waarden = kwaliteitDataCache.per_maand[jaar] || Array(12).fill(0);
+    const ctx = document.getElementById('kwaliteitMaandGrafiek').getContext('2d');
+
+    if (kwaliteitMaandGrafiek) kwaliteitMaandGrafiek.destroy();
+    kwaliteitMaandGrafiek = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: maandNamenKort,
+            datasets: [{
+                label: `Gemiste minuten (${jaar})`,
+                data: waarden,
+                backgroundColor: 'rgba(67, 140, 230, 0.75)',
+                borderColor: '#438ce6',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#8b9bb4' } },
+                y: { beginAtZero: true, grid: { color: 'rgba(139, 155, 180, 0.08)' }, ticks: { color: '#8b9bb4' } }
+            }
+        }
+    });
+}
+
+function tekenKwaliteitJaarTaart(perJaar) {
+    const ctx = document.getElementById('kwaliteitJaarTaart').getContext('2d');
+    const kleuren = ['#438ce6', '#f97316', '#10b981', '#a855f7', '#ef4444', '#eab308', '#06b6d4', '#ec4899'];
+
+    if (kwaliteitJaarTaart) kwaliteitJaarTaart.destroy();
+    kwaliteitJaarTaart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: perJaar.map(j => String(j.jaar)),
+            datasets: [{
+                data: perJaar.map(j => j.elia_minuut),
+                backgroundColor: perJaar.map((_, i) => kleuren[i % kleuren.length]),
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: window.innerWidth <= 768 ? 'bottom' : 'right',
+                    labels: {
+                        color: '#8b9bb4',
+                        boxWidth: 10,
+                        padding: window.innerWidth <= 768 ? 10 : 12,
+                        font: { size: window.innerWidth <= 768 ? 11 : 12 }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function tekenKwaliteitUurGrafiek(perUur) {
+    const ctx = document.getElementById('kwaliteitUurGrafiek').getContext('2d');
+    const labels = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0') + 'u');
+
+    if (kwaliteitUurGrafiek) kwaliteitUurGrafiek.destroy();
+    kwaliteitUurGrafiek = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Gemiste minuten',
+                data: perUur,
+                backgroundColor: 'rgba(249, 115, 22, 0.75)',
+                borderColor: '#f97316',
+                borderWidth: 1,
+                borderRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#8b9bb4', maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } },
+                y: { beginAtZero: true, grid: { color: 'rgba(139, 155, 180, 0.08)' }, ticks: { color: '#8b9bb4' } }
+            }
+        }
     });
 }
 

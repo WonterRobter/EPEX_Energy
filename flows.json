@@ -20,7 +20,7 @@
         "retentionPolicyV18Flux": "",
         "org": "epex_org",
         "bucket": "energie_db",
-        "x": 1310,
+        "x": 1290,
         "y": 180,
         "wires": []
     },
@@ -85,7 +85,7 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 730,
+        "x": 710,
         "y": 160,
         "wires": [
             [
@@ -105,7 +105,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1010,
+        "x": 990,
         "y": 160,
         "wires": [
             [
@@ -154,7 +154,7 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 760,
+        "x": 740,
         "y": 200,
         "wires": [
             [
@@ -174,7 +174,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1020,
+        "x": 1000,
         "y": 200,
         "wires": [
             [
@@ -223,7 +223,7 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 750,
+        "x": 730,
         "y": 240,
         "wires": [
             [
@@ -243,7 +243,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1020,
+        "x": 1000,
         "y": 240,
         "wires": [
             [
@@ -288,7 +288,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 470,
+        "x": 450,
         "y": 300,
         "wires": [
             [
@@ -353,7 +353,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 480,
+        "x": 460,
         "y": 340,
         "wires": [
             [
@@ -419,7 +419,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 460,
+        "x": 440,
         "y": 380,
         "wires": [
             [
@@ -591,8 +591,8 @@
         "name": "",
         "statusCode": "",
         "headers": {},
-        "x": 1170,
-        "y": 640,
+        "x": 1190,
+        "y": 620,
         "wires": []
     },
     {
@@ -643,7 +643,7 @@
         "skipBodyParsing": false,
         "swaggerDoc": "",
         "x": 200,
-        "y": 600,
+        "y": 640,
         "wires": [
             [
                 "build_flux"
@@ -663,7 +663,7 @@
         "finalize": "",
         "libs": [],
         "x": 450,
-        "y": 600,
+        "y": 640,
         "wires": [
             [
                 "query_influx"
@@ -682,7 +682,7 @@
         "retentionPolicy": "",
         "org": "epex_org",
         "x": 670,
-        "y": 600,
+        "y": 640,
         "wires": [
             [
                 "format_chart"
@@ -702,7 +702,7 @@
         "finalize": "",
         "libs": [],
         "x": 880,
-        "y": 600,
+        "y": 640,
         "wires": [
             [
                 "register_out"
@@ -719,7 +719,7 @@
         "upload": false,
         "swaggerDoc": "",
         "x": 220,
-        "y": 660,
+        "y": 680,
         "wires": [
             [
                 "build_flux_profiel"
@@ -739,7 +739,7 @@
         "finalize": "",
         "libs": [],
         "x": 460,
-        "y": 660,
+        "y": 680,
         "wires": [
             [
                 "fbd52162dae1288f"
@@ -759,7 +759,7 @@
         "finalize": "",
         "libs": [],
         "x": 890,
-        "y": 660,
+        "y": 680,
         "wires": [
             [
                 "register_out"
@@ -833,7 +833,7 @@
         "upload": false,
         "swaggerDoc": "",
         "x": 220,
-        "y": 780,
+        "y": 760,
         "wires": [
             [
                 "69bc24122c408407"
@@ -853,7 +853,7 @@
         "finalize": "",
         "libs": [],
         "x": 450,
-        "y": 780,
+        "y": 760,
         "wires": [
             [
                 "1a7a3fbd2a854a85"
@@ -873,7 +873,7 @@
         "finalize": "",
         "libs": [],
         "x": 900,
-        "y": 780,
+        "y": 760,
         "wires": [
             [
                 "register_out"
@@ -890,7 +890,7 @@
         "upload": false,
         "swaggerDoc": "",
         "x": 230,
-        "y": 840,
+        "y": 800,
         "wires": [
             [
                 "build_flux_seizoen"
@@ -910,7 +910,7 @@
         "finalize": "",
         "libs": [],
         "x": 460,
-        "y": 840,
+        "y": 800,
         "wires": [
             [
                 "0cb8de8073d955ac"
@@ -930,7 +930,7 @@
         "finalize": "",
         "libs": [],
         "x": 900,
-        "y": 840,
+        "y": 800,
         "wires": [
             [
                 "register_out"
@@ -963,7 +963,7 @@
         "retentionPolicy": "",
         "org": "epex_org",
         "x": 670,
-        "y": 660,
+        "y": 680,
         "wires": [
             [
                 "format_chart_profiel"
@@ -1001,7 +1001,7 @@
         "retentionPolicy": "",
         "org": "epex_org",
         "x": 670,
-        "y": 780,
+        "y": 760,
         "wires": [
             [
                 "29f380309365c195"
@@ -1020,7 +1020,7 @@
         "retentionPolicy": "",
         "org": "epex_org",
         "x": 670,
-        "y": 840,
+        "y": 800,
         "wires": [
             [
                 "calc_seizoen_turbo"
@@ -1225,8 +1225,8 @@
         "links": [
             "8dc9069821445696"
         ],
-        "x": 325,
-        "y": 400,
+        "x": 295,
+        "y": 420,
         "wires": [
             [
                 "9d34e86c39fe6e8c"
@@ -1311,7 +1311,7 @@
         "links": [
             "85929f296e6e8371"
         ],
-        "x": 1105,
+        "x": 1085,
         "y": 120,
         "wires": [
             [
@@ -1329,6 +1329,78 @@
         "y": 500,
         "wires": [
             []
+        ]
+    },
+    {
+        "id": "api_datakwaliteit_in",
+        "type": "http in",
+        "z": "44ae34a704e13388",
+        "name": "",
+        "url": "/api/datakwaliteit",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 220,
+        "y": 580,
+        "wires": [
+            [
+                "build_sql_kwaliteit"
+            ]
+        ]
+    },
+    {
+        "id": "build_sql_kwaliteit",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Query Data Gaten",
+        "func": "msg.topic = \"SELECT DATE_FORMAT(datum, '%Y-%m-%d') AS datum, api_type, aantal_gemist, gaten_details FROM data_gaten WHERE aantal_gemist > 0 ORDER BY datum DESC\";\nmsg.payload = [];\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 450,
+        "y": 580,
+        "wires": [
+            [
+                "db_kwaliteit"
+            ]
+        ]
+    },
+    {
+        "id": "db_kwaliteit",
+        "type": "mysql",
+        "z": "44ae34a704e13388",
+        "mydb": "0d836172df78c3f2",
+        "name": "MariaDB",
+        "x": 660,
+        "y": 580,
+        "wires": [
+            [
+                "format_kwaliteit"
+            ]
+        ]
+    },
+    {
+        "id": "format_kwaliteit",
+        "type": "function",
+        "z": "44ae34a704e13388",
+        "name": "Bereken Dashboard Stats",
+        "func": "let rows = Array.isArray(msg.payload) ? msg.payload : [];\n\nlet perJaar = {};\nlet perMaand = {}; // { \"2026\": [0, 0, ..., 0] }\nlet perUur = Array(24).fill(0); // 00u t/m 23u\n\nlet totaalMinGemist = 0;\nlet totaalKwartierGemist = 0;\nlet totaalEpexGemist = 0;\n\n// Grens voor \"laatste 7 dagen\" (YYYY-MM-DD)\nlet zevenDagenGeleden = new Date(Date.now() - 7 * 86400000);\nlet weekGrensStr = zevenDagenGeleden.toISOString().split('T')[0];\nlet gemistLaatsteWeek = 0;\n\n// Hulpfunctie om \"02:00-02:59 | 05:00-05:44\" om te zetten naar uren (0..23)\nfunction telUrenUitDetails(detailsStr) {\n    if (!detailsStr) return;\n    let blokken = detailsStr.split(/[|,]/).map(s => s.trim()).filter(Boolean);\n    blokken.forEach(blok => {\n        let delen = blok.split('-').map(s => s.trim());\n        let toMin = (hhmm) => {\n            let [h, m] = hhmm.split(':').map(Number);\n            return (isNaN(h) || isNaN(m)) ? null : h * 60 + m;\n        };\n        let startM = toMin(delen[0]);\n        let eindM = delen.length > 1 ? toMin(delen[1]) : startM;\n\n        if (startM !== null && eindM !== null && eindM >= startM) {\n            for (let m = startM; m <= eindM; m++) {\n                let uur = Math.floor(m / 60);\n                if (uur >= 0 && uur < 24) perUur[uur]++;\n            }\n        }\n    });\n}\n\nrows.forEach(r => {\n    let jaar = r.datum.substring(0, 4);\n    let maandIdx = parseInt(r.datum.substring(5, 7), 10) - 1;\n    let aantal = Number(r.aantal_gemist) || 0;\n\n    if (!perJaar[jaar]) perJaar[jaar] = { jaar: Number(jaar), elia_minuut: 0, elia_kwartier: 0, epex_kwartier: 0 };\n    if (!perMaand[jaar]) perMaand[jaar] = Array(12).fill(0);\n\n    if (r.api_type === 'elia_minuut') {\n        perJaar[jaar].elia_minuut += aantal;\n        perMaand[jaar][maandIdx] += aantal;\n        totaalMinGemist += aantal;\n\n        if (r.datum >= weekGrensStr) {\n            gemistLaatsteWeek += aantal;\n        }\n        telUrenUitDetails(r.gaten_details);\n    } else if (r.api_type === 'elia_kwartier') {\n        perJaar[jaar].elia_kwartier += aantal;\n        totaalKwartierGemist += aantal;\n    } else if (r.api_type === 'epex_kwartier') {\n        perJaar[jaar].epex_kwartier += aantal;\n        totaalEpexGemist += aantal;\n    }\n});\n\n// Uptime laatste 7 dagen (7 * 1440 = 10.080 minuten)\nlet uptimeWeekPct = Math.max(0, ((10080 - gemistLaatsteWeek) / 10080) * 100);\n\n// Top 5 zwaarste storingen\nlet wallOfShame = [...rows]\n    .filter(r => r.api_type === 'elia_minuut')\n    .sort((a, b) => b.aantal_gemist - a.aantal_gemist)\n    .slice(0, 5);\n\nmsg.payload = {\n    kpis: {\n        uptime_week_pct: Number(uptimeWeekPct.toFixed(2)),\n        gemist_laatste_week: gemistLaatsteWeek,\n        totaal_min_gemist: totaalMinGemist,\n        totaal_kwartier_gemist: totaalKwartierGemist,\n        totaal_epex_gemist: totaalEpexGemist,\n        aantal_dagen_met_gaten: new Set(rows.map(r => r.datum)).size\n    },\n    per_jaar: Object.values(perJaar).sort((a, b) => a.jaar - b.jaar),\n    per_maand: perMaand,\n    per_uur: perUur,\n    wall_of_shame: wallOfShame,\n    tabel: rows\n};\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `${rows.length} gaten verwerkt` });\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 890,
+        "y": 580,
+        "wires": [
+            [
+                "register_out"
+            ]
         ]
     },
     {
@@ -1411,7 +1483,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "0cb74249fdfa9b9a",
+        "id": "e1eabda4d3bb24c2",
         "type": "global-config",
         "env": [],
         "modules": {

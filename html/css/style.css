@@ -1009,34 +1009,215 @@ input[type="number"] {
 }
 
 /* ==========================================
-   ULTIEME VLOEIENDE SCROLL (INSTELLINGEN)
+   ULTIEME VLOEIENDE SCROLL (INSTELLINGEN + DATAKWALITEIT MOBIEL)
+   Geen 100dvh-bug meer: #content hangt al via position:fixed aan top:0/bottom:0
    ========================================== */
-/* 1. Zet de achtergrond en de basis muurvast */
-body.instellingen-pagina, 
+body.instellingen-pagina,
 body.instellingen-pagina #content {
     overflow: hidden !important;
-    height: 100dvh !important;
+    height: 100% !important;
 }
 
-/* 2. Laat ENKEL het hoofdgedeelte (main) vloeiend scrollen */
 body.instellingen-pagina #content main {
-    height: calc(100dvh - 56px) !important; /* Ruimte overlaten voor de navbar */
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
     overflow-y: auto !important;
-    
-    /* Deze twee regels zorgen voor dat boterzachte doorglijden op je gsm! */
-    -webkit-overflow-scrolling: touch !important; 
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
     overscroll-behavior-y: contain !important;
-    
-    /* Forceer touch-scroll (overrulet eventuele blokkades van de grafieken) */
-    touch-action: pan-y !important; 
+    touch-action: pan-y !important;
 }
 
-/* 3. Zorg dat de inhoud vrij kan meegroeien */
 body.instellingen-pagina #instellingen-container {
     display: flex !important;
     flex-direction: column !important;
+    flex: 0 0 auto !important;
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
-    padding-bottom: 80px !important; 
+    padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
+}
+
+/* ==========================================
+   DATAKWALITEIT 2x2 DASHBOARD
+   ========================================== */
+#view-kwaliteit {
+    flex-direction: column;
+    flex: 1 1 0%;
+    min-height: 0;
+}
+
+.kwaliteit-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+}
+
+.kwaliteit-card {
+    background: var(--light);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.kwaliteit-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.kwaliteit-card-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 0;
+}
+
+.kwaliteit-select {
+    background: var(--grey);
+    color: var(--dark);
+    border: 1px solid rgba(139, 155, 180, 0.25);
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.kwaliteit-chart-box {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+.kwaliteit-table-wrapper {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    border-radius: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 155, 180, 0.35) transparent;
+}
+
+.kwaliteit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    color: var(--dark);
+}
+
+.kwaliteit-table th {
+    position: sticky;
+    top: 0;
+    background: var(--light);
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(139, 155, 180, 0.2);
+    color: var(--dark-grey);
+    font-weight: 600;
+}
+
+.kwaliteit-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(139, 155, 180, 0.1);
+}
+
+.kwaliteit-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+/* Mobiel: exact hetzelfde vaste-navbar + scrollende-main gedrag als Instellingen */
+@media (max-aspect-ratio: 1/1), (max-width: 960px) {
+    body.tab-kwaliteit-actief,
+    body.tab-kwaliteit-actief #content {
+        overflow: hidden !important;
+        height: 100% !important;
+    }
+
+    body.tab-kwaliteit-actief #content main#view-kwaliteit {
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior-y: contain !important;
+        touch-action: pan-y !important;
+    }
+
+    body.tab-kwaliteit-actief #view-kwaliteit .box-info {
+        flex-shrink: 0 !important;
+    }
+
+    body.tab-kwaliteit-actief .kwaliteit-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 0 0 auto !important;
+        gap: 14px;
+        padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
+    }
+
+    body.tab-kwaliteit-actief .kwaliteit-card {
+        padding: 14px;
+        min-height: 280px;
+        height: auto !important;
+        flex: 0 0 auto !important;
+    }
+
+    body.tab-kwaliteit-actief .kwaliteit-card-header h3 {
+        font-size: 14px;
+    }
+
+    body.tab-kwaliteit-actief .kwaliteit-chart-box {
+        min-height: 220px;
+        height: 220px;
+        flex: 0 0 auto;
+    }
+
+    /* Zorg dat swipen op de grafieken de pagina scrollt in plaats van vast te zitten */
+    body.tab-kwaliteit-actief .kwaliteit-chart-box canvas {
+        touch-action: pan-y !important;
+    }
+
+    body.tab-kwaliteit-actief .kwaliteit-table-wrapper {
+        max-height: 280px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    body.tab-kwaliteit-actief .kwaliteit-table {
+        font-size: 12px;
+    }
+
+    body.tab-kwaliteit-actief .kwaliteit-table th,
+    body.tab-kwaliteit-actief .kwaliteit-table td {
+        padding: 6px;
+    }
+}
+
+@media screen and (max-width: 520px) {
+    .kwaliteit-table th:nth-child(2),
+    .kwaliteit-table td:nth-child(2) {
+        display: none;
+    }
 }
