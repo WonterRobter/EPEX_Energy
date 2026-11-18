@@ -4,77 +4,262 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="css/style.css?v=101">
+    <link rel="stylesheet" href="css/style.css?v=106">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" sizes="192x192" href="pics/icon-192.png">
     <meta name="theme-color" content="#3c91e6">
     <title>Info - EPEXenergy</title>
-    
+
     <style>
-        /* Specifieke styling voor de Info pagina om het mooi uit te lijnen */
-        .info-card {
+        .info-wrapper {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 20px;
+            width: 100%;
         }
-        .info-card p {
-            color: var(--dark-grey);
-            line-height: 1.6;
-            font-size: 14px;
-        }
-        .info-card ul {
-            padding-left: 20px;
-            color: var(--dark);
-            font-size: 14px;
-            line-height: 1.8;
-            margin-bottom: 8px;
-        }
-        .info-card ul li::marker {
-            color: var(--blue);
-        }
-        .info-card strong {
-            color: var(--dark);
-        }
-        .info-card a.api-link {
-            color: var(--blue);
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-flex;
+
+        /* Hero / Intro kaart */
+        .info-hero {
+            background: linear-gradient(135deg, rgba(60, 145, 230, 0.16), rgba(16, 185, 129, 0.08));
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 4px;
+            gap: 20px;
+            flex-wrap: wrap;
         }
-        .info-card a.api-link:hover {
-            text-decoration: underline;
+
+        .info-hero-text h2 {
+            font-size: 22px;
+            color: var(--dark);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
+        .info-hero-text p {
+            color: var(--dark-grey);
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 680px;
+        }
+
+        .info-hero-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .maker-badge {
+            font-size: 12px;
+            color: var(--dark-grey);
+            background: var(--light);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(139, 155, 180, 0.2);
+        }
+
+        .maker-badge strong {
+            color: var(--dark);
+        }
+
         .github-btn {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             background: #24292e;
             color: #fff;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
             text-decoration: none;
             font-weight: 600;
             font-size: 14px;
-            margin-top: 12px;
-            transition: 0.2s ease;
+            transition: transform 0.2s ease, background 0.2s ease;
         }
+
         .github-btn:hover {
             background: #000;
             transform: translateY(-2px);
         }
+
         body.dark .github-btn {
+            background: var(--blue);
+            color: #fff;
+        }
+
+        body.dark .github-btn:hover {
+            background: #2b7bc9;
+        }
+
+        /* Sectie titels */
+        .info-section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        /* Feature Grid (3 kolommen op desktop, 1 op mobiel) */
+        .info-feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .info-feature-card {
             background: var(--light);
+            border: 1px solid rgba(56, 189, 248, 0.16);
+            border-radius: 14px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .info-feature-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .info-feature-card h4 {
+            font-size: 15px;
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        .info-feature-card p {
+            font-size: 13px;
+            color: var(--dark-grey);
+            line-height: 1.55;
+        }
+
+        /* 2-koloms grid voor Architectuur & Licenties */
+        .info-two-col {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .info-box {
+            background: var(--light);
+            border: 1px solid rgba(56, 189, 248, 0.16);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .info-box h3 {
+            font-size: 16px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .info-box p {
+            font-size: 13.5px;
+            color: var(--dark-grey);
+            line-height: 1.6;
+        }
+
+        .info-box ul {
+            padding-left: 18px;
+            font-size: 13.5px;
+            color: var(--dark-grey);
+            line-height: 1.7;
+        }
+
+        .info-box ul li::marker {
+            color: var(--blue);
+        }
+
+        .info-box strong {
             color: var(--dark);
         }
-        body.dark .github-btn:hover {
-            background: #fff;
+
+        /* Tech stack pills */
+        .tech-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .tech-pill {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 11px;
+            border-radius: 20px;
+            background: var(--grey);
+            color: var(--dark);
+            border: 1px solid rgba(139, 155, 180, 0.2);
+        }
+
+        /* Licentie blokjes */
+        .license-notice {
+            background: var(--grey);
+            border-left: 3px solid var(--blue);
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 12.5px;
+            color: var(--dark-grey);
+            line-height: 1.55;
+        }
+
+        .license-notice.elia {
+            border-left-color: var(--orange);
+        }
+
+        .api-link {
+            color: var(--blue);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .api-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 1024px) {
+            .info-feature-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .info-feature-grid,
+            .info-two-col {
+                grid-template-columns: 1fr;
+            }
+            .info-hero-actions {
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
-<body class="dark instellingen-pagina"> <!-- We gebruiken instellingen-pagina class zodat deze pagina ook soepel kan scrollen! -->
-    
+<body class="dark instellingen-pagina">
+
     <!-- ZIJBALK -->
     <section id="sidebar">
         <div>
@@ -106,7 +291,7 @@
                 <li><a href="meldingen.html"><i class='bx bxs-bell'></i><span class="text">Meldingen</span></a></li>
                 <li class="active"><a href="info.html"><i class='bx bx-info-circle'></i><span class="text">Info (Over)</span></a></li>
             </ul>
-        </div> 
+        </div>
         <ul class="side-menu bottom">
             <li><a href="profiel.html"><i class='bx bxs-user-circle'></i><span class="text" id="profiel-naam">Profiel</span></a></li>
             <li><a href="instellingen.html"><i class='bx bxs-cog'></i><span class="text">Instellingen</span></a></li>
@@ -124,7 +309,7 @@
             <label class="swith-lm" for="switch-mode"><i class="bx bxs-moon"></i><i class="bx bx-sun"></i><div class="ball"></div></label>
             <a href="profiel.html" class="profile" id="profileIcon"><img src="https://ui-avatars.com/api/?name=Wouter+D&background=3C91E6&color=fff" alt="Profile"></a>
         </nav>
-        
+
         <main>
             <div class="head-title">
                 <div class="left">
@@ -132,66 +317,173 @@
                 </div>
             </div>
 
-            <!-- CONTAINER VOOR DE INFO BLOKKEN -->
-            <div class="table-data" id="instellingen-container" style="flex-direction: column; gap: 24px; overflow-y: auto;">
-                
-                <!-- BLOK 1: De Maker & GitHub -->
-                <div class="order">
-                    <div class="head">
-                        <h3><i class='bx bx-code-alt' style="color: var(--green);"></i> Project & Ontwikkelaar</h3>
-                    </div>
-                    <div class="info-card">
-                        <p><strong>EPEXenergy</strong> is een geavanceerd, open-source energiedashboard. Het is ontworpen om de complexe en zeer volatiele Europese energiemarkten inzichtelijk te maken via realtime data en dynamische wiskundige modellen.</p>
-                        
-                        <div style="background: var(--grey); padding: 16px; border-radius: 12px; margin-top: 8px;">
-                            <p style="margin-bottom: 4px;">Ontwikkeld en ontworpen door:</p>
-                            <h3 style="color: var(--dark); font-size: 20px; font-weight: 700; margin-bottom: 12px;">Wonter</h3>
-                            <a href="https://github.com/WonterRobter/EPEX_Energy" target="_blank" class="github-btn">
-                                <i class='bx bxl-github bx-sm'></i> Bekijk de code op GitHub
+            <div class="table-data" id="instellingen-container">
+                <div class="info-wrapper">
+
+                    <!-- 1. HERO & MAKER -->
+                    <div class="info-hero">
+                        <div class="info-hero-text">
+                            <h2><i class='bx bxs-zap' style="color: var(--blue);"></i> EPEXenergy</h2>
+                            <p>
+                                Een zelfgehost, open-source energiedashboard voor de Belgische elektriciteitsmarkt.
+                                EPEXenergy brengt <strong>EPEX Spot day-ahead prijzen</strong> en <strong>Elia onbalansprijzen</strong>
+                                samen in één snelle web-app (PWA), inclusief historische analyses vanaf september 2019,
+                                eigen tariefformules en automatische datakwaliteit-bewaking.
+                            </p>
+                        </div>
+                        <div class="info-hero-actions">
+                            <span class="maker-badge">Gebouwd door <strong>Wonter (Wouter De Laet)</strong> · IoT-technieker</span>
+                            <a href="https://github.com/WonterRobter/EPEX_Energy" target="_blank" rel="noopener" class="github-btn">
+                                <i class='bx bxl-github bx-sm'></i> Bekijk op GitHub
                             </a>
                         </div>
                     </div>
-                </div>
 
-                <!-- BLOK 2: Energy-Charts API -->
-                <div class="order">
-                    <div class="head">
-                        <h3><i class='bx bx-bar-chart-alt-2' style="color: var(--blue);"></i> EPEX Spot (Energy-Charts API)</h3>
+                    <!-- 2. WAT DOET ALLES IN DE APP? -->
+                    <div class="info-section-title">
+                        <i class='bx bx-grid-alt' style="color: var(--blue);"></i> Wat doet elk onderdeel?
                     </div>
-                    <div class="info-card">
-                        <p>De day-ahead marktprijzen (EPEX) worden berekend en gepubliceerd via de API van het <strong>Fraunhofer ISE (Energy-Charts)</strong>. Deze databron levert de fundamentele uurprijzen voor elektriciteit in heel Europa.</p>
-                        <ul>
-                            <li><strong>Hoe het werkt:</strong> Elke dag rond 13:00 uur CET sluit de "Day-Ahead" veilig op de Europese beurs. Vraag en aanbod worden gematcht, wat resulteert in een vaste uurprijs voor de dag erna.</li>
-                            <li><strong>In de app:</strong> De backend van deze applicatie haalt deze data automatisch binnen en de rekentool past hier realtime jouw leveranciersformule, netkosten en BTW op toe.</li>
-                        </ul>
-                        <a href="https://api.energy-charts.info/" target="_blank" class="api-link">
-                            <i class='bx bx-link-external'></i> api.energy-charts.info
-                        </a>
-                    </div>
-                </div>
 
-                <!-- BLOK 3: Elia Onbalans API -->
-                <div class="order">
-                    <div class="head">
-                        <h3><i class='bx bxs-zap' style="color: var(--orange);"></i> Onbalansprijzen (Elia API)</h3>
-                    </div>
-                    <div class="info-card">
-                        <p>De real-time kwartier- en minuutonbalans wordt rechtstreeks gevoed door de <strong>Open Data API van Elia</strong>, de transmissienetbeheerder van België.</p>
-                        <ul>
-                            <li><strong>Hoe het werkt:</strong> Wanneer het stroomnet uit balans raakt (door bijvoorbeeld onverwacht veel zon of het uitvallen van een centrale), moet Elia reservecapaciteit inzetten. De kosten of opbrengsten hiervan vormen de onbalansprijs.</li>
-                            <li><strong>Dynamiek:</strong> Deze prijzen zijn extreem volatiel en kunnen van minuut tot minuut drastisch wijzigen, soms zelfs naar zeer negatieve waarden. Dit maakt het de ultieme graadmeter voor slimme batterij-sturing.</li>
-                        </ul>
-                        <a href="https://opendata.elia.be/" target="_blank" class="api-link">
-                            <i class='bx bx-link-external'></i> opendata.elia.be
-                        </a>
-                    </div>
-                </div>
+                    <div class="info-feature-grid">
+                        <div class="info-feature-card">
+                            <div class="info-feature-icon" style="background: rgba(67, 140, 230, 0.15); color: #438ce6;">
+                                <i class='bx bxs-dashboard'></i>
+                            </div>
+                            <h4>Vandaag (Actueel)</h4>
+                            <p>Toont de actuele EPEX kwartierprijzen van vandaag (en morgen vanaf ~13:00u) samen met de live Elia kwartier- en minuutonbalans. Inclusief dagstatistieken en drempel-indicator.</p>
+                        </div>
 
+                        <div class="info-feature-card">
+                            <div class="info-feature-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                                <i class='bx bx-line-chart'></i>
+                            </div>
+                            <h4>Trends (Analyse)</h4>
+                            <p>Vergelijk <strong>kwartierprofielen</strong> over een vrije periode, bekijk <strong>maand- en jaaroverzichten</strong> (gemiddeld, min en max), en leg <strong>seizoensprofielen</strong> van verschillende jaren over elkaar.</p>
+                        </div>
+
+                        <div class="info-feature-card">
+                            <div class="info-feature-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                                <i class='bx bx-shield-quarter'></i>
+                            </div>
+                            <h4>Datakwaliteit</h4>
+                            <p>Houdt via een geautomatiseerde Watchdog en MariaDB bij of er minuten of kwartieren ontbreken bij Elia of EPEX, berekent de uptime van de laatste 7 dagen en toont storingspatronen per uur en jaar.</p>
+                        </div>
+
+                        <div class="info-feature-card">
+                            <div class="info-feature-icon" style="background: rgba(249, 115, 22, 0.15); color: #f97316;">
+                                <i class='bx bx-calculator'></i>
+                            </div>
+                            <h4>Eigen Tariefformule</h4>
+                            <p>Via <strong>Instellingen</strong> reken je ruwe beursprijzen (€/MWh) direct om naar jouw echte all-in consumentenprijs in <strong>c€/kWh</strong> of <strong>€/kWh</strong> met formule (<em>a + b × EPEX</em>), vaste kosten en BTW.</p>
+                        </div>
+
+                        <div class="info-feature-card">
+                            <div class="info-feature-icon" style="background: rgba(168, 85, 247, 0.15); color: #a855f7;">
+                                <i class='bx bxs-bell-ring'></i>
+                            </div>
+                            <h4>Telegram Meldingen &amp; Rescue</h4>
+                            <p>Ontvang dagelijks een overzicht zodra de prijzen voor morgen bekend zijn, plus een prijsalarm wanneer de stroom onder een ingestelde drempel zakt. Ontbrekende data wordt automatisch opnieuw opgehaald.</p>
+                        </div>
+
+                        <div class="info-feature-card">
+                            <div class="info-feature-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
+                                <i class='bx bx-mobile-alt'></i>
+                            </div>
+                            <h4>Installeerbare Web-App (PWA)</h4>
+                            <p>Werkt volledig responsive op desktop en smartphone met ondersteuning voor Donkere &amp; Lichte modus, touch-snapping op grafieken en installatie op je startscherm.</p>
+                        </div>
+                    </div>
+
+                    <!-- 3. ARCHITECTUUR & OVER DE MAKER -->
+                    <div class="info-two-col">
+                        <div class="info-box">
+                            <h3><i class='bx bx-server' style="color: var(--green);"></i> Technische Architectuur</h3>
+                            <p>EPEXenergy draait volledig zelfgehost in Docker-containers op een eigen Proxmox-homelab:</p>
+                            <ul>
+                                <li><strong>Node-RED:</strong> Haalt periodiek data op bij Energy-Charts &amp; Elia, draait de nachtelijke Watchdog/Rescue-loop en verzorgt alle <code>/api/*</code> endpoints.</li>
+                                <li><strong>InfluxDB 2.7:</strong> Tijdreeksdatabase voor miljoenen historische en live prijsmetingen (sinds 30 september 2019).</li>
+                                <li><strong>MariaDB:</strong> Relationele database voor gebruikersbeheer en het <code>data_gaten</code> datakwaliteit-logboek.</li>
+                                <li><strong>Nginx &amp; Chart.js:</strong> Reverse proxy en lichtgewicht frontend zonder zware frameworks.</li>
+                            </ul>
+                            <div class="tech-pills">
+                                <span class="tech-pill">Docker Compose</span>
+                                <span class="tech-pill">Node-RED</span>
+                                <span class="tech-pill">InfluxDB 2.7</span>
+                                <span class="tech-pill">MariaDB</span>
+                                <span class="tech-pill">Nginx</span>
+                                <span class="tech-pill">Chart.js</span>
+                                <span class="tech-pill">PWA</span>
+                            </div>
+                        </div>
+
+                        <div class="info-box">
+                            <h3><i class='bx bx-user' style="color: var(--blue);"></i> Wie ben ik?</h3>
+                            <p>
+                                Ik ben <strong>Wouter De Laet</strong> (online bekend als <strong>Wonter</strong>), afgestudeerd in het Graduaat
+                                <em>Internet of Things (IoT)</em> en werkzaam als IoT-technieker.
+                            </p>
+                            <p>
+                                EPEXenergy begon als een praktisch homelab-project om dynamische energieprijzen en de Belgische onbalansmarkt
+                                beter te begrijpen, en groeide uit tot een volwaardig platform met geautomatiseerde data-pipelines,
+                                Telegram-bots en historische trendanalyse.
+                            </p>
+                            <p>
+                                Alle code, Docker-configuraties en Node-RED flows zijn openbaar beschikbaar op GitHub om anderen op weg te helpen.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 4. DATABRONNEN & LICENTIES -->
+                    <div class="info-section-title">
+                        <i class='bx bx-copyright' style="color: var(--orange);"></i> Databronnen &amp; Licenties (CC BY 4.0)
+                    </div>
+
+                    <div class="info-two-col">
+                        <!-- Energy-Charts -->
+                        <div class="info-box">
+                            <h3><i class='bx bx-bar-chart-alt-2' style="color: var(--blue);"></i> Energy-Charts API (EPEX Spot)</h3>
+                            <p>
+                                De Belgische day-ahead elektriciteitsprijzen (<code>bzn=BE</code>) zijn afkomstig van de
+                                <strong>Energy-Charts API</strong> van het Fraunhofer ISE. Elke dag rond 13:00u CET worden de nieuwe
+                                prijzen voor de volgende dag gepubliceerd.
+                            </p>
+                            <div class="license-notice">
+                                <strong>Data License (CC BY 4.0):</strong><br>
+                                Unless stated otherwise, the data provided by the Energy-Charts API is licensed under the
+                                <strong>CC BY 4.0</strong> license. Proper attribution to <strong>Energy-Charts.info</strong> as the source is required.
+                            </div>
+                            <a href="https://api.energy-charts.info/" target="_blank" rel="noopener" class="api-link">
+                                <i class='bx bx-link-external'></i> api.energy-charts.info
+                            </a>
+                        </div>
+
+                        <!-- Elia Open Data -->
+                        <div class="info-box">
+                            <h3><i class='bx bxs-zap' style="color: var(--orange);"></i> Elia Open Data (Onbalans)</h3>
+                            <p>
+                                De Belgische kwartier- en minuutonbalansprijzen zijn afkomstig van het <strong>Elia Open Data Portal</strong>
+                                (datasets <code>ods161</code>, <code>ods162</code>, <code>ods133</code>, <code>ods134</code> en historische archieven
+                                <code>ods046</code> &amp; <code>ods047</code>).
+                            </p>
+                            <div class="license-notice elia">
+                                <strong>Elia Open Data License (CC BY 4.0):</strong><br>
+                                The data provided for are governed by Creative Commons Attribution 4.0 International Public License
+                                ("Public License" or "CC BY 4.0"). This Public License is governed by Belgian law. Any dispute concerning
+                                the conclusion, interpretation or execution of this Public License as well as any other dispute concerning
+                                or in connection with this Public License whether legal or factual, none excepted, shall be settled by the
+                                competent court of Brussels.
+                            </div>
+                            <a href="https://opendata.elia.be/" target="_blank" rel="noopener" class="api-link">
+                                <i class='bx bx-link-external'></i> opendata.elia.be
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </main>
     </section>
-    
-    <!-- We laden script.js in voor het menu en dark mode -->
+
     <script src="js/script.js?v=11"></script>
 </body>
 </html>
